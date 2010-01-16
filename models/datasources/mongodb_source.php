@@ -85,6 +85,23 @@ class MongodbSource extends DataSource{
 		return array();
 	}
 
+    public function create(&$model, $fields = null, $values = null){
+		if($fields !== null && $values !== null){
+			$data = array_combine($fields, $values);
+		}else{
+			$data = $model->data;
+		}
+
+		$result = $this->_db->selectCollection($model->table)->insert($data, true);
+
+		if($result['ok'] === 1.0){
+			$id = is_object($data['_id']) ? $data['_id']->__toString() : null;
+			$model->setInsertID($id);
+			$model->id = $id;
+			return true;
+		}
+		return false;
+    }
 
 
 	public function read(&$model, $query = array()) {
