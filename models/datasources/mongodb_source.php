@@ -136,7 +136,7 @@ class MongodbSource extends DataSource{
 			if(empty($mongodata['id'])){
 				$mongodata['id'] = $mongodata['_id']->__toString();
 			}
-			$results[] = $mongodata;
+			$results[][$model->name] = $mongodata;
 		}
 		return $results;
 
