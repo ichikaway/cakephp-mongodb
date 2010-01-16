@@ -112,6 +112,10 @@ class MongodbSource extends DataSource{
 			$order = array_shift($order);
 		}
 
+		if(!empty($conditions['_id'])){
+			$conditions['_id'] = new MongoId($conditions['_id']);
+		}
+
 		$result = $this->_db->selectCollection($model->table)->find($conditions, $fields)
 					->sort($order)->limit($limit)->skip( ($page - 1)  * $limit);
 
