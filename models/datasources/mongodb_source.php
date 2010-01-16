@@ -96,6 +96,9 @@ class MongodbSource extends DataSource{
 			$data = $model->data;
 		}
 
+		if(empty($data[$model->primaryKey])){
+			$data[$model->primaryKey] = String::uuid();
+		}
 		$result = $this->_db->selectCollection($model->table)->insert($data, true);
 
 		if($result['ok'] === 1.0){
