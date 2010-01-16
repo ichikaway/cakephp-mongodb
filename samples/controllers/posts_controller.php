@@ -16,7 +16,7 @@ class PostsController extends AppController {
 	
 
 	function index() {
-		$params = array('fields' => array('title','hoge'), 
+		$params = array('fields' => array('title','body','hoge'), 
 				  		//'conditions' => array('title' => 'hehe'),
 						//'order' => array('title' => 1, 'body' => 1),
 						'limit' => 35,
