@@ -81,7 +81,11 @@ class MongodbSource extends DataSource{
 		*/
 	}
 
-	public function describe(&$model ){
+	public function describe(&$model){
+		return array();
+	}
+
+	public function calculate(&$model){
 		return array();
 	}
 
