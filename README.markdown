@@ -1,7 +1,7 @@
 # mongoDB datasource for CakePHP
 
 ## Requirements
-PHP5
+PHP5, 
 pecl mongo (http://php.net/mongo)
 
 ## Author
