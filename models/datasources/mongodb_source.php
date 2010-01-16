@@ -65,9 +65,23 @@ class MongodbSource extends DataSource{
 		return true;
 	}
 
-	public function listSource($data = null) {
-		return $this->_db->listCollections();
+	public function listSources($data = null) {
+		$list = $this->_db->listCollections();
+		if(empty($list)){
+			return array();
+		}else{
+			$collections = null;		
+			foreach($this->_db->listCollections() as $collection){
+				$collections[] = $collection->getName();
+			}
+			return $collections;
+		}
 	}
+
+	public function describe(&$model ){
+		return array();
+	}
+
 
 
 	public function read(&$model, $query = array()) {
