@@ -66,6 +66,8 @@ class MongodbSource extends DataSource{
 	}
 
 	public function listSources($data = null) {
+		return array();
+		/*
 		$list = $this->_db->listCollections();
 		if(empty($list)){
 			return array();
@@ -76,6 +78,7 @@ class MongodbSource extends DataSource{
 			}
 			return $collections;
 		}
+		*/
 	}
 
 	public function describe(&$model ){
