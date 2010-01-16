@@ -30,7 +30,7 @@ class MongodbSource extends DataSource{
 
 	public function __construct($config = array()) {
 		$defaults = array(
-				'persistent' => true,
+				'persistent' => false,
 				'host'       => 'localhost',
 				'database'   => '',
 				'port'       => '27017',
