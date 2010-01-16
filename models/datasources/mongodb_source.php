@@ -1,4 +1,28 @@
 <?php
+/**
+* A CakePHP datasource for the mongoDB (http://www.mongodb.org/) document-oriented database.
+*
+* This datasource uses Pecl Mongo (http://php.net/mongo)
+* and is thus dependent on PHP 5.0 and greater.
+*
+* Original implementation by ichikaway(Yasushi Ichikawa) http://github.com/ichikaway/
+*
+* Reference:
+*	Nate Abele's lithium mongoDB datasource (http://li3.rad-dev.org/)
+*	Joe"l Perras's divan(http://github.com/jperras/divan/)
+*					
+* Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
+*
+* Licensed under The MIT License
+* Redistributions of files must retain the above copyright notice.
+*
+* @filesource
+* @copyright Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
+* @package app
+* @subpackage app.model.datasources
+* @license http://www.opensource.org/licenses/mit-license.php The MIT License
+*/
+
 
 class MongodbSource extends DataSource{
 
