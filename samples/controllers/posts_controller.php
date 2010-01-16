@@ -16,7 +16,7 @@ class PostsController extends AppController {
 	
 
 	function index() {
-		$params = array('fields' => array('title','body','hoge'), 
+		$params = array(//'fields' => array('title','body','hoge'), 
 				  		//'conditions' => array('title' => 'hehe'),
 						//'order' => array('title' => 1, 'body' => 1),
 						'limit' => 35,
@@ -52,7 +52,8 @@ class PostsController extends AppController {
 			}
 		}
 		if (empty($this->data)) {
-			$this->data = $this->Post->read(null, $id);
+			//$this->data = $this->Post->find('first', array('conditions' => array('id' => $id)));
+			$this->data = $this->Post->find('first', array('conditions' => array('_id' => $id)));
 		}
 	}
 
