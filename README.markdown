@@ -7,14 +7,14 @@ pecl mongo (http://php.net/mongo)
 ## Author
 Yasushi Ichikawa (ichikaway)
 
-http://twitter.com/ichikaway
+(http://twitter.com/ichikaway)
 
-http://cake.eizoku.com/blog/
+(http://cake.eizoku.com/blog/)
 
 ## Reference
 Reference code, Thank you!
 
-Nate Abele's lithium mongoDB datasource (http://li3.rad-dev.org/)
+[Nate Abele's lithium mongoDB datasource](http://li3.rad-dev.org/)
 
-Joe"l Perras's divan(http://github.com/jperras/divan/)
+[Joél Perras' divan](http://github.com/jperras/divan/)
 
