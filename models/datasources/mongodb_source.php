@@ -226,7 +226,7 @@ class MongodbSource extends DataSource{
 	
 		} else if(!empty($conditions) && !is_array($conditions)) {
 			$id = $conditions;
-			unset($conditions);
+			$conditions = null;
 		}
 		
 		if (!empty($id) && is_string($id)) {
