@@ -72,6 +72,18 @@ class MongodbSource extends DataSource{
 	}
 
 /**
+ * check connection to the database
+ *
+ * @return boolean Connected
+ * @access public
+ */
+	public function isConnected() {
+		return $this->connected;
+	}
+
+
+
+/**
  * Close database connection
  *
  * @return boolean Connected
