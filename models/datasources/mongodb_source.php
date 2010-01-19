@@ -116,8 +116,6 @@ class MongodbSource extends DataSource{
  * @access public
  */
 	public function listSources($data = null) {
-		return array();
-		/*
 		$list = $this->_db->listCollections();
 		if (empty($list)) {
 			return array();
@@ -128,7 +126,6 @@ class MongodbSource extends DataSource{
 			}
 			return $collections;
 		}
-		*/
 	}
 
 
@@ -140,7 +137,7 @@ class MongodbSource extends DataSource{
  * @access public
  */
 	public function calculate(&$model){
-		return array();
+		return array('count' => true);
 	}
 
 
@@ -161,9 +158,11 @@ class MongodbSource extends DataSource{
 			$data = $model->data;
 		}
 
+		/*
 		if (empty($data[$model->primaryKey])) {
 			$data[$model->primaryKey] = String::uuid();
 		}
+		*/
 
 		$result = $this->_db
 			->selectCollection($model->table)
@@ -239,8 +238,17 @@ class MongodbSource extends DataSource{
 			$order = array_shift($order);
 		}
 
-		if(!empty($conditions['_id'])){
+		if (!empty($conditions['_id']) && !is_object($conditions['_id'])) {
 			$conditions['_id'] = new MongoId($conditions['_id']);
+		}
+
+		/*
+		 * before update, model::save() check exist record with conditions key (ex: Post._id).
+		 * Convert Post._id to _id and make a MongoId object
+		 */
+		if (!empty($conditions[$model->alias . '._id'])) {
+			$conditions['_id'] = new MongoId($conditions[$model->alias . '._id']);
+			unset($conditions[$model->alias . '._id']);
 		}
 
 		$result = $this->_db
@@ -257,7 +265,7 @@ class MongodbSource extends DataSource{
 		$results = null;
 		while ($result->hasNext()) {
 			$mongodata = $result->getNext();
-			if (empty($mongodata['id'])) {
+			if (empty($mongodata['id']) && is_object($mongodata['_id'])) {
 				$mongodata['id'] = $mongodata['_id']->__toString();
 			}
 			$results[][$model->name] = $mongodata;
