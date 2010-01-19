@@ -46,6 +46,7 @@ class MongodbSource extends DataSource{
  */
 	public function __construct($config = array()) {
 		$defaults = array(
+			'set_string_id' => true,
 			'persistent' => false,
 			'host'       => 'localhost',
 			'database'   => '',
@@ -316,7 +317,7 @@ class MongodbSource extends DataSource{
 		$results = null;
 		while ($result->hasNext()) {
 			$mongodata = $result->getNext();
-			if (empty($mongodata['id']) && is_object($mongodata['_id'])) {
+			if ($this->config['set_string_id'] && empty($mongodata['id']) && is_object($mongodata['_id'])) {
 				$mongodata['id'] = $mongodata['_id']->__toString();
 			}
 			$results[][$model->alias] = $mongodata;
