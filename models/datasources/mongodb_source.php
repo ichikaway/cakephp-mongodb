@@ -179,31 +179,36 @@ class MongodbSource extends DataSource{
 
 
 /**
- * Read Data
+ * Update Data
  *
  * @param Model $model Model Instance
  * @param array $query Query data
  * @param array $fields Field data
  * @param array $values Save data
- * @param array $conditions Conditions for update
  * @return boolean Update result
  * @access public
  */
-	public function update(&$model, $fields = null, $values = null, $conditions = null){
-		/*		
-				if($fields !== null && $values !== null){
-				$data = array_combine($fields, $values);
-				}else{
-				$data = $model->data;
-				}
+	public function update(&$model, $fields = null, $values = null) {
 
-				if(!empty($data['_id'])){
-				$data['_id'] = new MongoId($data['_id']);
-				}
+		if ($fields !== null && $values !== null) {
+			$data = array_combine($fields, $values);
+		}else{
+			$data = $model->data;
+		}
 
-				$result = $this->_db->selectCollection($model->table)->save($data);
-		 */
-		return false;
+		if (!empty($data['_id']) && !is_object($data['_id'])) {
+			$data['_id'] = new MongoId($data['_id']);
+		}
+
+		$result = $this->_db
+			->selectCollection($model->table)
+			->save($data);
+
+		if ($result) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 
