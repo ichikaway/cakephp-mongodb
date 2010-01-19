@@ -132,10 +132,28 @@ class MongodbSource extends DataSource{
 	}
 
 
+/**
+ * Calculate
+ *
+ * @param Model $model 
+ * @return array
+ * @access public
+ */
 	public function calculate(&$model){
 		return array();
 	}
 
+
+/**
+ * Create Data
+ *
+ * @param Model $model Model Instance
+ * @param array $query Query data
+ * @param array $fields Field data
+ * @param array $values Save data
+ * @return boolean Insert result
+ * @access public
+ */
 	public function create(&$model, $fields = null, $values = null){
 		if($fields !== null && $values !== null){
 			$data = array_combine($fields, $values);
@@ -158,6 +176,17 @@ class MongodbSource extends DataSource{
 	}
 
 
+/**
+ * Read Data
+ *
+ * @param Model $model Model Instance
+ * @param array $query Query data
+ * @param array $fields Field data
+ * @param array $values Save data
+ * @param array $conditions Conditions for update
+ * @return boolean Update result
+ * @access public
+ */
 	public function update(&$model, $fields = null, $values = null, $conditions = null){
 		/*		
 				if($fields !== null && $values !== null){
