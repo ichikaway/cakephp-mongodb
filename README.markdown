@@ -14,6 +14,8 @@ Yasushi Ichikawa (ichikaway)
 
 ## Contributors
 [Predominant](http://github.com/predominant/) : Cleanup code, add documentation
+[Jrbasso](http://github.com/jrbasso/) : Cleanup code
+
 
 ## Reference
 Reference code, Thank you!
