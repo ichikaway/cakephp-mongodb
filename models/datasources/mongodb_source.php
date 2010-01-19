@@ -28,7 +28,7 @@
  * @package mongodb
  * @subpackage mongodb.models.datasources
  */
-class MongodbSource extends DataSource{
+class MongodbSource extends DataSource {
 
 /**
  * Database Instance
@@ -39,20 +39,27 @@ class MongodbSource extends DataSource{
 	protected $_db = null;
 
 /**
+ * Base Config
+ *
+ * @var array
+ * @access protected
+ */
+	protected $_baseConfig = array(
+		'set_string_id' => true,
+		'persistent' => false,
+		'host'       => 'localhost',
+		'database'   => '',
+		'port'       => '27017'
+	);
+
+/**
  * Constructor
  *
  * @param array $config Configuration array
  * @access public
  */
 	public function __construct($config = array()) {
-		$defaults = array(
-			'set_string_id' => true,
-			'persistent' => false,
-			'host'       => 'localhost',
-			'database'   => '',
-			'port'       => '27017',
-				);
-		parent::__construct(array_merge( $defaults, $config));
+		parent::__construct($config);
 		$this->connect();
 	}
 
@@ -207,7 +214,6 @@ class MongodbSource extends DataSource{
 		} else {
 			return $mongoCollectionObj->save($data);
 		}
-
 	}
 
 
@@ -336,7 +342,7 @@ class MongodbSource extends DataSource{
 			->skip(($page - 1) * $limit);
 
 		if ($model->findQueryType === 'count') {
-			return array(array($model->name => array('count' => $result->count())));
+			return array(array($model->alias => array('count' => $result->count())));
 		}
 
 		$results = null;
@@ -360,7 +366,9 @@ class MongodbSource extends DataSource{
 	protected function _setEmptyArrayIfEmpty($data) {
 		if (is_array($data)) {
 			foreach($data as $key => $value) {
-				$data[$key] = empty($value) ? array() : $value;
+				if (empty($value)) {
+					$data[$key] = array();
+				}
 			}
 			return $data;
 		} else {
