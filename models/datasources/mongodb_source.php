@@ -136,7 +136,7 @@ class MongodbSource extends DataSource{
  * @return array
  * @access public
  */
-	public function calculate(&$model){
+	public function calculate (&$model) {
 		return array('count' => true);
 	}
 
@@ -151,7 +151,7 @@ class MongodbSource extends DataSource{
  * @return boolean Insert result
  * @access public
  */
-	public function create(&$model, $fields = null, $values = null){
+	public function create(&$model, $fields = null, $values = null) {
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
 		} else {
@@ -279,7 +279,7 @@ class MongodbSource extends DataSource{
  * @return array
  * @access protected
  */
-	protected function _setEmptyArrayIfEmpty($data){
+	protected function _setEmptyArrayIfEmpty($data) {
 		if (is_array($data)) {
 			foreach($data as $key => $value) {
 				$data[$key] = empty($value) ? array() : $value;
