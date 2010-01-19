@@ -11,6 +11,10 @@ Yasushi Ichikawa (ichikaway)
 
 (http://cake.eizoku.com/blog/)
 
+
+## Contributors
+[Predominant](http://github.com/predominant/) : Cleanup code, add documentation
+
 ## Reference
 Reference code, Thank you!
 
