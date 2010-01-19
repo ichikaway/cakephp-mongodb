@@ -205,6 +205,54 @@ class MongodbSource extends DataSource{
 		}
 	}
 
+/**
+ * Delete Data
+ *
+ * @param Model $model Model Instance
+ * @param array $query Query data
+ * @param array $fields Field data
+ * @param array $values Save data
+ * @return boolean Update result
+ * @access public
+ */
+	public function delete(&$model, $conditions = null) {
+		
+		$id = null;
+		if (empty($conditions)) {
+			$id = $model->id;
+
+		} else if (is_array($conditions) && !empty($conditions['_id'])) {
+			$id = $conditions['_id'];
+	
+		} else if(!empty($conditions) && !is_array($conditions)) {
+			$id = $conditions;
+			unset($conditions);
+		}
+		
+		if (!empty($id) && is_string($id)) {
+			$conditions['_id'] = new MongoId($id);
+		}
+
+		$mongoCollectionObj = $this->_db
+			->selectCollection($model->table);
+
+
+		$result = true;
+		if (is_array($conditions) && is_array($conditions[$model->alias . '._id'])) {
+			//for Model::deleteAll()
+			foreach ($conditions[$model->alias . '._id'] as $val) {
+				if (!$mongoCollectionObj->remove(array('_id' => $val))) {
+					$result = false;
+				}
+			}
+
+		} else {
+			$return = $mongoCollectionObj->remove($conditions);
+		}
+
+		return $result;			
+
+	}
 
 
 
@@ -240,6 +288,10 @@ class MongodbSource extends DataSource{
 		if (!empty($conditions['_id']) && !is_object($conditions['_id'])) {
 			$conditions['_id'] = new MongoId($conditions['_id']);
 		}
+
+		$fields = (is_array($fields)) ? $fields : array($fields);
+		$conditions = (is_array($conditions)) ? $conditions : array($conditions);
+		$order = (is_array($order)) ? $order : array($order);
 
 		/*
 		 * before update, model::save() check exist record with conditions key (ex: Post._id).
@@ -289,5 +341,6 @@ class MongodbSource extends DataSource{
 			return empty($data) ? array() : $data;
 		}
 	}
+
 }
 ?>
