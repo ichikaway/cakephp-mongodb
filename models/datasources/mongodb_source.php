@@ -146,7 +146,6 @@ class MongodbSource extends DataSource{
  * Create Data
  *
  * @param Model $model Model Instance
- * @param array $query Query data
  * @param array $fields Field data
  * @param array $values Save data
  * @return boolean Insert result
@@ -177,42 +176,68 @@ class MongodbSource extends DataSource{
  * Update Data
  *
  * @param Model $model Model Instance
- * @param array $query Query data
  * @param array $fields Field data
  * @param array $values Save data
  * @return boolean Update result
  * @access public
  */
-	public function update(&$model, $fields = null, $values = null) {
-
+	public function update(&$model, $fields = null, $values = null, $conditions = null) {
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
-		}else{
+		
+		} else if($fields !== null && $conditions !== null) {
+			return $this->updateAll($model, $fields, $conditions);
+
+		} else{
 			$data = $model->data;
 		}
-
+		
 		if (!empty($data['_id']) && !is_object($data['_id'])) {
 			$data['_id'] = new MongoId($data['_id']);
 		}
 
+		$mongoCollectionObj = $this->_db
+			->selectCollection($model->table);
+
+		if (!empty($data['_id'])) {
+			$cond = array('_id' => $data['_id']);
+			unset($data['_id']);
+			$data = array('$set' => $data);
+			return $mongoCollectionObj->update($cond, $data, array("multiple" => false));
+		} else {
+			return $mongoCollectionObj->save($data);
+		}
+
+	}
+
+
+
+/**
+ * Update multiple Record
+ *
+ * @param Model $model Model Instance
+ * @param array $fields Field data
+ * @param array $conditions 
+ * @return boolean Update result
+ * @access public
+ */
+	public function updateAll (&$model, $fields = null,  $conditions = null) {
+		$fields = array('$set' => $fields);
+		
 		$result = $this->_db
 			->selectCollection($model->table)
-			->save($data);
-
-		if ($result) {
-			return true;
-		} else {
-			return false;
-		}
+			->update($conditions, $fields, array("multiple" => true));
+		
+		return $result;
 	}
+
+
 
 /**
  * Delete Data
  *
  * @param Model $model Model Instance
- * @param array $query Query data
- * @param array $fields Field data
- * @param array $values Save data
+ * @param array $conditions
  * @return boolean Update result
  * @access public
  */
