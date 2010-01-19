@@ -44,7 +44,7 @@ class MongodbSource extends DataSource {
  * @var array
  * @access protected
  */
-	protected $_baseConfig = array(
+	var $_baseConfig = array(
 		'set_string_id' => true,
 		'persistent' => false,
 		'host'       => 'localhost',
