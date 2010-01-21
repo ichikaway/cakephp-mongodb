@@ -275,7 +275,9 @@ class MongodbSource extends DataSource{
 	protected function _setEmptyArrayIfEmpty($data) {
 		if (is_array($data)) {
 			foreach($data as $key => $value) {
-				$data[$key] = empty($value) ? array() : $value;
+				if (empty($value)) {
+					$data[$key] = array();
+				}
 			}
 			return $data;
 		} else {
