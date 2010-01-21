@@ -28,7 +28,7 @@
  * @package mongodb
  * @subpackage mongodb.models.datasources
  */
-class MongodbSource extends DataSource{
+class MongodbSource extends DataSource {
 
 /**
  * Database Instance
@@ -39,19 +39,26 @@ class MongodbSource extends DataSource{
 	protected $_db = null;
 
 /**
+ * Base Config
+ *
+ * @var array
+ * @access protected
+ */
+	protected $_baseConfig = array(
+		'persistent' => false,
+		'host'       => 'localhost',
+		'database'   => '',
+		'port'       => '27017'
+	);
+
+/**
  * Constructor
  *
  * @param array $config Configuration array
  * @access public
  */
 	public function __construct($config = array()) {
-		$defaults = array(
-			'persistent' => false,
-			'host'       => 'localhost',
-			'database'   => '',
-			'port'       => '27017',
-		);
-		parent::__construct(array_merge( $defaults, $config));
+		parent::__construct($config);
 		$this->connect();
 	}
 
