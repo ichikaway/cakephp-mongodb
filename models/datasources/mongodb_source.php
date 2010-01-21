@@ -43,6 +43,10 @@ class MongodbSource extends DataSource {
  *
  * @var array
  * @access protected
+ *
+ * set_string_id: 
+ *    true: In read() method, convert MongoId object to string and set it to array 'id'.
+ *    false: not convert and set.
  */
 	var $_baseConfig = array(
 		'set_string_id' => true,
