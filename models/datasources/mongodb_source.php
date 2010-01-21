@@ -251,7 +251,7 @@ class MongodbSource extends DataSource{
 			->skip(($page - 1) * $limit);
 
 		if ($model->findQueryType === 'count') {
-			return array(array($model->name => array('count' => $result->count())));
+			return array(array($model->alias => array('count' => $result->count())));
 		}
 
 		$results = null;
@@ -260,7 +260,7 @@ class MongodbSource extends DataSource{
 			if (empty($mongodata['id'])) {
 				$mongodata['id'] = $mongodata['_id']->__toString();
 			}
-			$results[][$model->name] = $mongodata;
+			$results[][$model->alias] = $mongodata;
 		}
 		return $results;
 	}
