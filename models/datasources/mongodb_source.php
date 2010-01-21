@@ -50,7 +50,7 @@ class MongodbSource extends DataSource{
 			'host'       => 'localhost',
 			'database'   => '',
 			'port'       => '27017',
-				);
+		);
 		parent::__construct(array_merge( $defaults, $config));
 		$this->connect();
 	}
@@ -139,7 +139,7 @@ class MongodbSource extends DataSource{
  * @return array
  * @access public
  */
-	public function calculate(&$model){
+	public function calculate(&$model) {
 		return array();
 	}
 
@@ -154,7 +154,7 @@ class MongodbSource extends DataSource{
  * @return boolean Insert result
  * @access public
  */
-	public function create(&$model, $fields = null, $values = null){
+	public function create(&$model, $fields = null, $values = null) {
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
 		} else {
@@ -190,15 +190,15 @@ class MongodbSource extends DataSource{
  * @return boolean Update result
  * @access public
  */
-	public function update(&$model, $fields = null, $values = null, $conditions = null){
+	public function update(&$model, $fields = null, $values = null, $conditions = null) {
 		/*		
-				if($fields !== null && $values !== null){
+				if ($fields !== null && $values !== null) {
 				$data = array_combine($fields, $values);
 				}else{
 				$data = $model->data;
 				}
 
-				if(!empty($data['_id'])){
+				if (!empty($data['_id'])) {
 				$data['_id'] = new MongoId($data['_id']);
 				}
 
@@ -239,7 +239,7 @@ class MongodbSource extends DataSource{
 			$order = array_shift($order);
 		}
 
-		if(!empty($conditions['_id'])){
+		if (!empty($conditions['_id'])) {
 			$conditions['_id'] = new MongoId($conditions['_id']);
 		}
 
@@ -272,7 +272,7 @@ class MongodbSource extends DataSource{
  * @return array
  * @access protected
  */
-	protected function _setEmptyArrayIfEmpty($data){
+	protected function _setEmptyArrayIfEmpty($data) {
 		if (is_array($data)) {
 			foreach($data as $key => $value) {
 				$data[$key] = empty($value) ? array() : $value;
