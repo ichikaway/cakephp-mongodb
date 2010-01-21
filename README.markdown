@@ -5,6 +5,7 @@ PHP5,
 pecl mongo (http://php.net/mongo)
 
 ## Sample Code
+Model files need to have primaryKey and _schema properties for. primaryKey property have to be set "_id".
 Before you start, please check [a model sample.](http://github.com/ichikaway/mongoDB-Datasource/blob/master/samples/models/post.php)
 
 There are sample [controller action, find,save,delete,deleteAll,updateAll](http://github.com/ichikaway/mongoDB-Datasource/blob/master/samples/controllers/posts_controller.php)
