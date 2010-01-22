@@ -67,6 +67,19 @@ class MongodbSource extends DataSource {
 		$this->connect();
 	}
 
+
+/**
+ * Destruct
+ *
+ * @access public
+ */
+    public function __destruct() {
+        if ($this->connected) {
+            $this->disconnect();
+        }
+    }
+
+
 /**
  * Connect to the database
  *
