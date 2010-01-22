@@ -321,9 +321,8 @@ class MongodbSource extends DataSource {
 		$mongoCollectionObj = $this->_db
 			->selectCollection($model->table);
 
-
 		$result = true;
-		if (is_array($conditions) && is_array($conditions[$model->alias . '._id'])) {
+		if (!empty($conditions[$model->alias . '._id']) && is_array($conditions[$model->alias . '._id'])) {
 			//for Model::deleteAll()
 			foreach ($conditions[$model->alias . '._id'] as $val) {
 				if (!$mongoCollectionObj->remove(array('_id' => $val))) {
