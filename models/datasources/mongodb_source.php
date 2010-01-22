@@ -309,10 +309,15 @@ class MongodbSource extends DataSource {
  * Describe
  *
  * @param Model $model 
- * @return array
+ * @return array if model instance has mongo_schema, return it.
  * @access public
  */
 	public function describe(&$model) {
+
+		if (!empty($model->mongo_schema) && is_array($model->mongo_schema) ) {
+			return $model->mongo_schema;
+		}
+
 		return array();
 	}
 
