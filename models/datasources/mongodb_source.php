@@ -201,6 +201,18 @@ class MongodbSource extends DataSource {
 		return array('count' => true);
 	}
 
+/**
+ * Quotes identifiers.
+ *
+ * MongoDb does not need identifiers quoted, so this method simply returns the identifier.
+ *
+ * @param string $name The identifier to quote.
+ * @return string The quoted identifier.
+ */
+	public function name($name) {
+		return $name;
+	}
+
 
 /**
  * Create Data
