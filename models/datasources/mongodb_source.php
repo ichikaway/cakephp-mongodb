@@ -56,6 +56,26 @@ class MongodbSource extends DataSource {
 		'port'       => '27017'
 	);
 
+
+/**
+ * column definition
+ *
+ * @var array
+ */
+    var $columns = array(
+        'string' => array('name'  => 'varchar'),
+        'text' => array('name' => 'text'),
+        'integer' => array('name' => 'integer', 'formatter' => 'intval'),
+        'float' => array('name' => 'float', 'formatter' => 'floatval'),
+        'datetime' => array('name' => 'datetime', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
+        'timestamp' => array('name' => 'timestamp', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
+        'time' => array('name' => 'time', 'format' => 'H:i:s', 'formatter' => 'date'),
+        'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'date'),
+    );
+
+
+
+
 /**
  * Constructor
  *
