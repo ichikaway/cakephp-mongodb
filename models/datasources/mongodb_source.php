@@ -402,7 +402,7 @@ class MongodbSource extends DataSource {
 		$results = null;
 		while ($result->hasNext()) {
 			$mongodata = $result->getNext();
-			if ($this->config['set_string_id'] && empty($mongodata['id']) && is_object($mongodata['_id'])) {
+			if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 				$mongodata['_id'] = $mongodata['_id']->__toString();
 			}
 			$results[][$model->alias] = $mongodata;
