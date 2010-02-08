@@ -185,12 +185,12 @@ class MongodbSource extends DataSource {
  * Describe
  *
  * @param Model $model 
- * @return array if model instance has mongo_schema, return it.
+ * @return array if model instance has mongoSchema, return it.
  * @access public
  */
 	public function describe(&$model) {
 		$model->primaryKey = '_id';
-		$schema = is_array($model->mongo_schema) ? $model->mongo_schema : array();
+		$schema = is_array($model->mongoSchema) ? $model->mongoSchema : array();
 		return $schema + $this->_defaultSchema;
 	}
 

@@ -2,7 +2,7 @@
 
 class Post extends AppModel {
 	var $useDbConfig = 'mongo';
-	var $mongo_schema = array(
+	var $mongoSchema = array(
 			'title' => array('type'=>'string'),
 			'body'=>array('type'=>'string'),
 			'hoge'=>array('type'=>'string'),
