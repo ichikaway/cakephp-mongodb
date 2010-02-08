@@ -73,8 +73,13 @@ class MongodbSource extends DataSource {
         'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'date'),
     );
 
-
-
+/**
+ * Default schema for the mongo models
+ *
+ * @var resource
+ * @access protected
+ */
+    protected $_defaultSchema = array('_id' => array('type' => 'string', 'length' => 24));
 
 /**
  * Constructor
@@ -184,12 +189,9 @@ class MongodbSource extends DataSource {
  * @access public
  */
 	public function describe(&$model) {
-
-		if (!empty($model->mongo_schema) && is_array($model->mongo_schema) ) {
-			return $model->mongo_schema;
-		}
-
-		return array();
+		$model->primaryKey = '_id';
+		$schema = is_array($model->mongo_schema) ? $model->mongo_schema : array();
+		return $schema + $this->_defaultSchema;
 	}
 
 
