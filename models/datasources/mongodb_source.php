@@ -342,7 +342,8 @@ class MongodbSource extends DataSource {
 		if (!empty($conditions[$model->alias . '._id']) && is_array($conditions[$model->alias . '._id'])) {
 			//for Model::deleteAll()
 			foreach ($conditions[$model->alias . '._id'] as $val) {
-				if (!$mongoCollectionObj->remove(array('_id' => $val))) {
+				$id = is_string($val) ? new MongoId($val) : $val;
+				if (!$mongoCollectionObj->remove(array('_id' => $id))) {
 					$result = false;
 				}
 			}
