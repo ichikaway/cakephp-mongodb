@@ -192,8 +192,11 @@ class MongodbSource extends DataSource {
  */
 	public function describe(&$model) {
 		$model->primaryKey = '_id';
-		$schema = is_array($model->mongoSchema) ? $model->mongoSchema : array();
-		return $schema + $this->_defaultSchema;
+		$schema = array();
+		if (!empty($model->mongoSchema) && is_array($model->mongoSchema)) {
+			$schema = $model->mongoSchema; 
+			return $schema + $this->_defaultSchema;
+		} 
 	}
 
 
