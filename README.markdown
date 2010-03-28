@@ -24,6 +24,8 @@ Yasushi Ichikawa (ichikaway)
 
 [Jrbasso](http://github.com/jrbasso/) : Cleanup code
 
+[tkyk](http://github.com/tkyk/) : Fix bug, Add some function.
+
 
 ## Reference
 Reference code, Thank you!
