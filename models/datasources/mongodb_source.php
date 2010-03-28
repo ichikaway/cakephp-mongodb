@@ -78,7 +78,7 @@ class MongodbSource extends DataSource {
 /**
  * Default schema for the mongo models
  *
- * @var resource
+ * @var array
  * @access protected
  */
     protected $_defaultSchema = array('_id' => array('type' => 'string', 'length' => 24));
