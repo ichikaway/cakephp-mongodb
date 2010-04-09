@@ -22,16 +22,18 @@ class MongodbSourceTest extends CakeTestCase {
 	var $mongodb;
 
 	var $_config = array(
-        'datasource' => 'mongodb',
-        'host' => 'localhost',
-        'login' => '',
-        'password' => '',
-        'database' => 'test_mongo',
-        'port' => 27017,
-        'prefix' => '',
-	);
+			'datasource' => 'mongodb',
+			'host' => 'localhost',
+			'login' => '',
+			'password' => '',
+			'database' => 'test_mongo',
+			'port' => 27017,
+			'prefix' => '',
+			'persistent' => false,
+			);
 
 	function startTest() {
+		$this->Mongo = new MongodbSource($this->_config);
 		ConnectionManager::create('mongo_test', $this->_config);
 
 		$this->Post = ClassRegistry::init('Post');
@@ -57,6 +59,21 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->mongodb
 			->connection
 			->dropDB($this->_config['database']);
+	}
+
+	function testConnect() {
+		$result = $this->Mongo->connect();
+		$this->assertTrue($result);
+
+		$this->assertTrue($this->Mongo->connected);
+		$this->assertTrue($this->Mongo->isConnected());
+
+	}
+
+	function testDisconnect() {
+		$result = $this->Mongo->disconnect();
+		$this->assertTrue($result);
+		$this->assertFalse($this->Mongo->connected);
 	}
 
 	function testFind() {
