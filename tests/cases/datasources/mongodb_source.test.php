@@ -1,4 +1,21 @@
 <?php
+/**
+* Test cases for the Cakephp mongoDB datasource.
+*
+* This datasource uses Pecl Mongo (http://php.net/mongo)
+* and is thus dependent on PHP 5.0 and greater.
+*
+* Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
+*
+* Licensed under The MIT License
+* Redistributions of files must retain the above copyright notice.
+*
+* @copyright Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
+* @package mongodb
+* @subpackage mongodb.models.datasources
+* @license http://www.opensource.org/licenses/mit-license.php The MIT License
+*/
+
 
 /**
 * Import relevant classes for testing
@@ -10,7 +27,12 @@ App::import('Model', 'MongodbSource');
 */
 Mock::generate('AppModel', 'MockPost');
 
-
+/**
+ * Post Model for the test
+ *
+ * @package app
+ * @subpackage app.model.post
+ */
 class Post extends AppModel {
 	var $useDbConfig = 'mongo_test';
 	
@@ -26,10 +48,30 @@ class Post extends AppModel {
 
 }
 
+
+/**
+ * MongoDB Source test class
+ *
+ * @package app
+ * @subpackage app.model.datasources
+ */
 class MongodbSourceTest extends CakeTestCase {
 
+/**
+ * Database Instance
+ *
+ * @var resource
+ * @access public
+ */
 	var $mongodb;
 
+/**
+ * Base Config
+ *
+ * @var array
+ * @access public
+ *
+ */
 	var $_config = array(
 			'datasource' => 'mongodb',
 			'host' => 'localhost',
@@ -41,6 +83,12 @@ class MongodbSourceTest extends CakeTestCase {
 			'persistent' => false,
 			);
 
+/**
+ * Sets up the environment for each test method
+ *
+ * @return void
+ * @access public
+ */
 	function startTest() {
 		$this->Mongo = new MongodbSource($this->_config);
 		ConnectionManager::create('mongo_test', $this->_config);
@@ -51,11 +99,24 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->mongodb =& ConnectionManager::getDataSource($this->Post->useDbConfig);
 	}
 
+/**
+ * Destroys the environment after each test method is run
+ *
+ * @return void
+ * @access public
+ */
 	function endTest() {
 		$this->dropData();
 		unset($this->Post);
 	}
 
+/**
+ * Insert data method for mongodb.
+ *
+ * @param array insert data
+ * @return void
+ * @access public
+ */
 	function insertData($data) {
 		$this->mongodb
 			->connection
@@ -64,21 +125,39 @@ class MongodbSourceTest extends CakeTestCase {
             ->insert($data, true);
 	}
 
+/**
+ * Drop database
+ *
+ * @return void
+ * @access public
+ */
 	function dropData() {
 		$this->mongodb
 			->connection
 			->dropDB($this->_config['database']);
 	}
 
+/**
+ * Tests connection
+ *
+ * @return void
+ * @access public
+ */
 	function testConnect() {
 		$result = $this->Mongo->connect();
 		$this->assertTrue($result);
 
 		$this->assertTrue($this->Mongo->connected);
 		$this->assertTrue($this->Mongo->isConnected());
-
 	}
 
+
+/**
+ * Tests the disconnect method of the Mongodb DataSource
+ *
+ * @return void
+ * @access public
+ */
 	function testDisconnect() {
 		$result = $this->Mongo->disconnect();
 		$this->assertTrue($result);
@@ -86,19 +165,21 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 /**
-* Tests the listSources method of the Mongodb DataSource
-*
-* @return void
-*/
+ * Tests the listSources method of the Mongodb DataSource
+ *
+ * @return void
+ * @access public
+ */
 	function testListSources() {
 		$this->assertTrue($this->mongodb->listSources());
 	}
 
 /**
-* Tests the describe method of the Mongodb DataSource
-*
-* @return void
-*/
+ * Tests the describe method of the Mongodb DataSource
+ *
+ * @return void
+ * @access public
+ */
 	function testDescribe() {
 		$mockObj = new MockPost();
 		$result = $this->mongodb->describe($mockObj);
@@ -117,6 +198,12 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($expect, $result);	
 	}
 
+/**
+ * Tests find method.
+ *
+ * @return void
+ * @access public
+ */
 	function testFind() {
 		$data = array(
 			'title'=>'test', 
@@ -134,7 +221,12 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($data['text'], $resultData['text']);
 	}
 
-
+/**
+ * Tests save method.
+ *
+ * @return void
+ * @access public
+ */
 	function testSave() {
 		$data = array(
 			'title'=>'test', 
