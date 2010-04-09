@@ -1,0 +1,113 @@
+<?php
+
+App::import('Model', 'MongodbSource');
+
+class Post extends AppModel {
+	var $useDbConfig = 'mongo_test';
+	
+	var $mongoSchema = array(
+			'title' => array('type'=>'string'),
+			'body'=>array('type'=>'string'),
+			'text'=>array('type'=>'text'),
+			'created'=>array('type'=>'datetime'),
+			'modified'=>array('type'=>'datetime'),
+			);
+
+
+
+}
+
+class MongodbSourceTest extends CakeTestCase {
+
+	var $mongodb;
+
+	var $_config = array(
+        'datasource' => 'mongodb',
+        'host' => 'localhost',
+        'login' => '',
+        'password' => '',
+        'database' => 'test_mongo',
+        'port' => 27017,
+        'prefix' => '',
+	);
+
+	function startTest() {
+		ConnectionManager::create('mongo_test', $this->_config);
+
+		$this->Post = ClassRegistry::init('Post');
+		$this->Post->setDataSource('mongo_test');
+
+		$this->mongodb =& ConnectionManager::getDataSource($this->Post->useDbConfig);
+	}
+
+	function endTest() {
+		$this->dropData();
+		unset($this->Post);
+	}
+
+	function insertData($data) {
+		$this->mongodb
+			->connection
+			->selectDB($this->_config['database'])
+            ->selectCollection($this->Post->table)
+            ->insert($data, true);
+	}
+
+	function dropData() {
+		$this->mongodb
+			->connection
+			->dropDB($this->_config['database']);
+	}
+
+	function testFind() {
+		$data = array(
+			'title'=>'test', 
+			'body'=>'aaaa', 
+			'text'=>'bbbb'
+		); 
+		$this->insertData($data);
+		$result = $this->Post->find('all');
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0][$this->Post->alias];
+		$this->assertEqual(4, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$this->assertEqual($data['title'], $resultData['title']);
+		$this->assertEqual($data['body'], $resultData['body']);
+		$this->assertEqual($data['text'], $resultData['text']);
+	}
+
+
+	function testSave() {
+		$data = array(
+			'title'=>'test', 
+			'body'=>'aaaa', 
+			'text'=>'bbbb'
+		); 
+		$saveData[$this->Post->alias] = $data;
+
+		$this->Post->create(); 
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$result = $this->Post->find('all');
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0][$this->Post->alias];
+		$this->assertEqual(6, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$this->assertEqual($this->Post->id, $resultData['_id']);
+		$this->assertEqual($data['title'], $resultData['title']);
+		$this->assertEqual($data['body'], $resultData['body']);
+		$this->assertEqual($data['text'], $resultData['text']);
+
+		$dateRegex = '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/i';
+
+		$this->assertTrue(preg_match($dateRegex, $resultData['created']));
+		$this->assertTrue(preg_match($dateRegex, $resultData['modified']));
+	}
+
+
+
+}
+
+?>
