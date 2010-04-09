@@ -1,6 +1,15 @@
 <?php
 
+/**
+* Import relevant classes for testing
+*/
 App::import('Model', 'MongodbSource');
+
+/**
+* Generate Mock Model
+*/
+Mock::generate('AppModel', 'MockPost');
+
 
 class Post extends AppModel {
 	var $useDbConfig = 'mongo_test';
@@ -74,6 +83,38 @@ class MongodbSourceTest extends CakeTestCase {
 		$result = $this->Mongo->disconnect();
 		$this->assertTrue($result);
 		$this->assertFalse($this->Mongo->connected);
+	}
+
+/**
+* Tests the listSources method of the Mongodb DataSource
+*
+* @return void
+*/
+	function testListSources() {
+		$this->assertTrue($this->mongodb->listSources());
+	}
+
+/**
+* Tests the describe method of the Mongodb DataSource
+*
+* @return void
+*/
+	function testDescribe() {
+		$mockObj = new MockPost();
+		$result = $this->mongodb->describe($mockObj);
+		$this->assertNull($result);
+
+		$result = $this->mongodb->describe($this->Post);
+		$this->assertNotNull($result);
+		$expect = array(
+				'_id' => array('type' => 'string', 'length' => 24),
+				'title' => array('type'=>'string'),
+				'body'=>array('type'=>'string'),
+				'text'=>array('type'=>'text'),
+				'created'=>array('type'=>'datetime'),
+				'modified'=>array('type'=>'datetime'),
+				);
+		$this->assertEqual($expect, $result);	
 	}
 
 	function testFind() {
