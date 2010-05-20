@@ -257,6 +257,102 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 
+	/**
+	 * Tests saveAll method.
+	 *
+	 * @return void
+	 * @access public
+	 */
+	function testSaveAll() {
+		$saveData[0][$this->Post->alias] = array(
+				'title'=>'test1',
+				'body'=>'aaaa1',
+				'text'=>'bbbb1'
+				);
+
+		$saveData[1][$this->Post->alias] = array(
+				'title'=>'test2',
+				'body'=>'aaaa2',
+				'text'=>'bbbb2'
+				);
+
+		$this->Post->create();
+		$saveResult = $this->Post->saveAll($saveData);
+		$result = $this->Post->find('all');
+
+		$this->assertEqual(2, count($result));
+
+		$resultData = $result[0][$this->Post->alias];
+		$this->assertEqual(6, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$data = $saveData[0][$this->Post->alias];
+		$this->assertEqual($data['title'], $resultData['title']);
+		$this->assertEqual($data['body'], $resultData['body']);
+		$this->assertEqual($data['text'], $resultData['text']);
+
+		$dateRegex = '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/i';
+
+		$this->assertTrue(preg_match($dateRegex, $resultData['created']));
+		$this->assertTrue(preg_match($dateRegex, $resultData['modified']));
+
+		$resultData = $result[1][$this->Post->alias];
+		$this->assertEqual(6, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$data = $saveData[1][$this->Post->alias];
+		$this->assertEqual($data['title'], $resultData['title']);
+		$this->assertEqual($data['body'], $resultData['body']);
+		$this->assertEqual($data['text'], $resultData['text']);
+
+		$dateRegex = '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/i';
+		$this->assertTrue(preg_match($dateRegex, $resultData['created']));
+		$this->assertTrue(preg_match($dateRegex, $resultData['modified']));
+
+	}
+
+
+	/**
+	 * Tests update method.
+	 *
+	 * @return void
+	 * @access public
+	 */
+	function testUpdate() {
+		$data = array(
+				'title'=>'test',
+				'body'=>'aaaa',
+				'text'=>'bbbb'
+				);
+		$saveData[$this->Post->alias] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+		$findresult = $this->Post->find('all');
+
+
+		$updatedata = array(
+				'_id' => $findresult[0][$this->Post->alias]['_id'],
+				'title'=>'test2',
+				'body'=>'aaaa2',
+				'text'=>'bbbb2'
+				);
+		$saveData[$this->Post->alias] = $updatedata;
+
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$result = $this->Post->find('all');
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0][$this->Post->alias];
+		$this->assertEqual(6, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$this->assertEqual($this->Post->id, $resultData['_id']);
+		$this->assertEqual($updatedata['title'], $resultData['title']);
+		$this->assertEqual($updatedata['body'], $resultData['body']);
+		$this->assertEqual($updatedata['text'], $resultData['text']);
+
+	}
 
 }
 
