@@ -20,6 +20,7 @@ class PostsController extends AppController {
 				'fields' => array('title','body','hoge'), 
 				//'fields' => array('Post.title',), 
 				//'conditions' => array('title' => 'hehe'),
+				//'conditions' => array('hoge' => array('$gt' => '10', '$lt' => '34')),
 				//'order' => array('title' => 1, 'body' => 1),
 				'order' => array('_id' => -1),
 				'limit' => 35,
