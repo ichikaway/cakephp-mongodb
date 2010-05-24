@@ -35,7 +35,7 @@ Mock::generate('AppModel', 'MockPost');
  */
 class Post extends AppModel {
 	var $useDbConfig = 'mongo_test';
-	
+
 	var $mongoSchema = array(
 			'title' => array('type'=>'string'),
 			'body'=>array('type'=>'string'),
@@ -195,7 +195,7 @@ class MongodbSourceTest extends CakeTestCase {
 				'created'=>array('type'=>'datetime'),
 				'modified'=>array('type'=>'datetime'),
 				);
-		$this->assertEqual($expect, $result);	
+		$this->assertEqual($expect, $result);
 	}
 
 /**
@@ -206,10 +206,10 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	function testFind() {
 		$data = array(
-			'title'=>'test', 
-			'body'=>'aaaa', 
+			'title'=>'test',
+			'body'=>'aaaa',
 			'text'=>'bbbb'
-		); 
+		);
 		$this->insertData($data);
 		$result = $this->Post->find('all');
 		$this->assertEqual(1, count($result));
@@ -229,13 +229,13 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	function testSave() {
 		$data = array(
-			'title'=>'test', 
-			'body'=>'aaaa', 
+			'title'=>'test',
+			'body'=>'aaaa',
 			'text'=>'bbbb'
-		); 
+		);
 		$saveData[$this->Post->alias] = $data;
 
-		$this->Post->create(); 
+		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
 		$this->assertTrue($saveResult);
 
@@ -354,6 +354,64 @@ class MongodbSourceTest extends CakeTestCase {
 
 	}
 
+	function testSort() {
+		$data = array(
+			'title'=>'AAA',
+			'body'=>'aaaa',
+			'text'=>'aaaa'
+		);
+		$saveData[$this->Post->alias] = $data;
+		$this->Post->create();
+		$this->Post->save($saveData);
+
+		$data = array(
+			'title'=>'CCC',
+			'body'=>'cccc',
+			'text'=>'cccc'
+		);
+		$saveData[$this->Post->alias] = $data;
+		$this->Post->create();
+		$this->Post->save($saveData);
+
+		$this->Post->create();
+		$data = array(
+			'title'=>'BBB',
+			'body'=>'bbbb',
+			'text'=>'bbbb'
+		);
+		$saveData[$this->Post->alias] = $data;
+		$this->Post->create();
+		$this->Post->save($saveData);
+
+		$expected = array('AAA', 'BBB', 'CCC');
+		$result = $this->Post->find('all', array(
+			'fields' => array('_id', 'title'),
+			'order' => array('title' => 1)
+		));
+		$result = Set::extract($result, '/Post/title');
+
+		$this->assertEqual($expected, $result);
+		$result = $this->Post->find('all', array(
+			'fields' => array('_id', 'title'),
+			'order' => array('title' => 'ASC')
+		));
+		$result = Set::extract($result, '/Post/title');
+
+		$expected = array_reverse($expected);
+		$result = $this->Post->find('all', array(
+			'fields' => array('_id', 'title'),
+			'order' => array('title' => '-1')
+		));
+		$result = Set::extract($result, '/Post/title');
+		$this->assertEqual($expected, $result);
+
+		$result = $this->Post->find('all', array(
+			'fields' => array('_id', 'title'),
+			'order' => array('title' => 'DESC')
+		));
+		$result = Set::extract($result, '/Post/title');
+		$this->assertEqual($expected, $result);
+	}
 }
 
 ?>
