@@ -185,13 +185,17 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	function testDescribe() {
 		$mockObj = new MockPost();
+
 		$result = $this->mongodb->describe($mockObj);
-		$this->assertNull($result);
+		$expected = array(
+			'_id' => array('type' => 'string', 'length' => 24, 'key' => 'primary'),
+			'created' => array('type' => 'datetime', 'default' => null),
+		);
+		$this->assertEqual($expected, $result);
 
 		$result = $this->mongodb->describe($this->Post);
-		$this->assertNotNull($result);
 		$expect = array(
-				'_id' => array('type' => 'string', 'length' => 24),
+				'_id' => array('type' => 'string', 'length' => 24, 'key' => 'primary'),
 				'title' => array('type'=>'string'),
 				'body'=>array('type'=>'string'),
 				'text'=>array('type'=>'text'),
@@ -357,6 +361,14 @@ class MongodbSourceTest extends CakeTestCase {
 
 	}
 
+/**
+ * testSchemaless method
+ *
+ * Test you can save to a model without specifying mongodb.
+ *
+ * @return void
+ * @access public
+ */
 	function testSchemaless() {
 		$toSave = array(
 			'title' => 'A test article',
@@ -372,12 +384,29 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$MongoArticle = ClassRegistry::init('MongoArticle');
 		$MongoArticle->create();
-		$MongoArticle->save($toSave);
+		$this->assertTrue($MongoArticle->save($toSave), 'Saving with no defined schema failed');
 
 		$expected = array_intersect_key($toSave, array_flip(array('title', 'body', 'tags')));
-		$result = current($MongoArticle->read(array('title', 'body', 'tags')));
-		unset ($result['_id']);
-		$this->assertEqual($expected, $result);
+		$result = $MongoArticle->read(array('title', 'body', 'tags'));
+		unset ($result['MongoArticle']['_id']); // prevent auto added field from screwing things up
+		$this->assertEqual($expected, $result['MongoArticle']);
+
+		$toSave = array(
+			'title' => 'Another test article',
+			'body' => str_repeat('Lorum pipsum ', 100),
+			'tags' => array(
+				'four',
+				'five',
+				'six'
+			),
+			'starts' => date('Y-M-d H:i:s'),
+			'modified' => null,
+			'created' => null
+		);
+		$MongoArticle->create();
+		$this->assertTrue($MongoArticle->save($toSave), 'Saving with no defined schema failed');
+		$starts = $MongoArticle->field('starts');
+		$this->assertEqual($toSave['starts'], $starts);
 	}
 }
 

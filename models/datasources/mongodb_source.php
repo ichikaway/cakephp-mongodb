@@ -81,7 +81,10 @@ class MongodbSource extends DataSource {
  * @var array
  * @access protected
  */
-    protected $_defaultSchema = array('_id' => array('type' => 'string', 'length' => 24));
+	protected $_defaultSchema = array(
+		'_id' => array('type' => 'string', 'length' => 24, 'key' => 'primary'),
+		'created' => array('type' => 'datetime', 'default' => null)
+	);
 
 /**
  * Constructor
@@ -190,7 +193,7 @@ class MongodbSource extends DataSource {
  * @return array if model instance has mongoSchema, return it.
  * @access public
  */
-	public function describe(&$model) {
+	public function describe(&$model, $field = null) {
 		$model->primaryKey = '_id';
 		$schema = array();
 		if (!empty($model->mongoSchema) && is_array($model->mongoSchema)) {
@@ -198,8 +201,8 @@ class MongodbSource extends DataSource {
 			return $schema + $this->_defaultSchema;
 		} elseif (is_a($model, 'Model') && !empty($model->Behaviors)) {
 			$model->Behaviors->attach('Mongodb.Schemaless');
-
 		}
+		return $this->deriveSchemaFromData($model);
 	}
 
 
@@ -315,6 +318,36 @@ class MongodbSource extends DataSource {
 		return $result;
 	}
 
+/**
+ * deriveSchemaFromData method
+ *
+ * @param mixed $model
+ * @param array $data array()
+ * @return void
+ * @access public
+ */
+	public function deriveSchemaFromData($model, $data = array()) {
+		if (!$data) {
+			$data = $model->data;
+			if ($data && array_key_exists($model->alias, $data)) {
+				$data = $data[$model->alias];
+			}
+		}
+
+		$return = $this->_defaultSchema;
+
+		$fields = array_keys($data);
+		foreach($fields as $field) {
+			if (in_array($field, array('created', 'modified', 'updated'))) {
+				$return[$field] = array('type' => 'datetime', 'null' => true);
+			} else {
+				$return[$field] = array('type' => 'string', 'length' => 2000);
+			}
+		}
+
+		return $return;
+
+	}
 
 
 /**

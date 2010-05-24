@@ -63,43 +63,7 @@ class SchemalessBehavior extends ModelBehavior {
  * @access public
  */
 	public function beforeSave(&$Model) {
-		$this->setSchema($Model);
+		$Model->schema(true);
 		return true;
-	}
-
-/**
- * setSchema method
- *
- * @param mixed $Model
- * @return void
- * @access public
- */
-	public function setSchema(&$Model) {
-		$schema = $this->_deriveSchema($Model->data[$Model->alias]);
-		$Model->_schema = $schema;
-	}
-
-/**
- * deriveSchema method
- *
- * Returns a pseudo-schema based on the data passed.
- *
- * @param mixed $data
- * @return void
- * @access protected
- */
-	protected function _deriveSchema($data) {
-		$fields = array_keys($data);
-		$return = array(
-			'_id' => array('type'=>'string', 'length' => 26, 'PRIMARY' => true),
-		);
-		foreach($fields as $field) {
-			if (in_array($field, array('created', 'modified', 'updated'))) {
-				$return[$field] = array('type' => 'datetime');
-			} else {
-				$return[$field] = array('type' => 'string', 'length' => 2000);
-			}
-		}
-		return $return;
 	}
 }
