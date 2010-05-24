@@ -35,7 +35,7 @@ Mock::generate('AppModel', 'MockPost');
  */
 class Post extends AppModel {
 	var $useDbConfig = 'mongo_test';
-	
+
 	var $mongoSchema = array(
 			'title' => array('type'=>'string'),
 			'body'=>array('type'=>'string'),
@@ -48,6 +48,9 @@ class Post extends AppModel {
 
 }
 
+class MongoArticle extends AppModel {
+	var $useDbConfig = 'mongo_test';
+}
 
 /**
  * MongoDB Source test class
@@ -195,7 +198,7 @@ class MongodbSourceTest extends CakeTestCase {
 				'created'=>array('type'=>'datetime'),
 				'modified'=>array('type'=>'datetime'),
 				);
-		$this->assertEqual($expect, $result);	
+		$this->assertEqual($expect, $result);
 	}
 
 /**
@@ -206,10 +209,10 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	function testFind() {
 		$data = array(
-			'title'=>'test', 
-			'body'=>'aaaa', 
+			'title'=>'test',
+			'body'=>'aaaa',
 			'text'=>'bbbb'
-		); 
+		);
 		$this->insertData($data);
 		$result = $this->Post->find('all');
 		$this->assertEqual(1, count($result));
@@ -229,13 +232,13 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	function testSave() {
 		$data = array(
-			'title'=>'test', 
-			'body'=>'aaaa', 
+			'title'=>'test',
+			'body'=>'aaaa',
 			'text'=>'bbbb'
-		); 
+		);
 		$saveData[$this->Post->alias] = $data;
 
-		$this->Post->create(); 
+		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
 		$this->assertTrue($saveResult);
 
@@ -354,6 +357,28 @@ class MongodbSourceTest extends CakeTestCase {
 
 	}
 
+	function testSchemaless() {
+		$toSave = array(
+			'title' => 'A test article',
+			'body' => str_repeat('Lorum ipsum ', 100),
+			'tags' => array(
+				'one',
+				'two',
+				'three'
+			),
+			'modified' => null,
+			'created' => null
+		);
+
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create();
+		$MongoArticle->save($toSave);
+
+		$expected = array_intersect_key($toSave, array_flip(array('title', 'body', 'tags')));
+		$result = current($MongoArticle->read(array('title', 'body', 'tags')));
+		unset ($result['_id']);
+		$this->assertEqual($expected, $result);
+	}
 }
 
 ?>
