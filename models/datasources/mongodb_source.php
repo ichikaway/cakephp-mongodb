@@ -22,7 +22,9 @@
 * @package mongodb
 * @subpackage mongodb.models.datasources
 * @license http://www.opensource.org/licenses/mit-license.php The MIT License
-*/
+ */
+
+App::import('Datasource', 'DboSource');
 
 /**
  * MongoDB Source
@@ -30,7 +32,7 @@
  * @package mongodb
  * @subpackage mongodb.models.datasources
  */
-class MongodbSource extends DataSource {
+class MongodbSource extends DboSource {
 
 /**
  * Database Instance
@@ -46,7 +48,7 @@ class MongodbSource extends DataSource {
  * @var array
  * @access protected
  *
- * set_string_id: 
+ * set_string_id:
  *    true: In read() method, convert MongoId object to string and set it to array 'id'.
  *    false: not convert and set.
  */
@@ -106,6 +108,17 @@ class MongodbSource extends DataSource {
         }
     }
 
+/**
+ * commit method
+ *
+ * MongoDB doesn't support transactions
+ *
+ * @return void
+ * @access public
+ */
+	public function commit() {
+		return false;
+	}
 
 /**
  * Connect to the database
@@ -143,7 +156,7 @@ class MongodbSource extends DataSource {
  */
 	public function close() {
 		return $this->disconnect();
-	}	
+	}
 
 /**
  * Disconnect from the database
@@ -163,7 +176,7 @@ class MongodbSource extends DataSource {
 /**
  * Get list of available Collections
  *
- * @param array $data 
+ * @param array $data
  * @return array Collections
  * @access public
  */
@@ -174,7 +187,7 @@ class MongodbSource extends DataSource {
 		if (empty($list)) {
 			return array();
 		} else {
-			$collections = null;		
+			$collections = null;
 			foreach($this->_db->listCollections() as $collection) {
 				$collections[] = $collection->getName();
 			}
@@ -186,7 +199,7 @@ class MongodbSource extends DataSource {
 /**
  * Describe
  *
- * @param Model $model 
+ * @param Model $model
  * @return array if model instance has mongoSchema, return it.
  * @access public
  */
@@ -194,16 +207,27 @@ class MongodbSource extends DataSource {
 		$model->primaryKey = '_id';
 		$schema = array();
 		if (!empty($model->mongoSchema) && is_array($model->mongoSchema)) {
-			$schema = $model->mongoSchema; 
+			$schema = $model->mongoSchema;
 			return $schema + $this->_defaultSchema;
-		} 
+		}
 	}
 
+/**
+ * begin method
+ *
+ * Mongo doesn't support transactions
+ *
+ * @return void
+ * @access public
+ */
+	public function begin() {
+		return false;
+	}
 
 /**
  * Calculate
  *
- * @param Model $model 
+ * @param Model $model
  * @return array
  * @access public
  */
@@ -266,14 +290,14 @@ class MongodbSource extends DataSource {
 	public function update(&$model, $fields = null, $values = null, $conditions = null) {
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
-		
+
 		} else if($fields !== null && $conditions !== null) {
 			return $this->updateAll($model, $fields, $conditions);
 
 		} else{
 			$data = $model->data;
 		}
-		
+
 		if (!empty($data['_id']) && !is_object($data['_id'])) {
 			$data['_id'] = new MongoId($data['_id']);
 		}
@@ -298,17 +322,17 @@ class MongodbSource extends DataSource {
  *
  * @param Model $model Model Instance
  * @param array $fields Field data
- * @param array $conditions 
+ * @param array $conditions
  * @return boolean Update result
  * @access public
  */
 	public function updateAll (&$model, $fields = null,  $conditions = null) {
 		$fields = array('$set' => $fields);
-		
+
 		$result = $this->_db
 			->selectCollection($model->table)
 			->update($conditions, $fields, array("multiple" => true));
-		
+
 		return $result;
 	}
 
@@ -323,19 +347,19 @@ class MongodbSource extends DataSource {
  * @access public
  */
 	public function delete(&$model, $conditions = null) {
-		
+
 		$id = null;
 		if (empty($conditions)) {
 			$id = $model->id;
 
 		} else if (is_array($conditions) && !empty($conditions['_id'])) {
 			$id = $conditions['_id'];
-	
+
 		} else if(!empty($conditions) && !is_array($conditions)) {
 			$id = $conditions;
 			$conditions = null;
 		}
-		
+
 		if (!empty($id) && is_string($id)) {
 			$conditions['_id'] = new MongoId($id);
 		}
@@ -357,7 +381,7 @@ class MongodbSource extends DataSource {
 			$return = $mongoCollectionObj->remove($conditions);
 		}
 
-		return $result;			
+		return $result;
 
 	}
 
@@ -419,6 +443,34 @@ class MongodbSource extends DataSource {
 			$results[][$model->alias] = $mongodata;
 		}
 		return $results;
+	}
+
+/**
+ * rollback method
+ *
+ * MongoDB doesn't support transactions
+ *
+ * @return void
+ * @access public
+ */
+	public function rollback() {
+		return false;
+	}
+
+/**
+ * execute method
+ *
+ * Should never reach here.
+ *
+ * @param mixed $query
+ * @return void
+ * @access protected
+ */
+	protected function _execute($query) {
+		if (Configure::read()) {
+			debug(Debugger::trace());
+			debug ($query); die;
+		}
 	}
 
 /**
