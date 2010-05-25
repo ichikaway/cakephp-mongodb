@@ -22,7 +22,9 @@
 * @package mongodb
 * @subpackage mongodb.models.datasources
 * @license http://www.opensource.org/licenses/mit-license.php The MIT License
-*/
+ */
+
+App::import('Datasource', 'DboSource');
 
 /**
  * MongoDB Source
@@ -30,7 +32,7 @@
  * @package mongodb
  * @subpackage mongodb.models.datasources
  */
-class MongodbSource extends DataSource {
+class MongodbSource extends DboSource {
 
 /**
  * Database Instance
@@ -109,6 +111,17 @@ class MongodbSource extends DataSource {
         }
     }
 
+/**
+ * commit method
+ *
+ * MongoDB doesn't support transactions
+ *
+ * @return void
+ * @access public
+ */
+	public function commit() {
+		return false;
+	}
 
 /**
  * Connect to the database
@@ -203,6 +216,18 @@ class MongodbSource extends DataSource {
 			$model->Behaviors->attach('Mongodb.Schemaless');
 		}
 		return $this->deriveSchemaFromData($model);
+	}
+
+/**
+ * begin method
+ *
+ * Mongo doesn't support transactions
+ *
+ * @return void
+ * @access public
+ */
+	public function begin() {
+		return false;
 	}
 
 /**
@@ -467,6 +492,34 @@ class MongodbSource extends DataSource {
 			$results[][$model->alias] = $mongodata;
 		}
 		return $results;
+	}
+
+/**
+ * rollback method
+ *
+ * MongoDB doesn't support transactions
+ *
+ * @return void
+ * @access public
+ */
+	public function rollback() {
+		return false;
+	}
+
+/**
+ * execute method
+ *
+ * Should never reach here.
+ *
+ * @param mixed $query
+ * @return void
+ * @access protected
+ */
+	protected function _execute($query) {
+		if (Configure::read()) {
+			debug(Debugger::trace());
+			debug ($query); die;
+		}
 	}
 
 /**
