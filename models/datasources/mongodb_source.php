@@ -39,6 +39,14 @@ class MongodbSource extends DataSource {
  * @access protected
  */
 	protected $_db = null;
+	
+/**
+ * Mongo Driver Version
+ *
+ * @var string
+ * @access protected
+ */
+	protected $_driver = Mongo::VERSION;
 
 /**
  * Base Config
@@ -114,10 +122,44 @@ class MongodbSource extends DataSource {
  * @access public
  */
 	public function connect() {
+		
 		$this->connected = false;
-		$host = $this->config['host'] . ':' . $this->config['port'];
-		$this->connection = new Mongo($host, true, $this->config['persistent']);
+
+	/**
+	 * If using 1.0.2 or above use the mongodb:// format to connect
+	 */
+		if ($this->_driver >= '1.0.2' && $this->config['host'] != 'localhost')
+		{
+			$host = "mongodb://";
+		}
+
+		$host .= $this->config['host'] . ':' . $this->config['port'];
+
+
+	/**
+	 * If using 1.0.2 or newer setup correct connection 
+	 */
+		if ($this->_driver >= '1.0.2')
+		{
+			$this->connection = new Mongo($host, array("persist" => $this->config['persistent']));
+		}
+		else
+		{
+			$this->connection = new Mongo($host, true, $this->config['persistent']);
+		}
+		
+		
 		if ($this->_db = $this->connection->selectDB($this->config['database'])) {
+			
+		/**
+		 * If authentication information in present then authenticate the connection
+		 * We have to do it this way to access MongoHQ accounts
+		 */
+			if (isset($this->config['login']) && isset($this->config['password']))
+			{
+				$this->_db->authenticate( $this->config['login'], $this->config['password']);
+			}
+					
 			$this->connected = true;
 		}
 		return $this->connected;
