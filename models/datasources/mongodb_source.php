@@ -61,9 +61,12 @@ class MongodbSource extends DataSource {
 	var $_baseConfig = array(
 		'set_string_id' => true,
 		'persistent' => false,
+		'authenticate'	=> false,
 		'host'       => 'localhost',
 		'database'   => '',
-		'port'       => '27017'
+		'port'       => '27017',
+		'login'		=> '',
+		'password'	=> ''
 	);
 
 
@@ -155,7 +158,7 @@ class MongodbSource extends DataSource {
 		 * If authentication information in present then authenticate the connection
 		 * We have to do it this way to access MongoHQ accounts
 		 */
-			if (isset($this->config['login']) && isset($this->config['password']))
+			if ($this->config['authenticate'])
 			{
 				$this->_db->authenticate( $this->config['login'], $this->config['password']);
 			}
