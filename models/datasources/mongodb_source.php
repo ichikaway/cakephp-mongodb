@@ -43,6 +43,15 @@ class MongodbSource extends DboSource {
 	protected $_db = null;
 
 /**
+ * startTime property
+ *
+ * If debugging is enabled, stores the (micro)time the current query started
+ *
+ * @var mixed null
+ * @access protected
+ */
+	protected $_startTime = null;
+/**
  * Base Config
  *
  * @var array
@@ -264,9 +273,13 @@ class MongodbSource extends DboSource {
 			$data = $model->data;
 		}
 
+		$this->_prepareLogQuery($model); // just sets a timer
 		$result = $this->_db
 			->selectCollection($model->table)
 			->insert($data, true);
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$model->useTable}.insert( " . json_encode($data) . ' , true)');
+		}
 
 		if ($result['ok'] === 1.0) {
 			$id = is_object($data['_id']) ? $data['_id']->__toString() : null;
@@ -305,14 +318,23 @@ class MongodbSource extends DboSource {
 		$mongoCollectionObj = $this->_db
 			->selectCollection($model->table);
 
+		$this->_prepareLogQuery($model); // just sets a timer
 		if (!empty($data['_id'])) {
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 			$data = array('$set' => $data);
-			return $mongoCollectionObj->update($cond, $data, array("multiple" => false));
+			$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
+			if ($this->fullDebug) {
+				$this->logQuery("db.{$model->useTable}.update( " . json_encode($cond) .
+					' , ' . json_encode($data) . ' , ' . json_encode(array("multiple" => false)) . ' )');
+			}
 		} else {
-			return $mongoCollectionObj->save($data);
+			$return = $mongoCollectionObj->save($data);
+			if ($this->fullDebug) {
+				$this->logQuery("db.{$model->useTable}.save( " . json_encode($data) . ' )');
+			}
 		}
+		return $return;
 	}
 
 
@@ -329,10 +351,14 @@ class MongodbSource extends DboSource {
 	public function updateAll (&$model, $fields = null,  $conditions = null) {
 		$fields = array('$set' => $fields);
 
+		$this->_prepareLogQuery($model); // just sets a timer
 		$result = $this->_db
 			->selectCollection($model->table)
 			->update($conditions, $fields, array("multiple" => true));
-
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$model->useTable}.update( " . json_encode($fields) .
+				', array("multiple" => true) )' );
+		}
 		return $result;
 	}
 
@@ -423,12 +449,19 @@ class MongodbSource extends DboSource {
 			unset($conditions[$model->alias . '._id']);
 		}
 
+		$this->_prepareLogQuery($model); // just sets a timer
 		$result = $this->_db
 			->selectCollection($model->table)
 			->find($conditions, $fields)
 			->sort($order)
 			->limit($limit)
 			->skip(($page - 1) * $limit);
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$model->useTable}.find( " . json_encode($conditions) . ' , ' . json_encode($fields) . ').' .
+				'.sort( ' . json_encode($order) . ' )' .
+				'.limit( ' . json_encode($limit) . ' )' .
+				'.skip( ' . ($page - 1 * $limit) . ' )');
+		}
 
 		if ($model->findQueryType === 'count') {
 			return array(array($model->alias => array('count' => $result->count())));
@@ -493,5 +526,38 @@ class MongodbSource extends DboSource {
 		}
 	}
 
+/**
+ * prepareLogQuery method
+ *
+ * Any prep work to log a query
+ *
+ * @param mixed $Model
+ * @return void
+ * @access protected
+ */
+	protected function _prepareLogQuery(&$Model) {
+		if (!$this->fullDebug) {
+			return false;
+		}
+		$this->_startTime = getMicrotime();
+		return true;
+	}
+
+/**
+ * logQuery method
+ *
+ * Set timers, errors and refer to the parent
+ *
+ * @param mixed $query
+ * @return void
+ * @access public
+ */
+	public function logQuery($query) {
+		$this->took = round((getMicrotime() - $this->_startTime) * 1000, 0);
+		$this->affected = null;
+		$this->error = $this->connection->lastError();
+		$this->numRows = null;
+		return parent::logQuery($query);
+	}
 }
 ?>
