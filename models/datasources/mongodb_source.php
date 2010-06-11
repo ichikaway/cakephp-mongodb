@@ -283,6 +283,21 @@ class MongodbSource extends DboSource {
 		return false;
 	}
 
+/**
+ * ensureIndex method
+ *
+ * @param mixed $Model
+ * @param array $keys array()
+ * @param array $params array()
+ * @return void
+ * @access public
+ */
+	public function ensureIndex(&$Model, $keys = array(), $params = array()) {
+		return $this->_db
+			->selectCollection($Model->table)
+			->ensureIndex($keys, $params);
+	}
+
 
 /**
  * Update Data
