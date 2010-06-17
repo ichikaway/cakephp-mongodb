@@ -513,18 +513,22 @@ class MongodbSource extends DboSource {
 			}
 		}
 
+		if (empty($offset) && $page && $limit) {
+			$offset = ($page - 1) * $limit;
+		}
+
 		$this->_prepareLogQuery($model); // just sets a timer
 		$result = $this->_db
 			->selectCollection($model->table)
 			->find($conditions, $fields)
 			->sort($order)
 			->limit($limit)
-			->skip(($page - 1) * $limit);
+			->skip($offset);
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$model->useTable}.find( " . json_encode($conditions) . ' , ' . json_encode($fields) . ').' .
+			$this->logQuery("db.{$model->useTable}.find( " . json_encode($conditions) . ' , ' . json_encode($fields) . ')' .
 				'.sort( ' . json_encode($order) . ' )' .
 				'.limit( ' . json_encode($limit) . ' )' .
-				'.skip( ' . ($page - 1 * $limit) . ' )');
+				'.skip( ' . $offset . ' )');
 		}
 
 		if ($model->findQueryType === 'count') {
