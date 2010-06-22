@@ -483,15 +483,9 @@ class MongodbSource extends DboSource {
 			$order = array_shift($order);
 		}
 
-		/*
-		 * TODO This is giving
-		 * 		.find( {"_id":{}}
-		 * 	instead of
-		 * 	.find({"_id":"4c1658447f8b9ae102590000"})
 		if (!empty($conditions['_id']) && !is_object($conditions['_id'])) {
 			$conditions['_id'] = new MongoId((string)$conditions['_id']);
 		}
-		*/
 
 		$fields = (is_array($fields)) ? $fields : array($fields);
 		$conditions = (is_array($conditions)) ? $conditions : array($conditions);
