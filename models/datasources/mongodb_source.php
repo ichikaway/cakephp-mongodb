@@ -284,7 +284,7 @@ class MongodbSource extends DboSource {
 			->selectCollection($model->table)
 			->insert($data, true);
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$model->useTable}.insert( " . json_encode($data) . ' , true)');
+			$this->logQuery("db.{$model->useTable}.insert( :data , true)", compact('data'));
 		}
 
 		if ($result['ok'] === 1.0) {
@@ -346,13 +346,14 @@ class MongodbSource extends DboSource {
 			$data = array('$set' => $data);
 			$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$model->useTable}.update( " . json_encode($cond) .
-					' , ' . json_encode($data) . ' , ' . json_encode(array("multiple" => false)) . ' )');
+				$this->logQuery("db.{$model->useTable}.update( :conditions, :data, :params )",
+					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false))
+				);
 			}
 		} else {
 			$return = $mongoCollectionObj->save($data);
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$model->useTable}.save( " . json_encode($data) . ' )');
+				$this->logQuery("db.{$model->useTable}.save( :data )", compact('data'));
 			}
 		}
 		return $return;
@@ -377,8 +378,9 @@ class MongodbSource extends DboSource {
 			->selectCollection($model->table)
 			->update($conditions, $fields, array("multiple" => true));
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$model->useTable}.update( " . json_encode($fields) .
-				', array("multiple" => true) )' );
+			$this->logQuery("db.{$model->useTable}.update( :fields, :params )",
+				array('fields' => $fields, 'params' => array("multiple" => true))
+		   );
 		}
 		return $result;
 	}
@@ -525,10 +527,9 @@ class MongodbSource extends DboSource {
 			->limit($limit)
 			->skip($offset);
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$model->useTable}.find( " . json_encode($conditions) . ' , ' . json_encode($fields) . ')' .
-				'.sort( ' . json_encode($order) . ' )' .
-				'.limit( ' . json_encode($limit) . ' )' .
-				'.skip( ' . $offset . ' )');
+			$this->logQuery("db.{$model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
+				compact('conditions', 'fields', 'order', 'limit', 'offset')
+			);
 		}
 
 		if ($model->findQueryType === 'count') {
@@ -615,17 +616,48 @@ class MongodbSource extends DboSource {
  * logQuery method
  *
  * Set timers, errors and refer to the parent
+ * If there are arguments passed - inject them into the query
  *
  * @param mixed $query
+ * @param array $args array()
  * @return void
  * @access public
  */
-	public function logQuery($query) {
+	public function logQuery($query, $args = array()) {
+		if ($args) {
+			$this->_stringify($args);
+			$query = String::insert($query, $args);
+		}
 		$this->took = round((getMicrotime() - $this->_startTime) * 1000, 0);
 		$this->affected = null;
 		$this->error = $this->_db->lastError();
 		$this->numRows = null;
 		return parent::logQuery($query);
+	}
+
+/**
+ * stringify method
+ *
+ * Takes an array of args as an input and returns an array of json-encoded strings. Takes care of
+ * any objects the arrays might be holding (MongoID);
+ *
+ * @param array $args array()
+ * @param int $recursive 0
+ * @return array
+ * @access protected
+ */
+	protected function _stringify(&$args = array(), $recursive = 0) {
+		foreach($args as &$arg) {
+			if (is_array($arg)) {
+				$this->_stringify($arg, 1);
+			}
+			if (is_object($arg)) {
+				$arg = $arg->__toString();
+			}
+			if (!$recursive) {
+				$arg = json_encode($arg, true);
+			}
+		}
 	}
 }
 ?>
