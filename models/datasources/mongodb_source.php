@@ -651,7 +651,7 @@ class MongodbSource extends DboSource {
 			if (is_array($arg)) {
 				$this->_stringify($arg, 1);
 			}
-			if (is_object($arg)) {
+			if (is_object($arg) && is_callable(array($arg, '__toString'))) {
 				$arg = $arg->__toString();
 			}
 			if (!$recursive) {
