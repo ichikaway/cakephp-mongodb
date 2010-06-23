@@ -141,8 +141,12 @@ class MongodbSource extends DboSource {
 		$this->connected = false;
 		$host = $this->config['host'] . ':' . $this->config['port'];
 		$this->connection = new Mongo($host, true, $this->config['persistent']);
-		if ($this->_db = $this->connection->selectDB($this->config['database'])) {
-			$this->connected = true;
+		try{
+			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
+				$this->connected = true;
+			}
+		} catch (Exception $e) {
+			trigger_error($e->getMessage());
 		}
 		return $this->connected;
 	}
@@ -276,14 +280,18 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
-		$result = $this->_db
-			->selectCollection($Model->table)
-			->insert($data, true);
+		try{
+			$result = $this->_db
+				->selectCollection($Model->table)
+				->insert($data, true);
+		} catch (Exception $e) {
+			trigger_error($e->getMessage());
+		}
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$Model->useTable}.insert( :data , true)", compact('data'));
 		}
 
-		if ($result['ok'] === 1.0) {
+		if (!empty($result) && $result['ok'] === 1.0) {
 			$id = is_object($data['_id']) ? $data['_id']->__toString() : null;
 			$Model->setInsertID($id);
 			$Model->id = $id;
@@ -302,10 +310,15 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function ensureIndex(&$Model, $keys = array(), $params = array()) {
-		return $this->_db
-			->selectCollection($Model->table)
-			->ensureIndex($keys, $params);
-}
+		try{
+			return $this->_db
+				->selectCollection($Model->table)
+				->ensureIndex($keys, $params);
+		} catch (Exception $e) {
+			trigger_error($e->getMessage());
+		}
+		false;
+	}
 
 /**
  * Update Data
@@ -335,22 +348,36 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 			}
 		}
 
-		$mongoCollectionObj = $this->_db
-			->selectCollection($Model->table);
+		try{
+			$mongoCollectionObj = $this->_db
+				->selectCollection($Model->table);
+		} catch (Exception $e) {
+			trigger_error($e->getMessage());
+			return false;
+		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		if (!empty($data['_id'])) {
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 			$data = array('$set' => $data);
-			$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
+
+			try{
+				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
+			} catch (Exception $e) {
+				trigger_error($e->getMessage());
+			}
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$Model->useTable}.update( :conditions, :data, :params )",
 					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false))
 				);
 			}
 		} else {
-			$return = $mongoCollectionObj->save($data);
+			try{
+				$return = $mongoCollectionObj->save($data);
+			} catch (Exception $e) {
+				trigger_error($e->getMessage());
+			}
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$Model->useTable}.save( :data )", compact('data'));
 			}
@@ -371,9 +398,14 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 		$fields = array('$set' => $fields);
 
 		$this->_prepareLogQuery($Model); // just sets a timer
-		$result = $this->_db
-			->selectCollection($Model->table)
-			->update($conditions, $fields, array("multiple" => true));
+		try{
+			$result = $this->_db
+				->selectCollection($Model->table)
+				->update($conditions, $fields, array("multiple" => true));
+		} catch (Exception $e) {
+			trigger_error($e->getMessage());
+		}
+
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$Model->useTable}.update( :fields, :params )",
 				array('fields' => $fields, 'params' => array("multiple" => true))
@@ -447,17 +479,25 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 		//for Model::deleteAll()
 			foreach ($conditions[$Model->alias . '._id'] as $val) {
 				$id = is_string($val) ? new MongoId($val) : $val;
-				if (!$mongoCollectionObj->remove(array('_id' => $id))) {
+				try{
+					if (!$mongoCollectionObj->remove(array('_id' => $id))) {
+						$result = false;
+					}
+				} catch (Exception $e) {
 					$result = false;
+					trigger_error($e->getMessage());
 				}
 			}
 
 		} else {
-			$return = $mongoCollectionObj->remove($conditions);
+			try{
+				$return = $mongoCollectionObj->remove($conditions);
+			} catch (Exception $e) {
+				$result = false;
+				trigger_error($e->getMessage());
+			}
 		}
-
 		return $result;
-
 	}
 
 /**
