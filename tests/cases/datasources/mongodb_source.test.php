@@ -330,6 +330,8 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	function testUpdate() {
+		$count0 = $this->Post->find('count');
+
 		$data = array(
 			'title'=>'test',
 			'body'=>'aaaa',
@@ -339,11 +341,16 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
+		$postId = $this->Post->id;
+
+		$count1 = $this->Post->find('count');
+		$this->assertIdentical($count1 - $count0, 1, 'Save failed to create one row');
+
 		$this->assertTrue($saveResult);
+		$this->assertTrue($postId);
 		$findresult = $this->Post->find('all');
 
 		$updatedata = array(
-			'_id' => $this->Post->id,
 			'title'=>'test2',
 			'body'=>'aaaa2',
 			'text'=>'bbbb2'
@@ -351,7 +358,44 @@ class MongodbSourceTest extends CakeTestCase {
 		$saveData['Post'] = $updatedata;
 
 		$saveResult = $this->Post->save($saveData);
+
+		$count2 = $this->Post->find('count');
+		$this->assertIdentical($count2 - $count1, 0, 'Save test 2 created another row, it did not update the existing row');
+
 		$this->assertTrue($saveResult);
+		$this->assertIdentical($this->Post->id, $postId);
+
+		$this->Post->create();
+		$updatedata = array(
+			'_id' => $postId,
+			'title'=>'test3',
+			'body'=>'aaaa3',
+			'text'=>'bbbb3'
+		);
+		$saveData['Post'] = $updatedata;
+		$saveResult = $this->Post->save($saveData);
+
+		$count3 = $this->Post->find('count');
+		$this->assertIdentical($count3 - $count2, 0, 'Saving with the id in the data created another row');
+
+		$this->assertTrue($saveResult);
+		$this->assertIdentical($this->Post->id, $postId);
+
+		$this->Post->create();
+		$this->Post->id = $postId;
+		$updatedata = array(
+			'title'=>'test4',
+			'body'=>'aaaa4',
+			'text'=>'bbbb4'
+		);
+		$saveData['Post'] = $updatedata;
+		$saveResult = $this->Post->save($saveData);
+
+		$count4 = $this->Post->find('count');
+		$this->assertIdentical($count4 - $count3, 0, 'Saving with $Model->id set and no id in the data created another row');
+
+		$this->assertTrue($saveResult);
+		$this->assertIdentical($this->Post->id, $postId);
 
 		$result = $this->Post->find('all');
 
@@ -363,7 +407,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($updatedata['title'], $resultData['title']);
 		$this->assertEqual($updatedata['body'], $resultData['body']);
 		$this->assertEqual($updatedata['text'], $resultData['text']);
-
 	}
 
 /**
