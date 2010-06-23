@@ -208,20 +208,20 @@ class MongodbSource extends DboSource {
 /**
  * Describe
  *
- * @param Model $model
+ * @param Model $Model
  * @return array if model instance has mongoSchema, return it.
  * @access public
  */
-	public function describe(&$model, $field = null) {
-		$model->primaryKey = '_id';
+	public function describe(&$Model, $field = null) {
+		$Model->primaryKey = '_id';
 		$schema = array();
-		if (!empty($model->mongoSchema) && is_array($model->mongoSchema)) {
-			$schema = $model->mongoSchema;
+		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
+			$schema = $Model->mongoSchema;
 			return $schema + $this->_defaultSchema;
-		} elseif (is_a($model, 'Model') && !empty($model->Behaviors)) {
-			$model->Behaviors->attach('Mongodb.Schemaless');
+		} elseif (is_a($Model, 'Model') && !empty($Model->Behaviors)) {
+			$Model->Behaviors->attach('Mongodb.Schemaless');
 		}
-		return $this->deriveSchemaFromData($model);
+		return $this->deriveSchemaFromData($Model);
 	}
 
 /**
@@ -239,11 +239,11 @@ class MongodbSource extends DboSource {
 /**
  * Calculate
  *
- * @param Model $model
+ * @param Model $Model
  * @return array
  * @access public
  */
-	public function calculate(&$model) {
+	public function calculate(&$Model) {
 		return array('count' => true);
 	}
 
@@ -262,31 +262,31 @@ class MongodbSource extends DboSource {
 /**
  * Create Data
  *
- * @param Model $model Model Instance
+ * @param Model $Model Model Instance
  * @param array $fields Field data
  * @param array $values Save data
  * @return boolean Insert result
  * @access public
  */
-	public function create(&$model, $fields = null, $values = null) {
+	public function create(&$Model, $fields = null, $values = null) {
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
 		} else {
-			$data = $model->data;
+			$data = $Model->data;
 		}
 
-		$this->_prepareLogQuery($model); // just sets a timer
+		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
-			->selectCollection($model->table)
+			->selectCollection($Model->table)
 			->insert($data, true);
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$model->useTable}.insert( :data , true)", compact('data'));
+			$this->logQuery("db.{$Model->useTable}.insert( :data , true)", compact('data'));
 		}
 
 		if ($result['ok'] === 1.0) {
 			$id = is_object($data['_id']) ? $data['_id']->__toString() : null;
-			$model->setInsertID($id);
-			$model->id = $id;
+			$Model->setInsertID($id);
+			$Model->id = $id;
 			return true;
 		}
 		return false;
@@ -310,25 +310,25 @@ class MongodbSource extends DboSource {
 /**
  * Update Data
  *
- * @param Model $model Model Instance
+ * @param Model $Model Model Instance
  * @param array $fields Field data
  * @param array $values Save data
  * @return boolean Update result
  * @access public
  */
-public function update(&$model, $fields = null, $values = null, $conditions = null) {
+public function update(&$Model, $fields = null, $values = null, $conditions = null) {
 	if ($fields !== null && $values !== null) {
 		$data = array_combine($fields, $values);
 
 		} else if($fields !== null && $conditions !== null) {
-			return $this->updateAll($model, $fields, $conditions);
+			return $this->updateAll($Model, $fields, $conditions);
 
 		} else{
-			$data = $model->data;
+			$data = $Model->data;
 		}
 
 		if (empty($data['_id'])) {
-			$data['_id'] = new MongoId($model->id);
+			$data['_id'] = new MongoId($Model->id);
 		} else {
 			if (!is_object($data['_id'])) {
 				$data['_id'] = new MongoId($data['_id']);
@@ -336,23 +336,23 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 		}
 
 		$mongoCollectionObj = $this->_db
-			->selectCollection($model->table);
+			->selectCollection($Model->table);
 
-		$this->_prepareLogQuery($model); // just sets a timer
+		$this->_prepareLogQuery($Model); // just sets a timer
 		if (!empty($data['_id'])) {
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 			$data = array('$set' => $data);
 			$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$model->useTable}.update( :conditions, :data, :params )",
+				$this->logQuery("db.{$Model->useTable}.update( :conditions, :data, :params )",
 					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false))
 				);
 			}
 		} else {
 			$return = $mongoCollectionObj->save($data);
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$model->useTable}.save( :data )", compact('data'));
+				$this->logQuery("db.{$Model->useTable}.save( :data )", compact('data'));
 			}
 		}
 		return $return;
@@ -361,21 +361,21 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 /**
  * Update multiple Record
  *
- * @param Model $model Model Instance
+ * @param Model $Model Model Instance
  * @param array $fields Field data
  * @param array $conditions
  * @return boolean Update result
  * @access public
  */
-	public function updateAll(&$model, $fields = null,  $conditions = null) {
+	public function updateAll(&$Model, $fields = null,  $conditions = null) {
 		$fields = array('$set' => $fields);
 
-		$this->_prepareLogQuery($model); // just sets a timer
+		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
-			->selectCollection($model->table)
+			->selectCollection($Model->table)
 			->update($conditions, $fields, array("multiple" => true));
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$model->useTable}.update( :fields, :params )",
+			$this->logQuery("db.{$Model->useTable}.update( :fields, :params )",
 				array('fields' => $fields, 'params' => array("multiple" => true))
 			);
 		}
@@ -385,16 +385,16 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 /**
  * deriveSchemaFromData method
  *
- * @param mixed $model
+ * @param mixed $Model
  * @param array $data array()
  * @return void
  * @access public
  */
-	public function deriveSchemaFromData($model, $data = array()) {
+	public function deriveSchemaFromData($Model, $data = array()) {
 		if (!$data) {
-			$data = $model->data;
-			if ($data && array_key_exists($model->alias, $data)) {
-				$data = $data[$model->alias];
+			$data = $Model->data;
+			if ($data && array_key_exists($Model->alias, $data)) {
+				$data = $data[$Model->alias];
 			}
 		}
 
@@ -416,16 +416,16 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 /**
  * Delete Data
  *
- * @param Model $model Model Instance
+ * @param Model $Model Model Instance
  * @param array $conditions
  * @return boolean Update result
  * @access public
  */
-	public function delete(&$model, $conditions = null) {
+	public function delete(&$Model, $conditions = null) {
 
 		$id = null;
 		if (empty($conditions)) {
-			$id = $model->id;
+			$id = $Model->id;
 
 		} else if (is_array($conditions) && !empty($conditions['_id'])) {
 			$id = $conditions['_id'];
@@ -440,12 +440,12 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 		}
 
 		$mongoCollectionObj = $this->_db
-			->selectCollection($model->table);
+			->selectCollection($Model->table);
 
 		$result = true;
-		if (!empty($conditions[$model->alias . '._id']) && is_array($conditions[$model->alias . '._id'])) {
+		if (!empty($conditions[$Model->alias . '._id']) && is_array($conditions[$Model->alias . '._id'])) {
 		//for Model::deleteAll()
-			foreach ($conditions[$model->alias . '._id'] as $val) {
+			foreach ($conditions[$Model->alias . '._id'] as $val) {
 				$id = is_string($val) ? new MongoId($val) : $val;
 				if (!$mongoCollectionObj->remove(array('_id' => $id))) {
 					$result = false;
@@ -463,12 +463,12 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 /**
  * Read Data
  *
- * @param Model $model Model Instance
+ * @param Model $Model Model Instance
  * @param array $query Query data
  * @return array Results
  * @access public
  */
-	public function read(&$model, $query = array()) {
+	public function read(&$Model, $query = array()) {
 		$query = $this->_setEmptyArrayIfEmpty($query);
 		extract($query);
 
@@ -488,9 +488,9 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 	 * before update, model::save() check exist record with conditions key (ex: Post._id).
 	 * Convert Post._id to _id and make a MongoId object
 	 */
-		if (!empty($conditions[$model->alias . '._id'])) {
-			$conditions['_id'] = new MongoId($conditions[$model->alias . '._id']);
-			unset($conditions[$model->alias . '._id']);
+		if (!empty($conditions[$Model->alias . '._id'])) {
+			$conditions['_id'] = new MongoId($conditions[$Model->alias . '._id']);
+			unset($conditions[$Model->alias . '._id']);
 		}
 
 		if (is_array($order)) {
@@ -510,21 +510,21 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 			$offset = ($page - 1) * $limit;
 		}
 
-		$this->_prepareLogQuery($model); // just sets a timer
+		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
-			->selectCollection($model->table)
+			->selectCollection($Model->table)
 			->find($conditions, $fields)
 			->sort($order)
 			->limit($limit)
 			->skip($offset);
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
+			$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
 				compact('conditions', 'fields', 'order', 'limit', 'offset')
 			);
 		}
 
-		if ($model->findQueryType === 'count') {
-			return array(array($model->alias => array('count' => $result->count())));
+		if ($Model->findQueryType === 'count') {
+			return array(array($Model->alias => array('count' => $result->count())));
 		}
 
 		$results = null;
@@ -533,7 +533,7 @@ public function update(&$model, $fields = null, $values = null, $conditions = nu
 			if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 				$mongodata['_id'] = $mongodata['_id']->__toString();
 			}
-			$results[][$model->alias] = $mongodata;
+			$results[][$Model->alias] = $mongodata;
 		}
 		return $results;
 	}
