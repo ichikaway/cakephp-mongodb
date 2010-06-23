@@ -145,7 +145,7 @@ class MongodbSource extends DboSource {
 			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
 				$this->connected = true;
 			}
-		} catch (Exception $e) {
+		} catch (MongoException $e) {
 			trigger_error($e->getMessage());
 		}
 		return $this->connected;
@@ -284,7 +284,7 @@ class MongodbSource extends DboSource {
 			$result = $this->_db
 				->selectCollection($Model->table)
 				->insert($data, true);
-		} catch (Exception $e) {
+		} catch (MongoException $e) {
 			trigger_error($e->getMessage());
 		}
 		if ($this->fullDebug) {
@@ -314,7 +314,7 @@ class MongodbSource extends DboSource {
 			return $this->_db
 				->selectCollection($Model->table)
 				->ensureIndex($keys, $params);
-		} catch (Exception $e) {
+		} catch (MongoException $e) {
 			trigger_error($e->getMessage());
 		}
 		false;
@@ -351,7 +351,7 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 		try{
 			$mongoCollectionObj = $this->_db
 				->selectCollection($Model->table);
-		} catch (Exception $e) {
+		} catch (MongoException $e) {
 			trigger_error($e->getMessage());
 			return false;
 		}
@@ -364,7 +364,7 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 
 			try{
 				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
-			} catch (Exception $e) {
+			} catch (MongoException $e) {
 				trigger_error($e->getMessage());
 			}
 			if ($this->fullDebug) {
@@ -375,7 +375,7 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 		} else {
 			try{
 				$return = $mongoCollectionObj->save($data);
-			} catch (Exception $e) {
+			} catch (MongoException $e) {
 				trigger_error($e->getMessage());
 			}
 			if ($this->fullDebug) {
@@ -402,7 +402,7 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 			$result = $this->_db
 				->selectCollection($Model->table)
 				->update($conditions, $fields, array("multiple" => true));
-		} catch (Exception $e) {
+		} catch (MongoException $e) {
 			trigger_error($e->getMessage());
 		}
 
@@ -483,7 +483,7 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 					if (!$mongoCollectionObj->remove(array('_id' => $id))) {
 						$result = false;
 					}
-				} catch (Exception $e) {
+				} catch (MongoException $e) {
 					$result = false;
 					trigger_error($e->getMessage());
 				}
@@ -492,7 +492,7 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 		} else {
 			try{
 				$return = $mongoCollectionObj->remove($conditions);
-			} catch (Exception $e) {
+			} catch (MongoException $e) {
 				$result = false;
 				trigger_error($e->getMessage());
 			}
