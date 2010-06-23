@@ -220,7 +220,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->insertData($data);
 		$result = $this->Post->find('all');
 		$this->assertEqual(1, count($result));
-		$resultData = $result[0][$this->Post->alias];
+		$resultData = $result[0]['Post'];
 		$this->assertEqual(4, count($resultData));
 		$this->assertTrue(!empty($resultData['_id']));
 		$this->assertEqual($data['title'], $resultData['title']);
@@ -240,7 +240,7 @@ class MongodbSourceTest extends CakeTestCase {
 			'body'=>'aaaa',
 			'text'=>'bbbb'
 		);
-		$saveData[$this->Post->alias] = $data;
+		$saveData['Post'] = $data;
 
 		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
@@ -249,7 +249,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$result = $this->Post->find('all');
 
 		$this->assertEqual(1, count($result));
-		$resultData = $result[0][$this->Post->alias];
+		$resultData = $result[0]['Post'];
 		$this->assertEqual(6, count($resultData));
 		$this->assertTrue(!empty($resultData['_id']));
 		$this->assertEqual($this->Post->id, $resultData['_id']);
@@ -271,13 +271,13 @@ class MongodbSourceTest extends CakeTestCase {
 	 * @access public
 	 */
 	function testSaveAll() {
-		$saveData[0][$this->Post->alias] = array(
+		$saveData[0]['Post'] = array(
 				'title'=>'test1',
 				'body'=>'aaaa1',
 				'text'=>'bbbb1'
 				);
 
-		$saveData[1][$this->Post->alias] = array(
+		$saveData[1]['Post'] = array(
 				'title'=>'test2',
 				'body'=>'aaaa2',
 				'text'=>'bbbb2'
@@ -289,10 +289,10 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->assertEqual(2, count($result));
 
-		$resultData = $result[0][$this->Post->alias];
+		$resultData = $result[0]['Post'];
 		$this->assertEqual(6, count($resultData));
 		$this->assertTrue(!empty($resultData['_id']));
-		$data = $saveData[0][$this->Post->alias];
+		$data = $saveData[0]['Post'];
 		$this->assertEqual($data['title'], $resultData['title']);
 		$this->assertEqual($data['body'], $resultData['body']);
 		$this->assertEqual($data['text'], $resultData['text']);
@@ -302,10 +302,10 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertTrue(preg_match($dateRegex, $resultData['created']));
 		$this->assertTrue(preg_match($dateRegex, $resultData['modified']));
 
-		$resultData = $result[1][$this->Post->alias];
+		$resultData = $result[1]['Post'];
 		$this->assertEqual(6, count($resultData));
 		$this->assertTrue(!empty($resultData['_id']));
-		$data = $saveData[1][$this->Post->alias];
+		$data = $saveData[1]['Post'];
 		$this->assertEqual($data['title'], $resultData['title']);
 		$this->assertEqual($data['body'], $resultData['body']);
 		$this->assertEqual($data['text'], $resultData['text']);
@@ -325,25 +325,24 @@ class MongodbSourceTest extends CakeTestCase {
 	 */
 	function testUpdate() {
 		$data = array(
-				'title'=>'test',
-				'body'=>'aaaa',
-				'text'=>'bbbb'
-				);
-		$saveData[$this->Post->alias] = $data;
+			'title'=>'test',
+			'body'=>'aaaa',
+			'text'=>'bbbb'
+		);
+		$saveData['Post'] = $data;
 
 		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
 		$this->assertTrue($saveResult);
 		$findresult = $this->Post->find('all');
 
-
 		$updatedata = array(
-				'_id' => $findresult[0][$this->Post->alias]['_id'],
-				'title'=>'test2',
-				'body'=>'aaaa2',
-				'text'=>'bbbb2'
-				);
-		$saveData[$this->Post->alias] = $updatedata;
+			'_id' => $this->Post->id,
+			'title'=>'test2',
+			'body'=>'aaaa2',
+			'text'=>'bbbb2'
+		);
+		$saveData['Post'] = $updatedata;
 
 		$saveResult = $this->Post->save($saveData);
 		$this->assertTrue($saveResult);
@@ -351,7 +350,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$result = $this->Post->find('all');
 
 		$this->assertEqual(1, count($result));
-		$resultData = $result[0][$this->Post->alias];
+		$resultData = $result[0]['Post'];
 		$this->assertEqual(6, count($resultData));
 		$this->assertTrue(!empty($resultData['_id']));
 		$this->assertEqual($this->Post->id, $resultData['_id']);
@@ -367,7 +366,7 @@ class MongodbSourceTest extends CakeTestCase {
 			'body'=>'aaaa',
 			'text'=>'aaaa'
 		);
-		$saveData[$this->Post->alias] = $data;
+		$saveData['Post'] = $data;
 		$this->Post->create();
 		$this->Post->save($saveData);
 
@@ -376,7 +375,7 @@ class MongodbSourceTest extends CakeTestCase {
 			'body'=>'cccc',
 			'text'=>'cccc'
 		);
-		$saveData[$this->Post->alias] = $data;
+		$saveData['Post'] = $data;
 		$this->Post->create();
 		$this->Post->save($saveData);
 
@@ -386,7 +385,7 @@ class MongodbSourceTest extends CakeTestCase {
 			'body'=>'bbbb',
 			'text'=>'bbbb'
 		);
-		$saveData[$this->Post->alias] = $data;
+		$saveData['Post'] = $data;
 		$this->Post->create();
 		$this->Post->save($saveData);
 
@@ -474,7 +473,7 @@ class MongodbSourceTest extends CakeTestCase {
 			$data = array(
 				'title'=> $i,
 			);
-			$saveData[$this->Post->alias] = $data;
+			$saveData['Post'] = $data;
 			$this->Post->create();
 			$this->Post->save($saveData);
 		}
