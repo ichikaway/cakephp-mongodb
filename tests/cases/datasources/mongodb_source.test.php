@@ -1,30 +1,29 @@
 <?php
 /**
-* Test cases for the Cakephp mongoDB datasource.
-*
-* This datasource uses Pecl Mongo (http://php.net/mongo)
-* and is thus dependent on PHP 5.0 and greater.
-*
-* Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
-*
-* Licensed under The MIT License
-* Redistributions of files must retain the above copyright notice.
-*
-* @copyright Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
-* @package mongodb
-* @subpackage mongodb.models.datasources
-* @license http://www.opensource.org/licenses/mit-license.php The MIT License
-*/
-
-
-/**
-* Import relevant classes for testing
-*/
-App::import('Model', 'MongodbSource');
+ * Test cases for the Cakephp mongoDB datasource.
+ *
+ * This datasource uses Pecl Mongo (http://php.net/mongo)
+ * and is thus dependent on PHP 5.0 and greater.
+ *
+ * Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
+ *
+ * Licensed under The MIT License
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) 2010, Yasushi Ichikawa http://github.com/ichikaway/
+ * @package       mongodb
+ * @subpackage    mongodb.tests.cases.datasources
+ * @license       http://www.opensource.org/licenses/mit-license.php The MIT License
+ */
 
 /**
-* Generate Mock Model
-*/
+ * Import relevant classes for testing
+ */
+App::import('Model', 'Mongodb.MongodbSource');
+
+/**
+ * Generate Mock Model
+ */
 Mock::generate('AppModel', 'MockPost');
 
 /**
@@ -36,18 +35,28 @@ Mock::generate('AppModel', 'MockPost');
 class Post extends AppModel {
 	var $useDbConfig = 'mongo_test';
 
+/**
+ * mongoSchema property
+ *
+ * @var array
+ * @access public
+ */
 	var $mongoSchema = array(
-			'title' => array('type'=>'string'),
-			'body'=>array('type'=>'string'),
-			'text'=>array('type'=>'text'),
-			'created'=>array('type'=>'datetime'),
-			'modified'=>array('type'=>'datetime'),
-			);
-
-
-
+		'title' => array('type'=>'string'),
+		'body'=>array('type'=>'string'),
+		'text'=>array('type'=>'text'),
+		'created'=>array('type'=>'datetime'),
+		'modified'=>array('type'=>'datetime'),
+	);
 }
 
+/**
+ * MongoArticle class
+ *
+ * @uses          AppModel
+ * @package       mongodb
+ * @subpackage    mongodb.tests.cases.datasources
+ */
 class MongoArticle extends AppModel {
 	var $useDbConfig = 'mongo_test';
 }
@@ -76,15 +85,15 @@ class MongodbSourceTest extends CakeTestCase {
  *
  */
 	var $_config = array(
-			'datasource' => 'mongodb',
-			'host' => 'localhost',
-			'login' => '',
-			'password' => '',
-			'database' => 'test_mongo',
-			'port' => 27017,
-			'prefix' => '',
-			'persistent' => false,
-			);
+		'datasource' => 'mongodb',
+		'host' => 'localhost',
+		'login' => '',
+		'password' => '',
+		'database' => 'test_mongo',
+		'port' => 27017,
+		'prefix' => '',
+		'persistent' => false,
+	);
 
 /**
  * Sets up the environment for each test method
@@ -124,8 +133,8 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->mongodb
 			->connection
 			->selectDB($this->_config['database'])
-            ->selectCollection($this->Post->table)
-            ->insert($data, true);
+			->selectCollection($this->Post->table)
+			->insert($data, true);
 	}
 
 /**
@@ -153,7 +162,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertTrue($this->Mongo->connected);
 		$this->assertTrue($this->Mongo->isConnected());
 	}
-
 
 /**
  * Tests the disconnect method of the Mongodb DataSource
@@ -195,13 +203,13 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$result = $this->mongodb->describe($this->Post);
 		$expect = array(
-				'_id' => array('type' => 'string', 'length' => 24, 'key' => 'primary'),
-				'title' => array('type'=>'string'),
-				'body'=>array('type'=>'string'),
-				'text'=>array('type'=>'text'),
-				'created'=>array('type'=>'datetime'),
-				'modified'=>array('type'=>'datetime'),
-				);
+			'_id' => array('type' => 'string', 'length' => 24, 'key' => 'primary'),
+			'title' => array('type'=>'string'),
+			'body'=>array('type'=>'string'),
+			'text'=>array('type'=>'text'),
+			'created'=>array('type'=>'datetime'),
+			'modified'=>array('type'=>'datetime'),
+		);
 		$this->assertEqual($expect, $result);
 	}
 
@@ -263,25 +271,24 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertTrue(preg_match($dateRegex, $resultData['modified']));
 	}
 
-
-	/**
-	 * Tests saveAll method.
-	 *
-	 * @return void
-	 * @access public
-	 */
+/**
+ * Tests saveAll method.
+ *
+ * @return void
+ * @access public
+ */
 	function testSaveAll() {
 		$saveData[0]['Post'] = array(
-				'title'=>'test1',
-				'body'=>'aaaa1',
-				'text'=>'bbbb1'
-				);
+			'title'=>'test1',
+			'body'=>'aaaa1',
+			'text'=>'bbbb1'
+		);
 
 		$saveData[1]['Post'] = array(
-				'title'=>'test2',
-				'body'=>'aaaa2',
-				'text'=>'bbbb2'
-				);
+			'title'=>'test2',
+			'body'=>'aaaa2',
+			'text'=>'bbbb2'
+		);
 
 		$this->Post->create();
 		$saveResult = $this->Post->saveAll($saveData);
@@ -316,13 +323,12 @@ class MongodbSourceTest extends CakeTestCase {
 
 	}
 
-
-	/**
-	 * Tests update method.
-	 *
-	 * @return void
-	 * @access public
-	 */
+/**
+ * Tests update method.
+ *
+ * @return void
+ * @access public
+ */
 	function testUpdate() {
 		$data = array(
 			'title'=>'test',
@@ -360,6 +366,12 @@ class MongodbSourceTest extends CakeTestCase {
 
 	}
 
+/**
+ * testSort method
+ *
+ * @return void
+ * @access public
+ */
 	function testSort() {
 		$data = array(
 			'title'=>'AAA',
@@ -467,6 +479,12 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($toSave['starts'], $starts);
 	}
 
+/**
+ * testSqlComparisonOperators method
+ *
+ * @return void
+ * @access public
+ */
 	public function testSqlComparisonOperators() {
 		$this->Post->Behaviors->attach('Mongodb.SqlCompatible');
 		for ($i = 1; $i <= 20; $i++) {
@@ -525,5 +543,3 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($expected, $result);
 	}
 }
-
-?>
