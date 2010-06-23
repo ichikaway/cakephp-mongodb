@@ -332,8 +332,12 @@ class MongodbSource extends DboSource {
 			$data = $model->data;
 		}
 
-		if (!empty($data['_id']) && !is_object($data['_id'])) {
-			$data['_id'] = new MongoId($data['_id']);
+		if (empty($data['_id'])) {
+			$data['_id'] = new MongoId($model->id);
+		} else {
+		   	if (!is_object($data['_id'])) {
+				$data['_id'] = new MongoId($data['_id']);
+			}
 		}
 
 		$mongoCollectionObj = $this->_db
