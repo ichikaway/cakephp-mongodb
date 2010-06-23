@@ -1,27 +1,27 @@
 <?php
 /**
-* A CakePHP datasource for the mongoDB (http://www.mongodb.org/) document-oriented database.
-*
-* This datasource uses Pecl Mongo (http://php.net/mongo)
-* and is thus dependent on PHP 5.0 and greater.
-*
-* Original implementation by ichikaway(Yasushi Ichikawa) http://github.com/ichikaway/
-*
-* Reference:
-*	Nate Abele's lithium mongoDB datasource (http://li3.rad-dev.org/)
-*	Joél Perras' divan(http://github.com/jperras/divan/)
-*
-* Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
-*
-* Contributors: Predominant, Jrbasso, tkyk
-*
-* Licensed under The MIT License
-* Redistributions of files must retain the above copyright notice.
-*
-* @copyright Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
-* @package mongodb
-* @subpackage mongodb.models.datasources
-* @license http://www.opensource.org/licenses/mit-license.php The MIT License
+ * A CakePHP datasource for the mongoDB (http://www.mongodb.org/) document-oriented database.
+ *
+ * This datasource uses Pecl Mongo (http://php.net/mongo)
+ * and is thus dependent on PHP 5.0 and greater.
+ *
+ * Original implementation by ichikaway(Yasushi Ichikawa) http://github.com/ichikaway/
+ *
+ * Reference:
+ *	Nate Abele's lithium mongoDB datasource (http://li3.rad-dev.org/)
+ *	Joél Perras' divan(http://github.com/jperras/divan/)
+ *
+ * Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
+ *
+ * Contributors: Predominant, Jrbasso, tkyk
+ *
+ * Licensed under The MIT License
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
+ * @package       mongodb
+ * @subpackage    mongodb.models.datasources
+ * @license       http://www.opensource.org/licenses/mit-license.php The MIT License
  */
 
 App::import('Datasource', 'DboSource');
@@ -29,8 +29,8 @@ App::import('Datasource', 'DboSource');
 /**
  * MongoDB Source
  *
- * @package mongodb
- * @subpackage mongodb.models.datasources
+ * @package       mongodb
+ * @subpackage    mongodb.models.datasources
  */
 class MongodbSource extends DboSource {
 
@@ -51,6 +51,7 @@ class MongodbSource extends DboSource {
  * @access protected
  */
 	protected $_startTime = null;
+
 /**
  * Base Config
  *
@@ -69,22 +70,21 @@ class MongodbSource extends DboSource {
 		'port'       => '27017'
 	);
 
-
 /**
  * column definition
  *
  * @var array
  */
-    var $columns = array(
-        'string' => array('name'  => 'varchar'),
-        'text' => array('name' => 'text'),
-        'integer' => array('name' => 'integer', 'formatter' => 'intval'),
-        'float' => array('name' => 'float', 'formatter' => 'floatval'),
-        'datetime' => array('name' => 'datetime', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
-        'timestamp' => array('name' => 'timestamp', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
-        'time' => array('name' => 'time', 'format' => 'H:i:s', 'formatter' => 'date'),
-        'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'date'),
-    );
+	var $columns = array(
+		'string' => array('name'  => 'varchar'),
+		'text' => array('name' => 'text'),
+		'integer' => array('name' => 'integer', 'formatter' => 'intval'),
+		'float' => array('name' => 'float', 'formatter' => 'floatval'),
+		'datetime' => array('name' => 'datetime', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
+		'timestamp' => array('name' => 'timestamp', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
+		'time' => array('name' => 'time', 'format' => 'H:i:s', 'formatter' => 'date'),
+		'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'date'),
+	);
 
 /**
  * Default schema for the mongo models
@@ -108,17 +108,16 @@ class MongodbSource extends DboSource {
 		$this->connect();
 	}
 
-
 /**
  * Destruct
  *
  * @access public
  */
-    public function __destruct() {
-        if ($this->connected) {
-            $this->disconnect();
-        }
-    }
+	public function __destruct() {
+		if ($this->connected) {
+			$this->disconnect();
+		}
+	}
 
 /**
  * commit method
@@ -158,8 +157,6 @@ class MongodbSource extends DboSource {
 		return $this->connected;
 	}
 
-
-
 /**
  * Close database connection
  *
@@ -194,7 +191,7 @@ class MongodbSource extends DboSource {
  */
 	public function listSources($data = null) {
 		return true;
-		/*
+	/*
 		$list = $this->_db->listCollections();
 		if (empty($list)) {
 			return array();
@@ -205,7 +202,7 @@ class MongodbSource extends DboSource {
 			}
 			return $collections;
 		}
-		*/
+	 */
 	}
 
 /**
@@ -246,7 +243,7 @@ class MongodbSource extends DboSource {
  * @return array
  * @access public
  */
-	public function calculate (&$model) {
+	public function calculate(&$model) {
 		return array('count' => true);
 	}
 
@@ -261,7 +258,6 @@ class MongodbSource extends DboSource {
 	public function name($name) {
 		return $name;
 	}
-
 
 /**
  * Create Data
@@ -309,8 +305,7 @@ class MongodbSource extends DboSource {
 		return $this->_db
 			->selectCollection($Model->table)
 			->ensureIndex($keys, $params);
-	}
-
+}
 
 /**
  * Update Data
@@ -321,9 +316,9 @@ class MongodbSource extends DboSource {
  * @return boolean Update result
  * @access public
  */
-	public function update(&$model, $fields = null, $values = null, $conditions = null) {
-		if ($fields !== null && $values !== null) {
-			$data = array_combine($fields, $values);
+public function update(&$model, $fields = null, $values = null, $conditions = null) {
+	if ($fields !== null && $values !== null) {
+		$data = array_combine($fields, $values);
 
 		} else if($fields !== null && $conditions !== null) {
 			return $this->updateAll($model, $fields, $conditions);
@@ -335,7 +330,7 @@ class MongodbSource extends DboSource {
 		if (empty($data['_id'])) {
 			$data['_id'] = new MongoId($model->id);
 		} else {
-		   	if (!is_object($data['_id'])) {
+			if (!is_object($data['_id'])) {
 				$data['_id'] = new MongoId($data['_id']);
 			}
 		}
@@ -363,8 +358,6 @@ class MongodbSource extends DboSource {
 		return $return;
 	}
 
-
-
 /**
  * Update multiple Record
  *
@@ -374,7 +367,7 @@ class MongodbSource extends DboSource {
  * @return boolean Update result
  * @access public
  */
-	public function updateAll (&$model, $fields = null,  $conditions = null) {
+	public function updateAll(&$model, $fields = null,  $conditions = null) {
 		$fields = array('$set' => $fields);
 
 		$this->_prepareLogQuery($model); // just sets a timer
@@ -384,7 +377,7 @@ class MongodbSource extends DboSource {
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$model->useTable}.update( :fields, :params )",
 				array('fields' => $fields, 'params' => array("multiple" => true))
-		   );
+			);
 		}
 		return $result;
 	}
@@ -420,7 +413,6 @@ class MongodbSource extends DboSource {
 
 	}
 
-
 /**
  * Delete Data
  *
@@ -452,7 +444,7 @@ class MongodbSource extends DboSource {
 
 		$result = true;
 		if (!empty($conditions[$model->alias . '._id']) && is_array($conditions[$model->alias . '._id'])) {
-			//for Model::deleteAll()
+		//for Model::deleteAll()
 			foreach ($conditions[$model->alias . '._id'] as $val) {
 				$id = is_string($val) ? new MongoId($val) : $val;
 				if (!$mongoCollectionObj->remove(array('_id' => $id))) {
@@ -467,11 +459,6 @@ class MongodbSource extends DboSource {
 		return $result;
 
 	}
-
-
-
-
-
 
 /**
  * Read Data
@@ -497,10 +484,10 @@ class MongodbSource extends DboSource {
 		$conditions = (is_array($conditions)) ? $conditions : array($conditions);
 		$order = (is_array($order)) ? $order : array($order);
 
-		/*
-		 * before update, model::save() check exist record with conditions key (ex: Post._id).
-		 * Convert Post._id to _id and make a MongoId object
-		 */
+	/*
+	 * before update, model::save() check exist record with conditions key (ex: Post._id).
+	 * Convert Post._id to _id and make a MongoId object
+	 */
 		if (!empty($conditions[$model->alias . '._id'])) {
 			$conditions['_id'] = new MongoId($conditions[$model->alias . '._id']);
 			unset($conditions[$model->alias . '._id']);
@@ -664,4 +651,3 @@ class MongodbSource extends DboSource {
 		}
 	}
 }
-?>
