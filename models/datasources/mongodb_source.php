@@ -686,7 +686,7 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 				$arg = $arg->__toString();
 			}
 			if (!$recursive) {
-				$arg = json_encode($arg, true);
+				$arg = json_encode($arg);
 			}
 		}
 	}
