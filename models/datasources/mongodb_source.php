@@ -329,11 +329,10 @@ class MongodbSource extends DboSource {
  * @return boolean Update result
  * @access public
  */
-public function update(&$Model, $fields = null, $values = null, $conditions = null) {
-	if ($fields !== null && $values !== null) {
-		$data = array_combine($fields, $values);
-
-		} else if($fields !== null && $conditions !== null) {
+	public function update(&$Model, $fields = null, $values = null, $conditions = null) {
+		if ($fields !== null && $values !== null) {
+			$data = array_combine($fields, $values);
+		} elseif($fields !== null && $conditions !== null) {
 			return $this->updateAll($Model, $fields, $conditions);
 
 		} else{
@@ -397,6 +396,9 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 	public function updateAll(&$Model, $fields = null,  $conditions = null) {
 		$fields = array('$set' => $fields);
 
+		$this->_stripAlias($conditions, $Model->alias);
+		$this->_stripAlias($fields, $Model->alias, false, 'value');
+
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
 			$result = $this->_db
@@ -454,8 +456,10 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
  * @access public
  */
 	public function delete(&$Model, $conditions = null) {
-
 		$id = null;
+
+		$conditions = $this->_stripAlias($conditions, $Model->alias);
+
 		if (empty($conditions)) {
 			$id = $Model->id;
 
@@ -474,6 +478,7 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 		$mongoCollectionObj = $this->_db
 			->selectCollection($Model->table);
 
+		$this->_stripAlias($conditions, $Model->alias);
 		$result = true;
 		if (!empty($conditions[$Model->alias . '._id']) && is_array($conditions[$Model->alias . '._id'])) {
 		//for Model::deleteAll()
@@ -516,6 +521,10 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 			$order = array_shift($order);
 		}
 
+		$this->_stripAlias($conditions, $Model->alias);
+		$this->_stripAlias($fields, $Model->alias, false, 'value');
+		$this->_stripAlias($order, $Model->alias, false, 'both');
+
 		if (!empty($conditions['_id']) && !is_object($conditions['_id'])) {
 			$conditions['_id'] = new MongoId((string)$conditions['_id']);
 		}
@@ -523,15 +532,6 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 		$fields = (is_array($fields)) ? $fields : array($fields);
 		$conditions = (is_array($conditions)) ? $conditions : array($conditions);
 		$order = (is_array($order)) ? $order : array($order);
-
-	/*
-	 * before update, model::save() check exist record with conditions key (ex: Post._id).
-	 * Convert Post._id to _id and make a MongoId object
-	 */
-		if (!empty($conditions[$Model->alias . '._id'])) {
-			$conditions['_id'] = new MongoId($conditions[$Model->alias . '._id']);
-			unset($conditions[$Model->alias . '._id']);
-		}
 
 		if (is_array($order)) {
 			foreach($order as $field => &$dir) {
@@ -648,6 +648,8 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
  *
  * Set timers, errors and refer to the parent
  * If there are arguments passed - inject them into the query
+ * Show MongoIds in a copy-and-paste-into-mongo format
+ *
  *
  * @param mixed $query
  * @param array $args array()
@@ -663,6 +665,8 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
 		$this->affected = null;
 		$this->error = $this->_db->lastError();
 		$this->numRows = null;
+
+		$query = preg_replace('@"ObjectId\((.*?)\)"@', 'ObjectId ("\1")', $query);
 		return parent::logQuery($query);
 	}
 
@@ -673,20 +677,58 @@ public function update(&$Model, $fields = null, $values = null, $conditions = nu
  * any objects the arrays might be holding (MongoID);
  *
  * @param array $args array()
- * @param int $recursive 0
+ * @param int $level 0 internal recursion counter
  * @return array
  * @access protected
  */
-	protected function _stringify(&$args = array(), $recursive = 0) {
+	protected function _stringify(&$args = array(), $level = 0) {
 		foreach($args as &$arg) {
 			if (is_array($arg)) {
-				$this->_stringify($arg, 1);
+				$this->_stringify($arg, $level + 1);
+			} elseif (is_object($arg) && is_callable(array($arg, '__toString'))) {
+				$arg = 'ObjectId(' . $arg->__toString() . ')';
 			}
-			if (is_object($arg) && is_callable(array($arg, '__toString'))) {
-				$arg = $arg->__toString();
-			}
-			if (!$recursive) {
+			if ($level === 0) {
 				$arg = json_encode($arg);
+			}
+		}
+	}
+
+/**
+ * Convert automatically array('Model.field' => 'foo') to array('field' => 'foo')
+ *
+ * This introduces the limitation that you can't have a (nested) field with the same name as the model
+ * But it's a small price to pay to be able to use other behaviors/functionality with mongoDB
+ *
+ * @param array $args array()
+ * @param string $alias 'Model'
+ * @param bool $recurse true
+ * @param string $check 'key', 'value' or 'both'
+ * @return void
+ * @access protected
+ */
+	protected function _stripAlias(&$args = array(), $alias = 'Model', $recurse = true, $check = 'key') {
+		if (!is_array($args)) {
+			return;
+		}
+		$checkKey = ($check === 'key' || $check === 'both');
+		$checkValue = ($check === 'value' || $check === 'both');
+
+		foreach($args as $key => &$val) {
+			if ($checkKey) {
+				if (strpos($key, $alias . '.') === 0) {
+					unset($args[$key]);
+					$key = substr($key, strlen($alias) + 1);
+					$args[$key] = $val;
+				}
+			}
+			if ($checkValue) {
+			   if (is_string($val) && strpos($val, $alias . '.') === 0) {
+					$val = substr($val, strlen($alias) + 1);
+			   }
+			}
+			if ($recurse && is_array($val)) {
+				$this->_stripAlias($val, $alias, true, $check);
 			}
 		}
 	}
