@@ -342,9 +342,7 @@ class MongodbSource extends DboSource {
 		if (empty($data['_id'])) {
 			$data['_id'] = new MongoId($Model->id);
 		} else {
-			if (!is_object($data['_id'])) {
-				$data['_id'] = new MongoId($data['_id']);
-			}
+			$this->_convertId($data['_id']);
 		}
 
 		try{
@@ -479,28 +477,16 @@ class MongodbSource extends DboSource {
 			->selectCollection($Model->table);
 
 		$this->_stripAlias($conditions, $Model->alias);
-		$result = true;
-		if (!empty($conditions[$Model->alias . '._id']) && is_array($conditions[$Model->alias . '._id'])) {
-		//for Model::deleteAll()
-			foreach ($conditions[$Model->alias . '._id'] as $val) {
-				$id = is_string($val) ? new MongoId($val) : $val;
-				try{
-					if (!$mongoCollectionObj->remove(array('_id' => $id))) {
-						$result = false;
-					}
-				} catch (MongoException $e) {
-					$result = false;
-					trigger_error($e->getMessage());
-				}
-			}
+		if (!empty($conditions['_id'])) {
+			$this->_convertId($conditions['_id']);
+		}
 
-		} else {
-			try{
-				$return = $mongoCollectionObj->remove($conditions);
-			} catch (MongoException $e) {
-				$result = false;
-				trigger_error($e->getMessage());
-			}
+		$result = true;
+		try{
+			$return = $mongoCollectionObj->remove($conditions);
+		} catch (MongoException $e) {
+			$result = false;
+			trigger_error($e->getMessage());
 		}
 		return $result;
 	}
@@ -526,7 +512,7 @@ class MongodbSource extends DboSource {
 		$this->_stripAlias($order, $Model->alias, false, 'both');
 
 		if (!empty($conditions['_id']) && !is_object($conditions['_id'])) {
-			$conditions['_id'] = new MongoId((string)$conditions['_id']);
+			$this->_convertId($conditions['_id']);
 		}
 
 		$fields = (is_array($fields)) ? $fields : array($fields);
@@ -668,6 +654,24 @@ class MongodbSource extends DboSource {
 
 		$query = preg_replace('@"ObjectId\((.*?)\)"@', 'ObjectId ("\1")', $query);
 		return parent::logQuery($query);
+	}
+
+/**
+ * convertId method
+ *
+ * @param mixed $mixed
+ * @return void
+ * @access protected
+ */
+	protected function _convertId(&$mixed) {
+		if (is_string($mixed) && strlen($mixed) === 24) {
+			$mixed = new MongoId($mixed);
+		}
+		if (is_array($mixed)) {
+			foreach($mixed as &$row) {
+				$this->_convertId($row);
+			}
+		}
 	}
 
 /**
