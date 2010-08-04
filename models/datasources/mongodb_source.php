@@ -506,7 +506,6 @@ class MongodbSource extends DboSource {
 		if (!empty($order[0])) {
 			$order = array_shift($order);
 		}
-
 		$this->_stripAlias($conditions, $Model->alias);
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
 		$this->_stripAlias($order, $Model->alias, false, 'both');
@@ -515,7 +514,7 @@ class MongodbSource extends DboSource {
 			$this->_convertId($conditions['_id']);
 		}
 
-		$fields = (is_array($fields)) ? $fields : array($fields);
+		$fields = (is_array($fields)) ? $fields : array($fields => 1);
 		$conditions = (is_array($conditions)) ? $conditions : array($conditions);
 		$order = (is_array($order)) ? $order : array($order);
 
@@ -535,7 +534,6 @@ class MongodbSource extends DboSource {
 		if (empty($offset) && $page && $limit) {
 			$offset = ($page - 1) * $limit;
 		}
-
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
 			->selectCollection($Model->table)
@@ -585,11 +583,7 @@ class MongodbSource extends DboSource {
  * @return void
  * @access protected
  */
-	protected function _execute($query) {
-		if (Configure::read()) {
-			debug(Debugger::trace()); //@ignore
-			debug ($query); die; //@ignore
-		}
+	protected function _execute($query, $params = array()) {
 	}
 
 /**
@@ -625,7 +619,7 @@ class MongodbSource extends DboSource {
 		if (!$this->fullDebug) {
 			return false;
 		}
-		$this->_startTime = getMicrotime();
+		$this->_startTime = microtime(true);
 		return true;
 	}
 
@@ -647,7 +641,7 @@ class MongodbSource extends DboSource {
 			$this->_stringify($args);
 			$query = String::insert($query, $args);
 		}
-		$this->took = round((getMicrotime() - $this->_startTime) * 1000, 0);
+		$this->took = round((microtime(true) - $this->_startTime) * 1000, 0);
 		$this->affected = null;
 		$this->error = $this->_db->lastError();
 		$this->numRows = null;
