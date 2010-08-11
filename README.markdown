@@ -12,11 +12,9 @@ There are some sample [controller actions: find,save,delete,deleteAll,updateAll]
 
 
 ## Author
-Yasushi Ichikawa (ichikaway)
+Yasushi Ichikawa ([ichikaway](http://twitter.com/ichikaway) )
 
-(http://twitter.com/ichikaway)
-
-(http://cake.eizoku.com/blog/)
+[AD7six](http://twitter.com/AD7six)
 
 
 ## Contributors

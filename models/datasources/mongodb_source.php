@@ -13,7 +13,7 @@
  *
  * Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
  *
- * Contributors: Predominant, Jrbasso, tkyk
+ * Contributors: Predominant, Jrbasso, tkyk, AD7six
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
