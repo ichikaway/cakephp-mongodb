@@ -55,6 +55,7 @@ class MongodbSource extends DboSource {
 /**
  * Base Config
  *
+ * @TODO must be public because the parent var is public
  * @var array
  * @access protected
  *
@@ -62,7 +63,7 @@ class MongodbSource extends DboSource {
  *    true: In read() method, convert MongoId object to string and set it to array 'id'.
  *    false: not convert and set.
  */
-	var $_baseConfig = array(
+	public $_baseConfig = array(
 		'set_string_id' => true,
 		'persistent' => false,
 		'host'       => 'localhost',
@@ -75,7 +76,7 @@ class MongodbSource extends DboSource {
  *
  * @var array
  */
-	var $columns = array(
+	public $columns = array(
 		'string' => array('name'  => 'varchar'),
 		'text' => array('name' => 'text'),
 		'integer' => array('name' => 'integer', 'formatter' => 'intval'),

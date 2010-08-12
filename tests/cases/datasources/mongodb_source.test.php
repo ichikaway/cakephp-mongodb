@@ -33,7 +33,7 @@ Mock::generate('AppModel', 'MockPost');
  * @subpackage    app.model.post
  */
 class Post extends AppModel {
-	var $useDbConfig = 'mongo_test';
+	public $useDbConfig = 'mongo_test';
 
 /**
  * mongoSchema property
@@ -41,7 +41,7 @@ class Post extends AppModel {
  * @var array
  * @access public
  */
-	var $mongoSchema = array(
+	public $mongoSchema = array(
 		'title' => array('type' => 'string'),
 		'body' => array('type' => 'string'),
 		'text' => array('type' => 'text'),
@@ -58,7 +58,7 @@ class Post extends AppModel {
  * @subpackage    mongodb.tests.cases.datasources
  */
 class MongoArticle extends AppModel {
-	var $useDbConfig = 'mongo_test';
+	public $useDbConfig = 'mongo_test';
 }
 
 /**
@@ -75,7 +75,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @var resource
  * @access public
  */
-	var $mongodb;
+	public $mongodb;
 
 /**
  * Base Config
@@ -84,7 +84,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  *
  */
-	var $_config = array(
+	protected $_config = array(
 		'datasource' => 'mongodb',
 		'host' => 'localhost',
 		'login' => '',
@@ -101,7 +101,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function startTest() {
+	public function startTest() {
 		$this->Mongo = new MongodbSource($this->_config);
 		ConnectionManager::create('mongo_test', $this->_config);
 
@@ -118,7 +118,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function endTest() {
+	public function endTest() {
 		$this->dropData();
 		unset($this->Post);
 	}
@@ -130,7 +130,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function insertData($data) {
+	public function insertData($data) {
 		$this->mongodb
 			->connection
 			->selectDB($this->_config['database'])
@@ -144,7 +144,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function dropData() {
+	public function dropData() {
 		$this->mongodb
 			->connection
 			->dropDB($this->_config['database']);
@@ -156,7 +156,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testConnect() {
+	public function testConnect() {
 		$result = $this->Mongo->connect();
 		$this->assertTrue($result);
 
@@ -170,7 +170,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testDisconnect() {
+	public function testDisconnect() {
 		$result = $this->Mongo->disconnect();
 		$this->assertTrue($result);
 		$this->assertFalse($this->Mongo->connected);
@@ -182,7 +182,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testListSources() {
+	public function testListSources() {
 		$this->assertTrue($this->mongodb->listSources());
 	}
 
@@ -192,7 +192,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testDescribe() {
+	public function testDescribe() {
 		$mockObj = new MockPost();
 
 		$result = $this->mongodb->describe($mockObj);
@@ -220,7 +220,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testFind() {
+	public function testFind() {
 		$data = array(
 			'title' => 'test',
 			'body' => 'aaaa',
@@ -243,7 +243,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testSave() {
+	public function testSave() {
 		$data = array(
 			'title' => 'test',
 			'body' => 'aaaa',
@@ -278,7 +278,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testSaveAll() {
+	public function testSaveAll() {
 		$saveData[0]['Post'] = array(
 			'title' => 'test1',
 			'body' => 'aaaa1',
@@ -330,7 +330,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testUpdate() {
+	public function testUpdate() {
 		$count0 = $this->Post->find('count');
 
 		$data = array(
@@ -416,7 +416,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testSort() {
+	public function testSort() {
 		$data = array(
 			'title' => 'AAA',
 			'body' => 'aaaa',
@@ -483,7 +483,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	function testSchemaless() {
+	public function testSchemaless() {
 		$toSave = array(
 			'title' => 'A test article',
 			'body' => str_repeat('Lorum ipsum ', 100),
