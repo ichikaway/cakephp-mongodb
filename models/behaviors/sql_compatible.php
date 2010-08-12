@@ -20,6 +20,7 @@
  * @since         v 1.0 (24-May-2010)
  * @license       http://www.opensource.org/licenses/mit-license.php The MIT License
  */
+
 /**
  * SqlCompatibleBehavior class
  *

@@ -23,6 +23,7 @@
  * @since         v 1.0 (24-May-2010)
  * @license       http://www.opensource.org/licenses/mit-license.php The MIT License
  */
+
 /**
  * SchemalessBehavior class
  *
@@ -32,10 +33,28 @@
  */
 class SchemalessBehavior extends ModelBehavior {
 
+/**
+ * name property
+ *
+ * @var string 'Schemaless'
+ * @access public
+ */
 	public $name = 'Schemaless';
 
+/**
+ * settings property
+ *
+ * @var array
+ * @access public
+ */
 	public $settings = array();
 
+/**
+ * defaultSettings property
+ *
+ * @var array
+ * @access protected
+ */
 	protected $_defaultSettings = array(
 	);
 
