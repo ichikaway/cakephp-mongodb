@@ -102,8 +102,15 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function startTest() {
-		$this->Mongo = new MongodbSource($this->_config);
+		$connections = ConnectionManager::enumConnectionObjects();
+
+		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'mongodbSource') {
+			$config = new DATABASE_CONFIG();
+			$this->_config = $config->test;
+		}
+
 		ConnectionManager::create('mongo_test', $this->_config);
+		$this->Mongo = new MongodbSource($this->_config);
 
 		$this->Post = ClassRegistry::init('Post');
 		$this->Post->setDataSource('mongo_test');
@@ -131,11 +138,15 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function insertData($data) {
-		$this->mongodb
-			->connection
-			->selectDB($this->_config['database'])
-			->selectCollection($this->Post->table)
-			->insert($data, true);
+		try {
+			$this->mongodb
+				->connection
+				->selectDB($this->_config['database'])
+				->selectCollection($this->Post->table)
+				->insert($data, true);
+		} catch (MongoException $e) {
+			trigger_error($e->getMessage());
+		}
 	}
 
 /**
@@ -145,9 +156,15 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function dropData() {
-		$this->mongodb
-			->connection
-			->dropDB($this->_config['database']);
+		try {
+			$this->mongodb
+				->connection
+				->selectDB($this->_config['database'])
+				->selectCollection($this->Post->table)
+				->drop();
+		} catch (MongoException $e) {
+			trigger_error($e->getMessage());
+		}
 	}
 
 /**

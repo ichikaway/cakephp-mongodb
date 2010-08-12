@@ -43,6 +43,14 @@ class MongodbSource extends DboSource {
 	protected $_db = null;
 
 /**
+ * Mongo Driver Version
+ *
+ * @var string
+ * @access protected
+ */
+	protected $_driverVersion = Mongo::VERSION;
+
+/**
  * startTime property
  *
  * If debugging is enabled, stores the (micro)time the current query started
@@ -68,7 +76,9 @@ class MongodbSource extends DboSource {
 		'persistent' => false,
 		'host'       => 'localhost',
 		'database'   => '',
-		'port'       => '27017'
+		'port'       => '27017',
+		'login'		=> '',
+		'password'	=> ''
 	);
 
 /**
@@ -135,18 +145,42 @@ class MongodbSource extends DboSource {
 /**
  * Connect to the database
  *
+ * If using 1.0.2 or above use the mongodb:// format to connect
+ * The connect syntax changed in version 1.0.2 - so check for that too
+ *
+ * If authentication information in present then authenticate the connection
+ *
  * @return boolean Connected
  * @access public
  */
 	public function connect() {
 		$this->connected = false;
-		$host = $this->config['host'] . ':' . $this->config['port'];
-		$this->connection = new Mongo($host, true, $this->config['persistent']);
+
 		try{
+			if (false && $this->_driverVersion >= '1.0.2' && $this->config['host'] != 'localhost') {
+				$host = "mongodb://";
+			} else {
+				$host = '';
+			}
+			$host .= $this->config['host'] . ':' . $this->config['port'];
+
+			if (false && $this->_driverVersion >= '1.0.2') {
+				$this->connection = new Mongo($host, array("persist" => $this->config['persistent']));
+			} else {
+				$this->connection = new Mongo($host, true, $this->config['persistent']);
+			}
+
 			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
+				if (!empty($this->config['login'])) {
+					$return = $this->_db->authenticate($this->config['login'], $this->config['password']);
+					if (!$return || !$return['ok']) {
+						trigger_error('MongodbSource::connect ' . $return['errmsg']);
+						return false;
+					}
+				}
 				$this->connected = true;
 			}
-		} catch (MongoException $e) {
+		} catch(MongoException $e) {
 			trigger_error($e->getMessage());
 		}
 		return $this->connected;
