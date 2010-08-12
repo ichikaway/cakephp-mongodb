@@ -109,6 +109,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->Post->setDataSource('mongo_test');
 
 		$this->mongodb =& ConnectionManager::getDataSource($this->Post->useDbConfig);
+		$this->dropData();
 	}
 
 /**
@@ -584,5 +585,49 @@ class MongodbSourceTest extends CakeTestCase {
 		));
 		$result = Set::extract($result, '/Post/title');
 		$this->assertEqual($expected, $result);
+	}
+
+	public function testOr() {
+		$mongoVersion = $this->mongodb->execute('db.version()');
+		$shouldSkip = version_compare($mongoVersion, '1.5.3', '<');
+		if ($this->skipIf($shouldSkip, '$or tests require at least version mongo version 1.5.3, currently using ' . $mongoVersion . ' %s')) {
+			return;
+		}
+
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create();
+
+		for ($i = 1; $i <= 20; $i++) {
+			$data = array(
+				'title' => "Article $i",
+				'subtitle' => "Sub Article $i",
+			);
+			$saveData['MongoArticle'] = $data;
+			$MongoArticle->create();
+			$MongoArticle->save($saveData);
+		}
+		$expected = $MongoArticle->find('all', array(
+			'conditions' => array(
+				'title' => array('$in' => array('Article 1', 'Article 10'))
+			),
+			'order' => array('number' => 'ASC')
+		));
+		$this->assertTrue(count($expected), 2);
+
+		$result = $MongoArticle->find('all', array(
+			'conditions' => array(
+				'$or' => array(
+					array('title' => 'Article 1'),
+					array('title' => 'Article 10'),
+				)
+			),
+			'order' => array('number' => 'ASC')
+		));
+		$this->assertEqual($result, $expected);
+
+		$log = $this->mongodb->getLog();
+		debug ($expected);
+		debug ($result);
+		debug(end($log['log']));
 	}
 }

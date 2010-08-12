@@ -317,7 +317,7 @@ class MongodbSource extends DboSource {
 		} catch (MongoException $e) {
 			trigger_error($e->getMessage());
 		}
-		false;
+		return false;
 	}
 
 /**
@@ -442,7 +442,6 @@ class MongodbSource extends DboSource {
 		}
 
 		return $return;
-
 	}
 
 /**
@@ -456,17 +455,18 @@ class MongodbSource extends DboSource {
 	public function delete(&$Model, $conditions = null) {
 		$id = null;
 
-		$conditions = $this->_stripAlias($conditions, $Model->alias);
+		$this->_stripAlias($conditions, $Model->alias);
+		if (!$conditions) {
+			$conditions = array();
+		}
 
 		if (empty($conditions)) {
 			$id = $Model->id;
-
-		} else if (is_array($conditions) && !empty($conditions['_id'])) {
+		} elseif (is_array($conditions) && !empty($conditions['_id'])) {
 			$id = $conditions['_id'];
-
-		} else if(!empty($conditions) && !is_array($conditions)) {
+		} elseif (!empty($conditions) && !is_array($conditions)) {
 			$id = $conditions;
-			$conditions = null;
+			$conditions = array();
 		}
 
 		if (!empty($id) && is_string($id)) {
@@ -481,11 +481,24 @@ class MongodbSource extends DboSource {
 			$this->_convertId($conditions['_id']);
 		}
 
-		$result = true;
+		$result = false;
 		try{
-			$return = $mongoCollectionObj->remove($conditions);
+			$this->_prepareLogQuery($Model); // just sets a timer
+			if (!$conditions)  {
+				$return = $mongoCollectionObj->drop();
+				if ($this->fullDebug) {
+					$this->logQuery("db.{$Model->useTable}.drop()");
+				}
+			} else {
+				$return = $mongoCollectionObj->remove($conditions);
+				if ($this->fullDebug) {
+					$this->logQuery("db.{$Model->useTable}.remove( :conditions )",
+						compact('conditions')
+					);
+				}
+			}
+			$result = true;
 		} catch (MongoException $e) {
-			$result = false;
 			trigger_error($e->getMessage());
 		}
 		return $result;
@@ -577,13 +590,28 @@ class MongodbSource extends DboSource {
 /**
  * execute method
  *
- * Should never reach here.
- *
  * @param mixed $query
+ * @param array $params array()
  * @return void
- * @access protected
+ * @access public
  */
-	protected function _execute($query, $params = array()) {
+	public function execute($query, $params = array()) {
+		$this->_prepareLogQuery($Model); // just sets a timer
+		$result = $this->_db
+			->execute($query, $params);
+		if ($this->fullDebug) {
+			if ($params) {
+				$this->logQuery(":query, :params",
+					compact('query', 'params')
+				);
+			} else {
+				$this->logQuery($query);
+			}
+		}
+		if ($result['ok']) {
+			return $result['retval'];
+		}
+		return $result;
 	}
 
 /**
@@ -658,7 +686,7 @@ class MongodbSource extends DboSource {
  * @access protected
  */
 	protected function _convertId(&$mixed) {
-		if (is_string($mixed) && strlen($mixed) === 24) {
+		if (is_string($mixed)) {
 			$mixed = new MongoId($mixed);
 		}
 		if (is_array($mixed)) {
