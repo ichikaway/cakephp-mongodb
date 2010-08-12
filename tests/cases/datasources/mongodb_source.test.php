@@ -157,11 +157,13 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	public function dropData() {
 		try {
-			$this->mongodb
+			$db = $this->mongodb
 				->connection
-				->selectDB($this->_config['database'])
-				->selectCollection($this->Post->table)
-				->drop();
+				->selectDB($this->_config['database']);
+
+			foreach($db->listCollections() as $collection) {
+				$collection->drop();
+			}
 		} catch (MongoException $e) {
 			trigger_error($e->getMessage());
 		}
