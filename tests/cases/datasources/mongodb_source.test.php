@@ -587,6 +587,12 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($expected, $result);
 	}
 
+/**
+ * testOr method
+ *
+ * @return void
+ * @access public
+ */
 	public function testOr() {
 		$mongoVersion = $this->mongodb->execute('db.version()');
 		$shouldSkip = version_compare($mongoVersion, '1.5.3', '<');
