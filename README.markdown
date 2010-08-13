@@ -13,7 +13,7 @@ To install the driver for use in a single application:
 	cd my/app/plugins
 	git clone git://github.com/ichikaway/mongoDB-Datasource.git mongodb
 
-To install the driver for use in any/ application(s)
+To install the driver for use in any/multiple application(s)
 
 	# where ROOT is the name of the directory parent to the base index.php of CakePHP.
 	cd ROOT/plugins
