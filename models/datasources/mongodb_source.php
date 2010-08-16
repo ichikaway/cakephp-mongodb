@@ -709,7 +709,6 @@ class MongodbSource extends DboSource {
 		$this->error = $this->_db->lastError();
 		$this->numRows = null;
 
-		$query = preg_replace('@"ObjectId\((.*?)\)"@', 'ObjectId ("\1")', $query);
 		return parent::logQuery($query);
 	}
 
@@ -747,7 +746,7 @@ class MongodbSource extends DboSource {
 			if (is_array($arg)) {
 				$this->_stringify($arg, $level + 1);
 			} elseif (is_object($arg) && is_callable(array($arg, '__toString'))) {
-				$arg = 'ObjectId(' . $arg->__toString() . ')';
+				$arg = $arg->__toString();
 			}
 			if ($level === 0) {
 				$arg = json_encode($arg);
