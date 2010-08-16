@@ -607,6 +607,53 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 /**
+ * testSpecificId method
+ *
+ * Test you can save specifying your own _id values - and update by _id
+ *
+ * @return void
+ * @access public
+ */
+	public function testSpecificId() {
+		$data = array(
+			'_id' => 123,
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb'
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$found = $this->Post->find('first', array(
+			'fields' => array('_id', 'title', 'body', 'text'),
+			'conditions' => array('_id' => 123)
+		));
+
+		$this->assertEqual($found, $saveData);
+
+		$data = array(
+			'_id' => 123,
+			'title' => 'test2',
+			'body' => 'aaaa2',
+			'text' => 'bbbb2'
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$found = $this->Post->find('first', array(
+			'fields' => array('_id', 'title', 'body', 'text'),
+			'conditions' => array('_id' => 123)
+		));
+		$this->assertEqual($found, $saveData);
+	}
+
+/**
  * testOr method
  *
  * @return void

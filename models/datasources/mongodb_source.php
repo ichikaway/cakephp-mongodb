@@ -313,6 +313,9 @@ class MongodbSource extends DboSource {
 		} else {
 			$data = $Model->data;
 		}
+		if (!empty($data['_id'])) {
+			$this->_convertId($data['_id']);
+		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
@@ -369,7 +372,6 @@ class MongodbSource extends DboSource {
 			$data = array_combine($fields, $values);
 		} elseif($fields !== null && $conditions !== null) {
 			return $this->updateAll($Model, $fields, $conditions);
-
 		} else{
 			$data = $Model->data;
 		}
@@ -390,6 +392,7 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		if (!empty($data['_id'])) {
+			$this->_convertId($data['_id']);
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 			$data = array('$set' => $data);
@@ -504,8 +507,9 @@ class MongodbSource extends DboSource {
 			$conditions = array();
 		}
 
-		if (!empty($id) && is_string($id)) {
-			$conditions['_id'] = new MongoId($id);
+		if (!empty($id)) {
+			$conditions['_id'] = $id;
+			$this->_convertId($conditions['_id']);
 		}
 
 		$mongoCollectionObj = $this->_db
@@ -558,7 +562,7 @@ class MongodbSource extends DboSource {
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
 		$this->_stripAlias($order, $Model->alias, false, 'both');
 
-		if (!empty($conditions['_id']) && !is_object($conditions['_id'])) {
+		if (!empty($conditions['_id'])) {
 			$this->_convertId($conditions['_id']);
 		}
 
@@ -683,6 +687,10 @@ class MongodbSource extends DboSource {
 			return false;
 		}
 		$this->_startTime = microtime(true);
+		$this->took = null;
+		$this->affected = null;
+		$this->error = null;
+		$this->numRows = null;
 		return true;
 	}
 
