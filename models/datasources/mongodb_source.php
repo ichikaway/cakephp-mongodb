@@ -470,12 +470,14 @@ class MongodbSource extends DboSource {
 
 		$return = $this->_defaultSchema;
 
-		$fields = array_keys($data);
-		foreach($fields as $field) {
-			if (in_array($field, array('created', 'modified', 'updated'))) {
-				$return[$field] = array('type' => 'datetime', 'null' => true);
-			} else {
-				$return[$field] = array('type' => 'string', 'length' => 2000);
+		if ($data) {
+			$fields = array_keys($data);
+			foreach($fields as $field) {
+				if (in_array($field, array('created', 'modified', 'updated'))) {
+					$return[$field] = array('type' => 'datetime', 'null' => true);
+				} else {
+					$return[$field] = array('type' => 'string', 'length' => 2000);
+				}
 			}
 		}
 
@@ -594,8 +596,9 @@ class MongodbSource extends DboSource {
 			->limit($limit)
 			->skip($offset);
 		if ($this->fullDebug) {
+			$count = $result->count();
 			$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
-				compact('conditions', 'fields', 'order', 'limit', 'offset')
+				compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
 			);
 		}
 
@@ -611,6 +614,11 @@ class MongodbSource extends DboSource {
 			}
 			$results[][$Model->alias] = $mongodata;
 		}
+		if ($Model->name == 'HotelTranslation') {
+			//debug ($this);
+			//die;
+		}
+
 		return $results;
 	}
 
@@ -715,7 +723,7 @@ class MongodbSource extends DboSource {
 		$this->took = round((microtime(true) - $this->_startTime) * 1000, 0);
 		$this->affected = null;
 		$this->error = $this->_db->lastError();
-		$this->numRows = null;
+		$this->numRows = !empty($args['count'])?$args['count']:null;
 
 		$query = preg_replace('@"ObjectId\((.*?)\)"@', 'ObjectId ("\1")', $query);
 		return parent::logQuery($query);
