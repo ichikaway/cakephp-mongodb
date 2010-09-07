@@ -562,6 +562,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(&$Model, $query = array()) {
+
 		$query = $this->_setEmptyArrayIfEmpty($query);
 		extract($query);
 
@@ -597,17 +598,39 @@ class MongodbSource extends DboSource {
 			$offset = ($page - 1) * $limit;
 		}
 		$this->_prepareLogQuery($Model); // just sets a timer
-		$result = $this->_db
-			->selectCollection($Model->table)
-			->find($conditions, $fields)
-			->sort($order)
-			->limit($limit)
-			->skip($offset);
-		if ($this->fullDebug) {
-			$count = $result->count();
-			$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
-				compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
-			);
+		if (empty($modify)) {
+			$result = $this->_db
+				->selectCollection($Model->table)
+				->find($conditions, $fields)
+				->sort($order)
+				->limit($limit)
+				->skip($offset);
+			if ($this->fullDebug) {
+				$count = $result->count();
+				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
+					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
+				);
+			}
+		} else {
+			$options = array_filter(array(
+				'findandmodify' => $Model->table,
+				'query' => $conditions,
+				'sort' => $order,
+				'remove' => !empty($remove),
+				'update' => array('$set' => $modify),
+				'new' => !empty($new),
+				'fields' => $fields,
+				'upsert' => !empty($upsert)
+			));
+			$result = $this->_db
+				->command($options);
+			if ($this->fullDebug) {
+				debug ($result); die;
+				$count = $result->count();
+				$this->logQuery("db.runCommand( :options )",
+					array('options' => array_filter($options), 'count' => 'count')
+				);
+			}
 		}
 
 		if ($Model->findQueryType === 'count') {
