@@ -625,7 +625,6 @@ class MongodbSource extends DboSource {
 			$result = $this->_db
 				->command($options);
 			if ($this->fullDebug) {
-				debug ($result); die;
 				$count = $result->count();
 				$this->logQuery("db.runCommand( :options )",
 					array('options' => array_filter($options), 'count' => 'count')
@@ -645,11 +644,6 @@ class MongodbSource extends DboSource {
 			}
 			$results[][$Model->alias] = $mongodata;
 		}
-		if ($Model->name == 'HotelTranslation') {
-			//debug ($this);
-			//die;
-		}
-
 		return $results;
 	}
 
