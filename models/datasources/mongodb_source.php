@@ -181,7 +181,8 @@ class MongodbSource extends DboSource {
 				$this->connected = true;
 			}
 		} catch(MongoException $e) {
-			trigger_error($e->getMessage());
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
 		}
 		return $this->connected;
 	}
@@ -323,7 +324,8 @@ class MongodbSource extends DboSource {
 				->selectCollection($Model->table)
 				->insert($data, true);
 		} catch (MongoException $e) {
-			trigger_error($e->getMessage());
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$Model->useTable}.insert( :data , true)", compact('data'));
@@ -353,7 +355,8 @@ class MongodbSource extends DboSource {
 				->selectCollection($Model->table)
 				->ensureIndex($keys, $params);
 		} catch (MongoException $e) {
-			trigger_error($e->getMessage());
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
 		}
 		return false;
 	}
@@ -386,7 +389,8 @@ class MongodbSource extends DboSource {
 			$mongoCollectionObj = $this->_db
 				->selectCollection($Model->table);
 		} catch (MongoException $e) {
-			trigger_error($e->getMessage());
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
 			return false;
 		}
 
@@ -400,7 +404,8 @@ class MongodbSource extends DboSource {
 			try{
 				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
 			} catch (MongoException $e) {
-				trigger_error($e->getMessage());
+				$this->error = $e->getMessage();
+				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$Model->useTable}.update( :conditions, :data, :params )",
@@ -411,7 +416,8 @@ class MongodbSource extends DboSource {
 			try{
 				$return = $mongoCollectionObj->save($data);
 			} catch (MongoException $e) {
-				trigger_error($e->getMessage());
+				$this->error = $e->getMessage();
+				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$Model->useTable}.save( :data )", compact('data'));
@@ -441,7 +447,8 @@ class MongodbSource extends DboSource {
 				->selectCollection($Model->table)
 				->update($conditions, $fields, array("multiple" => true));
 		} catch (MongoException $e) {
-			trigger_error($e->getMessage());
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
 		}
 
 		if ($this->fullDebug) {
@@ -540,7 +547,8 @@ class MongodbSource extends DboSource {
 			}
 			$result = true;
 		} catch (MongoException $e) {
-			trigger_error($e->getMessage());
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
 		}
 		return $result;
 	}
@@ -722,7 +730,9 @@ class MongodbSource extends DboSource {
 		}
 		$this->took = round((microtime(true) - $this->_startTime) * 1000, 0);
 		$this->affected = null;
-		$this->error = $this->_db->lastError();
+		if (empty($this->error)) {
+			$this->error = $this->_db->lastError();
+		}
 		$this->numRows = !empty($args['count'])?$args['count']:null;
 
 		$query = preg_replace('@"ObjectId\((.*?)\)"@', 'ObjectId ("\1")', $query);
@@ -738,6 +748,9 @@ class MongodbSource extends DboSource {
  */
 	protected function _convertId(&$mixed) {
 		if (is_string($mixed)) {
+			if (strlen($mixed) !== 24) {
+				return;
+			}
 			$mixed = new MongoId($mixed);
 		}
 		if (is_array($mixed)) {
