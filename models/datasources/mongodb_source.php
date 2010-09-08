@@ -597,6 +597,8 @@ class MongodbSource extends DboSource {
 		if (empty($offset) && $page && $limit) {
 			$offset = ($page - 1) * $limit;
 		}
+
+		$results = null;
 		$this->_prepareLogQuery($Model); // just sets a timer
 		if (empty($modify)) {
 			$result = $this->_db
@@ -625,7 +627,15 @@ class MongodbSource extends DboSource {
 			$result = $this->_db
 				->command($options);
 			if ($this->fullDebug) {
-				$count = $result->count();
+				if ($result['ok']) {
+					$count = 1;
+					if ($this->config['set_string_id'] && !empty($result['value']['_id']) && is_object($result['value']['_id'])) {
+						$result['value']['_id'] = $result['value']['_id']->__toString();
+					}
+					$results[][$Model->alias] = $result['value'];
+				} else {
+					$count = 0;
+				}
 				$this->logQuery("db.runCommand( :options )",
 					array('options' => array_filter($options), 'count' => 'count')
 				);
@@ -636,13 +646,14 @@ class MongodbSource extends DboSource {
 			return array(array($Model->alias => array('count' => $result->count())));
 		}
 
-		$results = null;
-		while ($result->hasNext()) {
-			$mongodata = $result->getNext();
-			if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
-				$mongodata['_id'] = $mongodata['_id']->__toString();
+		if (is_object($result)) {
+			while ($result->hasNext()) {
+				$mongodata = $result->getNext();
+				if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
+					$mongodata['_id'] = $mongodata['_id']->__toString();
+				}
+				$results[][$Model->alias] = $mongodata;
 			}
-			$results[][$Model->alias] = $mongodata;
 		}
 		return $results;
 	}
