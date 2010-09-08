@@ -660,6 +660,27 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * query method
+ *
+ * @param mixed $query
+ * @param array $params array()
+ * @return void
+ * @access public
+ */
+	public function query($query, $params = array()) {
+		$this->_prepareLogQuery($Model); // just sets a timer
+		$result = $this->_db
+			->command($query);
+		if ($this->fullDebug) {
+			$this->logQuery("db.runCommand( :query )", 	compact('query'));
+		}
+		if ($result['ok']) {
+			return $result['values'];
+		}
+		return $result;
+	}
+
+/**
  * execute method
  *
  * @param mixed $query
