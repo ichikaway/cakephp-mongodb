@@ -601,6 +601,18 @@ class MongodbSource extends DboSource {
 		$results = null;
 		$this->_prepareLogQuery($Model); // just sets a timer
 		if (empty($modify)) {
+			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
+				$count = $this->_db
+					->selectCollection($Model->table)
+					->count($conditions);
+				if ($this->fullDebug) {
+					$this->logQuery("db.{$Model->useTable}.count( :conditions )",
+						compact('conditions', 'count')
+					);
+				}
+				return array(array($Model->alias => array('count' => $count)));
+			}
+
 			$result = $this->_db
 				->selectCollection($Model->table)
 				->find($conditions, $fields)
