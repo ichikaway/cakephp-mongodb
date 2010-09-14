@@ -331,7 +331,7 @@ class MongodbSource extends DboSource {
 			$this->logQuery("db.{$Model->useTable}.insert( :data , true)", compact('data'));
 		}
 
-		if (!empty($result) && $result['ok'] === 1.0) {
+		if (!empty($result) && $result['ok']) {
 			$id = is_object($data['_id']) ? $data['_id']->__toString() : null;
 			$Model->setInsertID($id);
 			$Model->id = $id;
