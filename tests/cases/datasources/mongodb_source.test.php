@@ -702,4 +702,48 @@ class MongodbSourceTest extends CakeTestCase {
 		debug ($result);
 		debug(end($log['log']));
 	}
+
+/**
+ * testDeleteAll method
+ *
+ * @return void
+ * @access public
+ */
+	function testDeleteAll($cascade = true) {
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
+		$MongoArticle->save();
+
+		$MongoArticle->create(array('title' => 'Article 2', 'cat' => 1));
+		$MongoArticle->save();
+
+		$MongoArticle->create(array('title' => 'Article 3', 'cat' => 2));
+		$MongoArticle->save();
+
+		$MongoArticle->create(array('title' => 'Article 4', 'cat' => 2));
+		$MongoArticle->save();
+
+		$count = $MongoArticle->find('count');
+		$this->assertEqual($count, 4);
+
+		$MongoArticle->deleteAll(array('cat' => 2), $cascade);
+
+		$count = $MongoArticle->find('count');
+		$this->assertEqual($count, 2);
+
+		$MongoArticle->deleteAll(true, $cascade);
+
+		$count = $MongoArticle->find('count');
+		$this->assertFalse($count);
+	}
+
+/**
+ * testDeleteAllNoCascade method
+ *
+ * @return void
+ * @access public
+ */
+	function testDeleteAllNoCascade() {
+		$this->testDeleteAll(false);
+	}
 }
