@@ -507,27 +507,26 @@ class MongodbSource extends DboSource {
 			$conditions = array();
 		} elseif (empty($conditions)) {
 			$id = $Model->id;
-		} elseif (is_array($conditions) && !empty($conditions['_id'])) {
-			$id = $conditions['_id'];
 		} elseif (!empty($conditions) && !is_array($conditions)) {
 			$id = $conditions;
 			$conditions = array();
-		}
-
-		if (!empty($id)) {
-			$conditions['_id'] = $id;
-			$this->_convertId($conditions['_id']);
 		}
 
 		$mongoCollectionObj = $this->_db
 			->selectCollection($Model->table);
 
 		$this->_stripAlias($conditions, $Model->alias);
-		if (!empty($conditions['_id'])) {
+		if (!empty($id)) {
+			$conditions['_id'] = $id;
 			$this->_convertId($conditions['_id']);
+		} elseif (!empty($conditions['_id'])) {
+			$this->_convertId($conditions['_id']);
+			if (is_array($conditions['_id']) && isset($conditions['_id'][0])) {
+				$conditions['_id'] = array('$in' => $conditions['_id']);
+			}
 		}
 
-		$result = false;
+		$r = false;
 		try{
 			$this->_prepareLogQuery($Model); // just sets a timer
 			$return = $mongoCollectionObj->remove($conditions);
@@ -569,7 +568,11 @@ class MongodbSource extends DboSource {
 		}
 
 		$fields = (is_array($fields)) ? $fields : array($fields => 1);
-		$conditions = (is_array($conditions)) ? $conditions : array($conditions);
+		if ($conditions === true) {
+			$conditions = array();
+		} elseif (!is_array($conditions)) {
+			$conditions = array($conditions);
+		}
 		$order = (is_array($order)) ? $order : array($order);
 
 		if (is_array($order)) {
