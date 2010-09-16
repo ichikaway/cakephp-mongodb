@@ -873,7 +873,7 @@ class MongodbSource extends DboSource {
  * @return void
  * @access protected
  */
-protected function _stripAlias(&$args = array(), $alias = 'Model', $recurse = true, $check = 'key') {
+	protected function _stripAlias(&$args = array(), $alias = 'Model', $recurse = true, $check = 'key') {
 		if (!is_array($args)) {
 			return;
 		}
