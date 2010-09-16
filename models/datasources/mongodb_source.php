@@ -502,11 +502,10 @@ class MongodbSource extends DboSource {
 		$id = null;
 
 		$this->_stripAlias($conditions, $Model->alias);
-		if (!$conditions) {
-			$conditions = array();
-		}
 
-		if (empty($conditions)) {
+		if ($conditions === true) {
+			$conditions = array();
+		} elseif (empty($conditions)) {
 			$id = $Model->id;
 		} elseif (is_array($conditions) && !empty($conditions['_id'])) {
 			$id = $conditions['_id'];
@@ -531,18 +530,11 @@ class MongodbSource extends DboSource {
 		$result = false;
 		try{
 			$this->_prepareLogQuery($Model); // just sets a timer
-			if (!$conditions)  {
-				$return = $mongoCollectionObj->drop();
-				if ($this->fullDebug) {
-					$this->logQuery("db.{$Model->useTable}.drop()");
-				}
-			} else {
-				$return = $mongoCollectionObj->remove($conditions);
-				if ($this->fullDebug) {
-					$this->logQuery("db.{$Model->useTable}.remove( :conditions )",
-						compact('conditions')
-					);
-				}
+			$return = $mongoCollectionObj->remove($conditions);
+			if ($this->fullDebug) {
+				$this->logQuery("db.{$Model->useTable}.remove( :conditions )",
+					compact('conditions')
+				);
 			}
 			$result = true;
 		} catch (MongoException $e) {
@@ -790,8 +782,11 @@ class MongodbSource extends DboSource {
 		}
 		$this->took = round((microtime(true) - $this->_startTime) * 1000, 0);
 		$this->affected = null;
-		if (empty($this->error)) {
+		if (empty($this->error['err'])) {
 			$this->error = $this->_db->lastError();
+			if (!is_scalar($this->error)) {
+				$this->error = json_encode($this->error);
+			}
 		}
 		$this->numRows = !empty($args['count'])?$args['count']:null;
 
