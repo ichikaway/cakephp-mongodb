@@ -718,8 +718,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$MongoArticle->create(array('title' => 'Article 4', 'cat' => 2));
 		$MongoArticle->save();
 
-		$log = $this->mongodb->getLog();
-
 		$count = $MongoArticle->find('count');
 		$this->assertEqual($count, 4);
 
@@ -732,8 +730,6 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$count = $MongoArticle->find('count');
 		$this->assertFalse($count);
-
-		$log = $this->mongodb->getLog();
 	}
 
 /**

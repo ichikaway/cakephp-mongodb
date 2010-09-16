@@ -493,6 +493,9 @@ class MongodbSource extends DboSource {
 /**
  * Delete Data
  *
+ * For deleteAll(true, false) calls - conditions will arrive here as true - account for that and
+ * convert to an empty array
+ *
  * @param Model $Model Model Instance
  * @param array $conditions
  * @return boolean Update result
@@ -545,6 +548,8 @@ class MongodbSource extends DboSource {
 
 /**
  * Read Data
+ *
+ * For deleteAll(true) calls - the conditions will arrive here as true - account for that and switch to an empty array
  *
  * @param Model $Model Model Instance
  * @param array $query Query data
