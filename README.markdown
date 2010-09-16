@@ -28,8 +28,9 @@ To use this DB driver, install (obviously) and define a db source such as follow
 	class DATABASE_CONFIG {
 
 		public $mongo = array(
-			'driver' => 'mongodb.dbo_mongodb',
-			'database' => 'driver',
+			'driver' => 'mongodb',
+			'plugin' => 'mongodb',
+			'database' => 'app_db',
 			'host' => 'localhost',
 			'port' => 27017,
 			/* optional auth fields
