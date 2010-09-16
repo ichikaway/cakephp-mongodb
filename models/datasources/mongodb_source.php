@@ -496,6 +496,8 @@ class MongodbSource extends DboSource {
  * For deleteAll(true, false) calls - conditions will arrive here as true - account for that and
  * convert to an empty array
  *
+ * @TODO bench remove() v drop. if it's faster to drop - just drop the collection taking into
+ *  	account existing indexes (recreate just the indexes)
  * @param Model $Model Model Instance
  * @param array $conditions
  * @return boolean Update result
@@ -529,6 +531,7 @@ class MongodbSource extends DboSource {
 			}
 		}
 
+		$result = false;
 		$r = false;
 		try{
 			$this->_prepareLogQuery($Model); // just sets a timer
