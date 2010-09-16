@@ -1,4 +1,4 @@
-# mongoDB datasource for CakePHP
+# mongoDB driver for CakePHP
 
 ## Requirements
 PHP5, 
@@ -28,7 +28,7 @@ To use this DB driver, install (obviously) and define a db source such as follow
 	class DATABASE_CONFIG {
 
 		public $mongo = array(
-			'driver' => 'mongodb.mongodbSource',
+			'driver' => 'mongodb.dbo_mongodb',
 			'database' => 'driver',
 			'host' => 'localhost',
 			'port' => 27017,
@@ -43,7 +43,7 @@ Model files need to have mongoSchema property - or make use of the schemaless be
 Mongo uses a primary key named "\_id" (cannot be renamed). It can be any format you like but if you don't explicitly set it Mongo will use an automatic 24 character (uu)id.
 
 Before you start, you may find it useful to see [a model sample.](http://github.com/ichikaway/mongoDB-Datasource/blob/master/samples/models/post.php)
-There are also some sample [controller actions: find,save,delete,deleteAll,updateAll](http://github.com/ichikaway/mongoDB-Datasource/blob/master/samples/controllers/posts_controller.php) note that your controller code needs no specific code to use this datasource.
+There are also some sample [controller actions: find,save,delete,deleteAll,updateAll](http://github.com/ichikaway/mongoDB-Datasource/blob/master/samples/controllers/posts_controller.php) note that your controller code needs no specific code to use this driver.
 
 ## Author
 Yasushi Ichikawa ([ichikaway](http://twitter.com/ichikaway))

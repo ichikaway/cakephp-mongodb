@@ -1,8 +1,8 @@
 <?php
 /**
- * Test cases for the Cakephp mongoDB datasource.
+ * Test cases for the Cakephp mongoDB driver
  *
- * This datasource uses Pecl Mongo (http://php.net/mongo)
+ * This driver uses Pecl Mongo (http://php.net/mongo)
  * and is thus dependent on PHP 5.0 and greater.
  *
  * Copyright 2010, Yasushi Ichikawa http://github.com/ichikaway/
@@ -19,7 +19,8 @@
 /**
  * Import relevant classes for testing
  */
-App::import('Model', 'Mongodb.MongodbSource');
+App::import('Datasource', 'Mongodb', 'Mongodb');
+App::import('Model', 'AppModel');
 
 /**
  * Generate Mock Model
@@ -67,7 +68,7 @@ class MongoArticle extends AppModel {
  * @package       app
  * @subpackage    app.model.datasources
  */
-class MongodbSourceTest extends CakeTestCase {
+class DboMongodbTest extends CakeTestCase {
 
 /**
  * Database Instance
@@ -85,7 +86,8 @@ class MongodbSourceTest extends CakeTestCase {
  *
  */
 	protected $_config = array(
-		'datasource' => 'mongodb',
+		'driver' => 'Mongodb',
+		'plugin' => 'mongodb',
 		'host' => 'localhost',
 		'login' => '',
 		'password' => '',
@@ -104,13 +106,13 @@ class MongodbSourceTest extends CakeTestCase {
 	public function startTest() {
 		$connections = ConnectionManager::enumConnectionObjects();
 
-		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'mongodbSource') {
+		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'mongodb') {
 			$config = new DATABASE_CONFIG();
 			$this->_config = $config->test;
 		}
 
 		ConnectionManager::create('mongo_test', $this->_config);
-		$this->Mongo = new MongodbSource($this->_config);
+		$this->Mongo = new DboMongodb($this->_config);
 
 		$this->Post = ClassRegistry::init('Post');
 		$this->Post->setDataSource('mongo_test');

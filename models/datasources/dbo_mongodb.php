@@ -1,8 +1,8 @@
 <?php
 /**
- * A CakePHP datasource for the mongoDB (http://www.mongodb.org/) document-oriented database.
+ * A CakePHP driver for the mongoDB (http://www.mongodb.org/) document-oriented database.
  *
- * This datasource uses Pecl Mongo (http://php.net/mongo)
+ * This driver uses Pecl Mongo (http://php.net/mongo)
  * and is thus dependent on PHP 5.0 and greater.
  *
  * Original implementation by ichikaway(Yasushi Ichikawa) http://github.com/ichikaway/
@@ -32,7 +32,7 @@ App::import('Datasource', 'DboSource');
  * @package       mongodb
  * @subpackage    mongodb.models.datasources
  */
-class MongodbSource extends DboSource {
+class DboMongodb extends DboSource {
 
 /**
  * Database Instance
@@ -174,7 +174,7 @@ class MongodbSource extends DboSource {
 				if (!empty($this->config['login'])) {
 					$return = $this->_db->authenticate($this->config['login'], $this->config['password']);
 					if (!$return || !$return['ok']) {
-						trigger_error('MongodbSource::connect ' . $return['errmsg']);
+						trigger_error('DboMongodb::connect ' . $return['errmsg']);
 						return false;
 					}
 				}
