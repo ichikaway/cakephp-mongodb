@@ -696,11 +696,6 @@ class MongodbSourceTest extends CakeTestCase {
 			'order' => array('number' => 'ASC')
 		));
 		$this->assertEqual($result, $expected);
-
-		$log = $this->mongodb->getLog();
-		debug ($expected);
-		debug ($result);
-		debug(end($log['log']));
 	}
 
 /**
