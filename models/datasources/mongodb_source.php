@@ -495,6 +495,16 @@ class MongodbSource extends DboSource {
  *
  * For deleteAll(true, false) calls - conditions will arrive here as true - account for that and
  * convert to an empty array
+ * For deleteAll(array('some conditions')) calls - conditions will arrive here as:
+ *  array(
+ *  	Alias._id => array(1, 2, 3, ...)
+ *  )
+ *
+ * This format won't be understood by mongodb, it'll find 0 rows. convert to:
+ *
+ *  array(
+ *  	Alias._id => array('$in' => array(1, 2, 3, ...))
+ *  )
  *
  * @TODO bench remove() v drop. if it's faster to drop - just drop the collection taking into
  *  	account existing indexes (recreate just the indexes)
