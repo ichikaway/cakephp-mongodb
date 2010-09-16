@@ -89,12 +89,12 @@ class MongodbSource extends DboSource {
 	public $columns = array(
 		'string' => array('name'  => 'varchar'),
 		'text' => array('name' => 'text'),
-		'integer' => array('name' => 'integer', 'formatter' => 'intval'),
-		'float' => array('name' => 'float', 'formatter' => 'floatval'),
-		'datetime' => array('name' => 'datetime', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
-		'timestamp' => array('name' => 'timestamp', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
-		'time' => array('name' => 'time', 'format' => 'H:i:s', 'formatter' => 'date'),
-		'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'date'),
+		'integer' => array('name' => 'integer', 'format' => null, 'formatter' => 'intval'),
+		'float' => array('name' => 'float', 'format' => null, 'formatter' => 'floatval'),
+		'datetime' => array('name' => 'datetime', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
+		'timestamp' => array('name' => 'timestamp', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
+		'time' => array('name' => 'time', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
+		'date' => array('name' => 'date', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
 	);
 
 /**
@@ -873,7 +873,7 @@ class MongodbSource extends DboSource {
  * @return void
  * @access protected
  */
-	protected function _stripAlias(&$args = array(), $alias = 'Model', $recurse = true, $check = 'key') {
+protected function _stripAlias(&$args = array(), $alias = 'Model', $recurse = true, $check = 'key') {
 		if (!is_array($args)) {
 			return;
 		}
@@ -898,4 +898,20 @@ class MongodbSource extends DboSource {
 			}
 		}
 	}
+}
+
+/**
+ * MongoDbDateFormatter method
+ *
+ * This function cannot be in the class because of the way model save is written
+ *
+ * @param mixed $date null
+ * @return void
+ * @access public
+ */
+function MongoDbDateFormatter($date = null) {
+	if ($date) {
+		return new MongoDate($date);
+	}
+	return new MongoDate();
 }

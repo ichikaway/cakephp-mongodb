@@ -285,10 +285,8 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($data['body'], $resultData['body']);
 		$this->assertEqual($data['text'], $resultData['text']);
 
-		$dateRegex = '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/i';
-
-		$this->assertTrue(preg_match($dateRegex, $resultData['created']));
-		$this->assertTrue(preg_match($dateRegex, $resultData['modified']));
+		$this->assertTrue(is_a($resultData['created'], 'MongoDate'));
+		$this->assertTrue(is_a($resultData['modified'], 'MongoDate'));
 	}
 
 /**
@@ -324,10 +322,8 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($data['body'], $resultData['body']);
 		$this->assertEqual($data['text'], $resultData['text']);
 
-		$dateRegex = '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/i';
-
-		$this->assertTrue(preg_match($dateRegex, $resultData['created']));
-		$this->assertTrue(preg_match($dateRegex, $resultData['modified']));
+		$this->assertTrue(is_a($resultData['created'], 'MongoDate'));
+		$this->assertTrue(is_a($resultData['modified'], 'MongoDate'));
 
 		$resultData = $result[1]['Post'];
 		$this->assertEqual(6, count($resultData));
@@ -337,10 +333,8 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($data['body'], $resultData['body']);
 		$this->assertEqual($data['text'], $resultData['text']);
 
-		$dateRegex = '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/i';
-		$this->assertTrue(preg_match($dateRegex, $resultData['created']));
-		$this->assertTrue(preg_match($dateRegex, $resultData['modified']));
-
+		$this->assertTrue(is_a($resultData['created'], 'MongoDate'));
+		$this->assertTrue(is_a($resultData['modified'], 'MongoDate'));
 	}
 
 /**
