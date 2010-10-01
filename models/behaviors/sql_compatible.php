@@ -118,6 +118,15 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				$return = true;
 				continue;
 			}
+			if ($key === 'OR') {
+				$this->_translateConditions($Model, $value);
+				unset($conditions[$key]);
+				foreach($value as $key => $part) {
+					$conditions['$or'][][$key] = $part;
+				}
+				$return = true;
+				continue;
+			}
 			if (substr($key, -3) === 'NOT') {
 				// 'Special' case because it's awkward
 				$childKey = key($value);
@@ -138,6 +147,25 @@ class SqlCompatibleBehavior extends ModelBehavior {
 
 				$conditions[$childKey]['$not'][$operator] = $childValue;
 				unset($conditions['NOT']);
+				$return = true;
+				continue;
+			}
+			if (substr($key, -5) === ' LIKE') {
+				// 'Special' case because it's awkward
+				if ($value[0] === '%') {
+					$value = substr($value, 1);
+				} else {
+					$value = '^' . $value;
+				}
+				if (substr($value, -1) === '%') {
+					$value = substr($value, 0, -1);
+				} else {
+					$value .= '$';
+				}
+				$value = str_replace('%', '.*', $value);
+
+				$conditions[substr($key, 0, -5)] = new MongoRegex("/$value/i");
+				unset($conditions[$key]);
 				$return = true;
 				continue;
 			}
