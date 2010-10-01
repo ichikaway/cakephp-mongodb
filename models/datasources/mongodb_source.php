@@ -248,6 +248,10 @@ class MongodbSource extends DboSource {
 /**
  * Describe
  *
+ * Automatically bind the schemaless behavior if there is no explicit mongo schema.
+ * When called, if there is model data it will be used to derive a schema. a row is plucked
+ * out of the db and the data obtained used to derive the schema.
+ *
  * @param Model $Model
  * @return array if model instance has mongoSchema, return it.
  * @access public
@@ -260,6 +264,11 @@ class MongodbSource extends DboSource {
 			return $schema + $this->_defaultSchema;
 		} elseif (is_a($Model, 'Model') && !empty($Model->Behaviors)) {
 			$Model->Behaviors->attach('Mongodb.Schemaless');
+			if (!$Model->data) {
+				if ($this->_db->selectCollection($Model->table)->count()) {
+					return $this->deriveSchemaFromData($Model, $this->_db->selectCollection($Model->table)->findOne());
+				}
+			}
 		}
 		return $this->deriveSchemaFromData($Model);
 	}
@@ -595,10 +604,14 @@ class MongodbSource extends DboSource {
 
 		if (is_array($order)) {
 			foreach($order as $field => &$dir) {
-				if (strtoupper($dir) === 'ASC') {
+				if (is_numeric($field) || is_null($dir)) {
+					unset ($order[$field]);
+					continue;
+				}
+				if ($dir && strtoupper($dir) === 'ASC') {
 					$dir = 1;
 					continue;
-				} elseif (strtoupper($dir) === 'DESC') {
+				} elseif (!$dir || strtoupper($dir) === 'DESC') {
 					$dir = -1;
 					continue;
 				}
@@ -661,7 +674,7 @@ class MongodbSource extends DboSource {
 					$count = 0;
 				}
 				$this->logQuery("db.runCommand( :options )",
-					array('options' => array_filter($options), 'count' => 'count')
+					array('options' => array_filter($options), 'count' => $count)
 				);
 			}
 		}
@@ -852,10 +865,24 @@ class MongodbSource extends DboSource {
 			if (is_array($arg)) {
 				$this->_stringify($arg, $level + 1);
 			} elseif (is_object($arg) && is_callable(array($arg, '__toString'))) {
-				$arg = 'ObjectId(' . $arg->__toString() . ')';
+				$class = get_class($arg);
+				if ($class === 'MongoId') {
+					$arg = 'ObjectId(' . $arg->__toString() . ')';
+				} elseif ($class === 'MongoRegex') {
+					$arg = '_regexstart_' . $arg->__toString() . '_regexend_';
+				} else {
+					$arg = $class . '(' . $arg->__toString() . ')';
+				}
 			}
 			if ($level === 0) {
 				$arg = json_encode($arg);
+				if (strpos($arg, '_regexstart_')) {
+					preg_match_all('@"_regexstart_(.*?)_regexend_"@', $arg, $matches);
+					foreach($matches[0] as $i => $whole) {
+						$replace = stripslashes($matches[1][$i]);
+						$arg = str_replace($whole, $replace, $arg);
+					}
+				}
 			}
 		}
 	}
