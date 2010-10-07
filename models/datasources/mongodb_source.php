@@ -87,6 +87,7 @@ class MongodbSource extends DboSource {
  * @var array
  */
 	public $columns = array(
+		'boolean' => array('name' => 'boolean'),
 		'string' => array('name'  => 'varchar'),
 		'text' => array('name' => 'text'),
 		'integer' => array('name' => 'integer', 'format' => null, 'formatter' => 'intval'),
@@ -188,6 +189,41 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * Inserts multiple values into a table
+ *
+ * @param string $table
+ * @param string $fields
+ * @param array $values
+ * @access protected
+ */
+	function insertMulti($table, $fields, $values) {
+		$table = $this->fullTableName($table);
+
+		if (!is_array($fields) || !is_array($values)) {
+			return false;
+		}
+		$data = array();
+		foreach($values as $row) {
+			if (is_string($row)) {
+				$row = explode(', ', substr($row, 1, -1));
+			}
+			$data[] = array_combine($fields, $row);
+		}
+		$this->_prepareLogQuery($table); // just sets a timer
+		try{
+			$result = $this->_db
+				->selectCollection($table)
+				->batchInsert($data, array('safe' => true));
+		} catch (MongoException $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$table}.insertMulti( :data , array('safe' => true))", compact('data'));
+		}
+	}
+
+/**
  * check connection to the database
  *
  * @return boolean Connected
@@ -195,6 +231,25 @@ class MongodbSource extends DboSource {
  */
 	public function isConnected() {
 		return $this->connected;
+	}
+
+/**
+ * isInterfaceSupported method
+ *
+ * listSources is infact supported, however: cake expects it to return a complete list of all
+ * possible sources in the selected db - the possible list of collections is infinte, so it's
+ * faster and simpler to tell cake that the interface is /not/ supported so it assumes that
+ * <insert name of your table here> exist
+ *
+ * @param mixed $interface
+ * @return void
+ * @access public
+ */
+	public function isInterfaceSupported($interface) {
+		if ($interface === 'listSources') {
+			return false;
+		}
+		return parent::isInterfaceSupported($interface);
 	}
 
 /**
@@ -230,19 +285,15 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function listSources($data = null) {
-		return true;
-	/*
 		$list = $this->_db->listCollections();
-		if (empty($list)) {
-			return array();
-		} else {
-			$collections = null;
+		if (!empty($list)) {
+			$collections = array();
 			foreach($this->_db->listCollections() as $collection) {
 				$collections[] = $collection->getName();
 			}
 			return $collections;
 		}
-	 */
+		return true;
 	}
 
 /**
@@ -726,6 +777,23 @@ class MongodbSource extends DboSource {
 			return $result['values'];
 		}
 		return $result;
+	}
+
+/**
+ * Prepares a value, or an array of values for database queries by quoting and escaping them.
+ *
+ * @param mixed $data A value or an array of values to prepare.
+ * @param string $column The column into which this data will be inserted
+ * @param boolean $read Value to be used in READ or WRITE context
+ * @return mixed Prepared value or array of values.
+ * @access public
+ */
+	public function value($data, $column = null, $read = true) {
+		$return = parent::value($data, $column, $read);
+		if ($return === null && $data !== null) {
+			return $data;
+		}
+		return $return;
 	}
 
 /**
