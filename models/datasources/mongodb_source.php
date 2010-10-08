@@ -445,8 +445,8 @@ class MongodbSource extends DboSource {
 		}
 
 		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
-
 		$tables = '["' . implode($toDrop, '", "') . '"]';
+
 		return String::insert($return, compact('tables'));
 	}
 
