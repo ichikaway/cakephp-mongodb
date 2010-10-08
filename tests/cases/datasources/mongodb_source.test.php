@@ -202,7 +202,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function testListSources() {
-		$this->assertTrue($this->mongodb->listSources());
+		$this->assertTrue(is_array($this->mongodb->listSources()));
 	}
 
 /**

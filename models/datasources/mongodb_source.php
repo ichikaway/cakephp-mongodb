@@ -293,7 +293,7 @@ class MongodbSource extends DboSource {
 			}
 			return $collections;
 		}
-		return true;
+		return array();
 	}
 
 /**
@@ -436,12 +436,14 @@ class MongodbSource extends DboSource {
 			}
 		}
 		if (count($toDrop) === 1) {
-			return "db.{$toDrop[0]}.drop();";
-		}
-		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
+			$return = "db.{$toDrop[0]}.drop();";
+		} else {
+			$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
 
-		$tables = '["' . implode($toDrop, '", "') . '"]';
-		return String::insert($return, compact('tables'));
+			$tables = '["' . implode($toDrop, '", "') . '"]';
+			$return = String::insert($return, compact('tables'));
+		}
+		return $return;
 	}
 
 /**
@@ -800,6 +802,17 @@ class MongodbSource extends DboSource {
  */
 	public function rollback() {
 		return false;
+	}
+
+/**
+ * Deletes all the records in a table
+ *
+ * @param mixed $table A string or model class representing the table to be truncated
+ * @return boolean
+ * @access public
+ */
+	public function truncate($table) {
+		return $this->execute('db.' . $this->fullTableName($table) . '.remove();');
 	}
 
 /**
