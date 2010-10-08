@@ -119,10 +119,11 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				continue;
 			}
 			if ($key === 'OR') {
-				$this->_translateConditions($Model, $value);
 				unset($conditions[$key]);
 				foreach($value as $key => $part) {
-					$conditions['$or'][][$key] = $part;
+					$part = array($key => $part);
+					$this->_translateConditions($Model, $part);
+					$conditions['$or'][] = $part;
 				}
 				$return = true;
 				continue;
