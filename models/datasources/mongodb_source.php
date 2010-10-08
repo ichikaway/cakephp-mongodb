@@ -429,21 +429,25 @@ class MongodbSource extends DboSource {
 			trigger_error(__('Invalid schema object', true), E_USER_WARNING);
 			return null;
 		}
+		if ($tableName) {
+			return "db.{$tableName}.drop();";
+		}
+
 		$toDrop = array();
 		foreach ($schema->tables as $curTable => $columns) {
-			if (!$tableName || $tableName == $curTable) {
+			if ($tableName === $curTable) {
 				$toDrop[] = $curTable;
 			}
 		}
-		if (count($toDrop) === 1) {
-			$return = "db.{$toDrop[0]}.drop();";
-		} else {
-			$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
 
-			$tables = '["' . implode($toDrop, '", "') . '"]';
-			$return = String::insert($return, compact('tables'));
+		if (count($toDrop) === 1) {
+			return "db.{$toDrop[0]}.drop();";
 		}
-		return $return;
+
+		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
+
+		$tables = '["' . implode($toDrop, '", "') . '"]';
+		return String::insert($return, compact('tables'));
 	}
 
 /**
