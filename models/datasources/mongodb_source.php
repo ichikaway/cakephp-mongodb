@@ -401,6 +401,50 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * createSchema method
+ *
+ * Mongo no care for creating schema. Mongo work with no schema.
+ *
+ * @param mixed $schema
+ * @param mixed $tableName null
+ * @return void
+ * @access public
+ */
+	public function createSchema($schema, $tableName = null) {
+		return true;
+	}
+
+/**
+ * dropSchema method
+ *
+ * Return a command to drop each table
+ *
+ * @param mixed $schema
+ * @param mixed $tableName null
+ * @return void
+ * @access public
+ */
+	public function dropSchema($schema, $tableName = null) {
+		if (!is_a($schema, 'CakeSchema')) {
+			trigger_error(__('Invalid schema object', true), E_USER_WARNING);
+			return null;
+		}
+		$toDrop = array();
+		foreach ($schema->tables as $curTable => $columns) {
+			if (!$tableName || $tableName == $curTable) {
+				$toDrop[] = $curTable;
+			}
+		}
+		if (count($toDrop) === 1) {
+			return "db.{$toDrop[0]}.drop();";
+		}
+		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
+
+		$tables = '["' . implode($toDrop, '", "') . '"]';
+		return String::insert($return, compact('tables'));
+	}
+
+/**
  * ensureIndex method
  *
  * @param mixed $Model
@@ -799,12 +843,18 @@ class MongodbSource extends DboSource {
 /**
  * execute method
  *
+ * If there is no query or the query is true, execute has probably been called as part of a
+ * db-agnostic process which does not have a mongo equivalent, don't do anything.
+ *
  * @param mixed $query
  * @param array $params array()
  * @return void
  * @access public
  */
 	public function execute($query, $params = array()) {
+		if (!$query || $query === true) {
+			return;
+		}
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
 			->execute($query, $params);
