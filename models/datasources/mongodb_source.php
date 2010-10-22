@@ -899,9 +899,14 @@ class MongodbSource extends DboSource {
  */
 	protected function _setEmptyArrayIfEmpty($data) {
 		if (is_array($data)) {
+			$offsets = array('limit', 'offset');
 			foreach($data as $key => $value) {
 				if (empty($value)) {
-					$data[$key] = array();
+					if (in_array($key, $offsets)) {
+						$data[$key] = 0;
+					} else {
+						$data[$key] = array();
+					}
 				}
 			}
 			return $data;
