@@ -893,16 +893,16 @@ class MongodbSource extends DboSource {
 /**
  * Recursively Setup Empty arrays for data
  *
- * @param mixed $data Input Data
- * @return array
+ * @param mixed $data
+ * @param array $integers array('limit'
+ * @return void
  * @access protected
  */
-	protected function _setEmptyArrayIfEmpty($data) {
+	protected function _setEmptyArrayIfEmpty($data, $integers = array('limit', 'offset')) {
 		if (is_array($data)) {
-			$offsets = array('limit', 'offset');
 			foreach($data as $key => $value) {
 				if (empty($value)) {
-					if (in_array($key, $offsets)) {
+					if (in_array($key, $integers)) {
 						$data[$key] = 0;
 					} else {
 						$data[$key] = array();
