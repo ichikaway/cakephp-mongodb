@@ -681,7 +681,7 @@ class MongodbSource extends DboSource {
  */
 	public function read(&$Model, $query = array()) {
 
-		$query = $this->_setEmptyArrayIfEmpty($query);
+		$this->_setEmptyValues($query);
 		extract($query);
 
 		if (!empty($order[0])) {
@@ -891,27 +891,25 @@ class MongodbSource extends DboSource {
 	}
 
 /**
- * Recursively Setup Empty arrays for data
+ * Set empty values, arrays or integers, for the variables Mongo uses
  *
  * @param mixed $data
- * @param array $integers array('limit'
+ * @param array $integers array('limit', 'offset')
  * @return void
  * @access protected
  */
-	protected function _setEmptyArrayIfEmpty($data, $integers = array('limit', 'offset')) {
-		if (is_array($data)) {
-			foreach($data as $key => $value) {
-				if (empty($value)) {
-					if (in_array($key, $integers)) {
-						$data[$key] = 0;
-					} else {
-						$data[$key] = array();
-					}
+	protected function _setEmptyValues(&$data, $integers = array('limit', 'offset')) {
+		if (!is_array($data)) {
+			return;
+		}
+		foreach($data as $key => $value) {
+			if (empty($value)) {
+				if (in_array($key, $integers)) {
+					$data[$key] = 0;
+				} else {
+					$data[$key] = array();
 				}
 			}
-			return $data;
-		} else {
-			return empty($data) ? array() : $data;
 		}
 	}
 
