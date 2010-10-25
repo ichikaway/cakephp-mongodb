@@ -55,6 +55,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @access protected
  */
 	protected $_defaultSettings = array(
+		'convertDates' => true,
 		'operators' => array(
 			'!=' => '$ne',
 			'>' => '$gt',
@@ -82,6 +83,22 @@ class SqlCompatibleBehavior extends ModelBehavior {
 	}
 
 /**
+ * If requested, convert dates from MongoDate objects to standard date strings
+ *
+ * @param mixed $Model
+ * @param mixed $results
+ * @param mixed $primary
+ * @return void
+ * @access public
+ */
+	public function afterFind(&$Model, $results, $primary) {
+		if ($this->settings[$Model->alias]['convertDates']) {
+			return $this->convertDates($results);
+		}
+		return $results;
+	}
+
+/**
  * beforeFind method
  *
  * If conditions are an array ensure they are mongified
@@ -96,6 +113,24 @@ class SqlCompatibleBehavior extends ModelBehavior {
 			return $query;
 		}
 		return true;
+	}
+
+/**
+ * Convert MongoDate objects to strings for the purpose of view simplicity
+ *
+ * @param mixed $results
+ * @return void
+ * @access public
+ */
+	public function convertDates(&$results) {
+		if (is_array($results)) {
+			foreach($results as &$row) {
+				$this->convertDates($row);
+			}
+		} elseif (is_a($results, 'MongoDate')) {
+			$results = date('Y-M-d h:i:s', $results->sec);
+		}
+		return $results;
 	}
 
 /**
