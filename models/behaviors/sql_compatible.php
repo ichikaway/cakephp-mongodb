@@ -93,7 +93,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  */
 	public function afterFind(&$Model, $results, $primary) {
 		if ($this->settings[$Model->alias]['convertDates']) {
-			return $this->convertDates($results);
+			$this->convertDates($results);
 		}
 		return $results;
 	}
@@ -130,7 +130,6 @@ class SqlCompatibleBehavior extends ModelBehavior {
 		} elseif (is_a($results, 'MongoDate')) {
 			$results = date('Y-M-d h:i:s', $results->sec);
 		}
-		return $results;
 	}
 
 /**
