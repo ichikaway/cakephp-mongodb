@@ -1,5 +1,4 @@
 <?php
-
 /**
  * A CakePHP datasource for the mongoDB (http://www.mongodb.org/) document-oriented database.
  *
