@@ -1,4 +1,5 @@
 <?php
+
 /**
  * A CakePHP datasource for the mongoDB (http://www.mongodb.org/) document-oriented database.
  *
@@ -33,6 +34,18 @@ App::import('Datasource', 'DboSource');
  * @subpackage    mongodb.models.datasources
  */
 class MongodbSource extends DboSource {
+
+/**
+ * Are we connected to the DataSource?
+ *
+ * true - yes
+ * null - haven't tried yet
+ * false - nope, and we can't connect
+ *
+ * @var boolean
+ * @access public
+ */
+	var $connected = null;
 
 /**
  * Database Instance
@@ -110,14 +123,17 @@ class MongodbSource extends DboSource {
 	);
 
 /**
- * Constructor
+ * construct method
+ *
+ * By default don't try to connect until you need to
  *
  * @param array $config Configuration array
+ * @param bool $autoConnect false
+ * @return void
  * @access public
  */
-	public function __construct($config = array()) {
-		parent::__construct($config);
-		$this->connect();
+	function __construct($config = array(), $autoConnect = false) {
+		return parent::__construct($config, $autoConnect);
 	}
 
 /**
@@ -194,7 +210,7 @@ class MongodbSource extends DboSource {
  * @param string $table
  * @param string $fields
  * @param array $values
- * @access protected
+ * @access public
  */
 	public function insertMulti($table, $fields, $values) {
 		$table = $this->fullTableName($table);
@@ -230,7 +246,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function isConnected() {
-		return $this->connected;
+		if ($this->connected === false) {
+			return false;
+		}
+		return $this->connect();
 	}
 
 /**
@@ -285,7 +304,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function listSources($data = null) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -373,7 +392,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function create(&$Model, $fields = null, $values = null) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -433,7 +452,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function dropSchema($schema, $tableName = null) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -472,7 +491,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function distinct(&$Model, $keys = array(), $params = array()) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -506,7 +525,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function ensureIndex(&$Model, $keys = array(), $params = array()) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -537,7 +556,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function update(&$Model, $fields = null, $values = null, $conditions = null) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -605,7 +624,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function updateAll(&$Model, $fields = null,  $conditions = null) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -688,7 +707,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function delete(&$Model, $conditions = null) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -748,7 +767,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(&$Model, $query = array()) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -887,7 +906,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function truncate($table) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -903,7 +922,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function query($query, $params = array()) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
@@ -948,7 +967,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function execute($query, $params = array()) {
-		if (!$this->connected) {
+		if (!$this->isConnected()) {
 			return false;
 		}
 
