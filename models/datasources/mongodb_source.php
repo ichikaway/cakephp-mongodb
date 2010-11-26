@@ -196,7 +196,7 @@ class MongodbSource extends DboSource {
  * @param array $values
  * @access protected
  */
-	function insertMulti($table, $fields, $values) {
+	public function insertMulti($table, $fields, $values) {
 		$table = $this->fullTableName($table);
 
 		if (!is_array($fields) || !is_array($values)) {
@@ -285,6 +285,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function listSources($data = null) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		$list = $this->_db->listCollections();
 		if (!empty($list)) {
 			$collections = array();
@@ -313,7 +317,7 @@ class MongodbSource extends DboSource {
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
 			$schema = $Model->mongoSchema;
 			return $schema + $this->_defaultSchema;
-		} elseif (is_a($Model, 'Model') && !empty($Model->Behaviors)) {
+		} elseif ($this->connected && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
 			$Model->Behaviors->attach('Mongodb.Schemaless');
 			if (!$Model->data) {
 				if ($this->_db->selectCollection($Model->table)->count()) {
@@ -369,6 +373,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function create(&$Model, $fields = null, $values = null) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
 		} else {
@@ -425,6 +433,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function dropSchema($schema, $tableName = null) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		if (!is_a($schema, 'CakeSchema')) {
 			trigger_error(__('Invalid schema object', true), E_USER_WARNING);
 			return null;
@@ -451,6 +463,40 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * distinct method
+ *
+ * @param mixed $Model
+ * @param array $keys array()
+ * @param array $params array()
+ * @return void
+ * @access public
+ */
+	public function distinct(&$Model, $keys = array(), $params = array()) {
+		if (!$this->connected) {
+			return false;
+		}
+
+		$this->_prepareLogQuery($Model); // just sets a timer
+
+		if (array_key_exists('conditions', $params)) {
+			$params = $params['conditions'];
+		}
+		try{
+			return $this->_db
+				->selectCollection($Model->table)
+				->distinct($keys, $params);
+		} catch (MongoException $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$Model->useTable}.distinct( :keys, :params )", compact('keys', 'params'));
+		}
+
+		return false;
+	}
+
+/**
  * ensureIndex method
  *
  * @param mixed $Model
@@ -460,6 +506,12 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function ensureIndex(&$Model, $keys = array(), $params = array()) {
+		if (!$this->connected) {
+			return false;
+		}
+
+		$this->_prepareLogQuery($Model); // just sets a timer
+
 		try{
 			return $this->_db
 				->selectCollection($Model->table)
@@ -468,6 +520,10 @@ class MongodbSource extends DboSource {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$Model->useTable}.ensureIndex( :keys, :params )", compact('keys', 'params'));
+		}
+
 		return false;
 	}
 
@@ -481,6 +537,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function update(&$Model, $fields = null, $values = null, $conditions = null) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
 		} elseif($fields !== null && $conditions !== null) {
@@ -545,6 +605,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function updateAll(&$Model, $fields = null,  $conditions = null) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		$fields = array('$set' => $fields);
 
 		$this->_stripAlias($conditions, $Model->alias);
@@ -624,6 +688,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function delete(&$Model, $conditions = null) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		$id = null;
 
 		$this->_stripAlias($conditions, $Model->alias);
@@ -680,6 +748,9 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(&$Model, $query = array()) {
+		if (!$this->connected) {
+			return false;
+		}
 
 		$this->_setEmptyValues($query);
 		extract($query);
@@ -816,6 +887,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function truncate($table) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		return $this->execute('db.' . $this->fullTableName($table) . '.remove();');
 	}
 
@@ -828,6 +903,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function query($query, $params = array()) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
 			->command($query);
@@ -869,6 +948,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function execute($query, $params = array()) {
+		if (!$this->connected) {
+			return false;
+		}
+
 		if (!$query || $query === true) {
 			return;
 		}
@@ -1054,9 +1137,9 @@ class MongodbSource extends DboSource {
 				}
 			}
 			if ($checkValue) {
-			   if (is_string($val) && strpos($val, $alias . '.') === 0) {
+				if (is_string($val) && strpos($val, $alias . '.') === 0) {
 					$val = substr($val, strlen($alias) + 1);
-			   }
+				}
 			}
 			if ($recurse && is_array($val)) {
 				$this->_stripAlias($val, $alias, true, $check);
