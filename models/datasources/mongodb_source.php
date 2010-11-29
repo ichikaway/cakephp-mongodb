@@ -35,6 +35,18 @@ App::import('Datasource', 'DboSource');
 class MongodbSource extends DboSource {
 
 /**
+ * Are we connected to the DataSource?
+ *
+ * true - yes
+ * null - haven't tried yet
+ * false - nope, and we can't connect
+ *
+ * @var boolean
+ * @access public
+ */
+	var $connected = null;
+
+/**
  * Database Instance
  *
  * @var resource
@@ -87,6 +99,7 @@ class MongodbSource extends DboSource {
  * @var array
  */
 	public $columns = array(
+		'boolean' => array('name' => 'boolean'),
 		'string' => array('name'  => 'varchar'),
 		'text' => array('name' => 'text'),
 		'integer' => array('name' => 'integer', 'format' => null, 'formatter' => 'intval'),
@@ -109,14 +122,17 @@ class MongodbSource extends DboSource {
 	);
 
 /**
- * Constructor
+ * construct method
+ *
+ * By default don't try to connect until you need to
  *
  * @param array $config Configuration array
+ * @param bool $autoConnect false
+ * @return void
  * @access public
  */
-	public function __construct($config = array()) {
-		parent::__construct($config);
-		$this->connect();
+	function __construct($config = array(), $autoConnect = false) {
+		return parent::__construct($config, $autoConnect);
 	}
 
 /**
@@ -188,13 +204,70 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * Inserts multiple values into a table
+ *
+ * @param string $table
+ * @param string $fields
+ * @param array $values
+ * @access public
+ */
+	public function insertMulti($table, $fields, $values) {
+		$table = $this->fullTableName($table);
+
+		if (!is_array($fields) || !is_array($values)) {
+			return false;
+		}
+		$data = array();
+		foreach($values as $row) {
+			if (is_string($row)) {
+				$row = explode(', ', substr($row, 1, -1));
+			}
+			$data[] = array_combine($fields, $row);
+		}
+		$this->_prepareLogQuery($table); // just sets a timer
+		try{
+			$result = $this->_db
+				->selectCollection($table)
+				->batchInsert($data, array('safe' => true));
+		} catch (MongoException $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$table}.insertMulti( :data , array('safe' => true))", compact('data'));
+		}
+	}
+
+/**
  * check connection to the database
  *
  * @return boolean Connected
  * @access public
  */
 	public function isConnected() {
-		return $this->connected;
+		if ($this->connected === false) {
+			return false;
+		}
+		return $this->connect();
+	}
+
+/**
+ * isInterfaceSupported method
+ *
+ * listSources is infact supported, however: cake expects it to return a complete list of all
+ * possible sources in the selected db - the possible list of collections is infinte, so it's
+ * faster and simpler to tell cake that the interface is /not/ supported so it assumes that
+ * <insert name of your table here> exist
+ *
+ * @param mixed $interface
+ * @return void
+ * @access public
+ */
+	public function isInterfaceSupported($interface) {
+		if ($interface === 'listSources') {
+			return false;
+		}
+		return parent::isInterfaceSupported($interface);
 	}
 
 /**
@@ -234,23 +307,27 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function listSources($data = null) {
-		return true;
-	/*
+		if (!$this->isConnected()) {
+			return false;
+		}
+
 		$list = $this->_db->listCollections();
-		if (empty($list)) {
-			return array();
-		} else {
-			$collections = null;
+		if (!empty($list)) {
+			$collections = array();
 			foreach($this->_db->listCollections() as $collection) {
 				$collections[] = $collection->getName();
 			}
 			return $collections;
 		}
-	 */
+		return array();
 	}
 
 /**
  * Describe
+ *
+ * Automatically bind the schemaless behavior if there is no explicit mongo schema.
+ * When called, if there is model data it will be used to derive a schema. a row is plucked
+ * out of the db and the data obtained used to derive the schema.
  *
  * @param Model $Model
  * @return array if model instance has mongoSchema, return it.
@@ -262,8 +339,13 @@ class MongodbSource extends DboSource {
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
 			$schema = $Model->mongoSchema;
 			return $schema + $this->_defaultSchema;
-		} elseif (is_a($Model, 'Model') && !empty($Model->Behaviors)) {
+		} elseif ($this->connected && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
 			$Model->Behaviors->attach('Mongodb.Schemaless');
+			if (!$Model->data) {
+				if ($this->_db->selectCollection($Model->table)->count()) {
+					return $this->deriveSchemaFromData($Model, $this->_db->selectCollection($Model->table)->findOne());
+				}
+			}
 		}
 		return $this->deriveSchemaFromData($Model);
 	}
@@ -313,6 +395,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function create(&$Model, $fields = null, $values = null) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
 		} else {
@@ -345,6 +431,94 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * createSchema method
+ *
+ * Mongo no care for creating schema. Mongo work with no schema.
+ *
+ * @param mixed $schema
+ * @param mixed $tableName null
+ * @return void
+ * @access public
+ */
+	public function createSchema($schema, $tableName = null) {
+		return true;
+	}
+
+/**
+ * dropSchema method
+ *
+ * Return a command to drop each table
+ *
+ * @param mixed $schema
+ * @param mixed $tableName null
+ * @return void
+ * @access public
+ */
+	public function dropSchema($schema, $tableName = null) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
+		if (!is_a($schema, 'CakeSchema')) {
+			trigger_error(__('Invalid schema object', true), E_USER_WARNING);
+			return null;
+		}
+		if ($tableName) {
+			return "db.{$tableName}.drop();";
+		}
+
+		$toDrop = array();
+		foreach ($schema->tables as $curTable => $columns) {
+			if ($tableName === $curTable) {
+				$toDrop[] = $curTable;
+			}
+		}
+
+		if (count($toDrop) === 1) {
+			return "db.{$toDrop[0]}.drop();";
+		}
+
+		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
+		$tables = '["' . implode($toDrop, '", "') . '"]';
+
+		return String::insert($return, compact('tables'));
+	}
+
+/**
+ * distinct method
+ *
+ * @param mixed $Model
+ * @param array $keys array()
+ * @param array $params array()
+ * @return void
+ * @access public
+ */
+	public function distinct(&$Model, $keys = array(), $params = array()) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
+		$this->_prepareLogQuery($Model); // just sets a timer
+
+		if (array_key_exists('conditions', $params)) {
+			$params = $params['conditions'];
+		}
+		try{
+			return $this->_db
+				->selectCollection($Model->table)
+				->distinct($keys, $params);
+		} catch (MongoException $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$Model->useTable}.distinct( :keys, :params )", compact('keys', 'params'));
+		}
+
+		return false;
+	}
+
+/**
  * ensureIndex method
  *
  * @param mixed $Model
@@ -354,6 +528,12 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function ensureIndex(&$Model, $keys = array(), $params = array()) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
+		$this->_prepareLogQuery($Model); // just sets a timer
+
 		try{
 			return $this->_db
 				->selectCollection($Model->table)
@@ -362,6 +542,10 @@ class MongodbSource extends DboSource {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$Model->useTable}.ensureIndex( :keys, :params )", compact('keys', 'params'));
+		}
+
 		return false;
 	}
 
@@ -375,6 +559,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function update(&$Model, $fields = null, $values = null, $conditions = null) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
 		} elseif($fields !== null && $conditions !== null) {
@@ -439,6 +627,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function updateAll(&$Model, $fields = null,  $conditions = null) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
 		$fields = array('$set' => $fields);
 
 		$this->_stripAlias($conditions, $Model->alias);
@@ -518,6 +710,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function delete(&$Model, $conditions = null) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
 		$id = null;
 
 		$this->_stripAlias($conditions, $Model->alias);
@@ -574,8 +770,11 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(&$Model, $query = array()) {
+		if (!$this->isConnected()) {
+			return false;
+		}
 
-		$query = $this->_setEmptyArrayIfEmpty($query);
+		$this->_setEmptyValues($query);
 		extract($query);
 
 		if (!empty($order[0])) {
@@ -599,10 +798,14 @@ class MongodbSource extends DboSource {
 
 		if (is_array($order)) {
 			foreach($order as $field => &$dir) {
-				if (strtoupper($dir) === 'ASC') {
+				if (is_numeric($field) || is_null($dir)) {
+					unset ($order[$field]);
+					continue;
+				}
+				if ($dir && strtoupper($dir) === 'ASC') {
 					$dir = 1;
 					continue;
-				} elseif (strtoupper($dir) === 'DESC') {
+				} elseif (!$dir || strtoupper($dir) === 'DESC') {
 					$dir = -1;
 					continue;
 				}
@@ -665,7 +868,7 @@ class MongodbSource extends DboSource {
 					$count = 0;
 				}
 				$this->logQuery("db.runCommand( :options )",
-					array('options' => array_filter($options), 'count' => 'count')
+					array('options' => array_filter($options), 'count' => $count)
 				);
 			}
 		}
@@ -699,6 +902,21 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * Deletes all the records in a table
+ *
+ * @param mixed $table A string or model class representing the table to be truncated
+ * @return boolean
+ * @access public
+ */
+	public function truncate($table) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
+		return $this->execute('db.' . $this->fullTableName($table) . '.remove();');
+	}
+
+/**
  * query method
  *
  * @param mixed $query
@@ -707,6 +925,10 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function query($query, $params = array()) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
 			->command($query);
@@ -720,7 +942,27 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * Prepares a value, or an array of values for database queries by quoting and escaping them.
+ *
+ * @param mixed $data A value or an array of values to prepare.
+ * @param string $column The column into which this data will be inserted
+ * @param boolean $read Value to be used in READ or WRITE context
+ * @return mixed Prepared value or array of values.
+ * @access public
+ */
+	public function value($data, $column = null, $read = true) {
+		$return = parent::value($data, $column, $read);
+		if ($return === null && $data !== null) {
+			return $data;
+		}
+		return $return;
+	}
+
+/**
  * execute method
+ *
+ * If there is no query or the query is true, execute has probably been called as part of a
+ * db-agnostic process which does not have a mongo equivalent, don't do anything.
  *
  * @param mixed $query
  * @param array $params array()
@@ -728,6 +970,13 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function execute($query, $params = array()) {
+		if (!$this->isConnected()) {
+			return false;
+		}
+
+		if (!$query || $query === true) {
+			return;
+		}
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
 			->execute($query, $params);
@@ -747,22 +996,25 @@ class MongodbSource extends DboSource {
 	}
 
 /**
- * Recursively Setup Empty arrays for data
+ * Set empty values, arrays or integers, for the variables Mongo uses
  *
- * @param mixed $data Input Data
- * @return array
+ * @param mixed $data
+ * @param array $integers array('limit', 'offset')
+ * @return void
  * @access protected
  */
-	protected function _setEmptyArrayIfEmpty($data) {
-		if (is_array($data)) {
-			foreach($data as $key => $value) {
-				if (empty($value)) {
+	protected function _setEmptyValues(&$data, $integers = array('limit', 'offset')) {
+		if (!is_array($data)) {
+			return;
+		}
+		foreach($data as $key => $value) {
+			if (empty($value)) {
+				if (in_array($key, $integers)) {
+					$data[$key] = 0;
+				} else {
 					$data[$key] = array();
 				}
 			}
-			return $data;
-		} else {
-			return empty($data) ? array() : $data;
 		}
 	}
 
@@ -856,10 +1108,24 @@ class MongodbSource extends DboSource {
 			if (is_array($arg)) {
 				$this->_stringify($arg, $level + 1);
 			} elseif (is_object($arg) && is_callable(array($arg, '__toString'))) {
-				$arg = 'ObjectId(' . $arg->__toString() . ')';
+				$class = get_class($arg);
+				if ($class === 'MongoId') {
+					$arg = 'ObjectId(' . $arg->__toString() . ')';
+				} elseif ($class === 'MongoRegex') {
+					$arg = '_regexstart_' . $arg->__toString() . '_regexend_';
+				} else {
+					$arg = $class . '(' . $arg->__toString() . ')';
+				}
 			}
 			if ($level === 0) {
 				$arg = json_encode($arg);
+				if (strpos($arg, '_regexstart_')) {
+					preg_match_all('@"_regexstart_(.*?)_regexend_"@', $arg, $matches);
+					foreach($matches[0] as $i => $whole) {
+						$replace = stripslashes($matches[1][$i]);
+						$arg = str_replace($whole, $replace, $arg);
+					}
+				}
 			}
 		}
 	}
@@ -893,9 +1159,9 @@ class MongodbSource extends DboSource {
 				}
 			}
 			if ($checkValue) {
-			   if (is_string($val) && strpos($val, $alias . '.') === 0) {
+				if (is_string($val) && strpos($val, $alias . '.') === 0) {
 					$val = substr($val, strlen($alias) + 1);
-			   }
+				}
 			}
 			if ($recurse && is_array($val)) {
 				$this->_stripAlias($val, $alias, true, $check);

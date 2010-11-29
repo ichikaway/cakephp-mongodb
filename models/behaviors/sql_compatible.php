@@ -55,6 +55,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @access protected
  */
 	protected $_defaultSettings = array(
+		'convertDates' => true,
 		'operators' => array(
 			'!=' => '$ne',
 			'>' => '$gt',
@@ -82,6 +83,22 @@ class SqlCompatibleBehavior extends ModelBehavior {
 	}
 
 /**
+ * If requested, convert dates from MongoDate objects to standard date strings
+ *
+ * @param mixed $Model
+ * @param mixed $results
+ * @param mixed $primary
+ * @return void
+ * @access public
+ */
+	public function afterFind(&$Model, $results, $primary) {
+		if ($this->settings[$Model->alias]['convertDates']) {
+			$this->convertDates($results);
+		}
+		return $results;
+	}
+
+/**
  * beforeFind method
  *
  * If conditions are an array ensure they are mongified
@@ -96,6 +113,23 @@ class SqlCompatibleBehavior extends ModelBehavior {
 			return $query;
 		}
 		return true;
+	}
+
+/**
+ * Convert MongoDate objects to strings for the purpose of view simplicity
+ *
+ * @param mixed $results
+ * @return void
+ * @access public
+ */
+	public function convertDates(&$results) {
+		if (is_array($results)) {
+			foreach($results as &$row) {
+				$this->convertDates($row);
+			}
+		} elseif (is_a($results, 'MongoDate')) {
+			$results = date('Y-M-d h:i:s', $results->sec);
+		}
 	}
 
 /**
@@ -115,6 +149,16 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				// 'Special' case because it has a space in it, and it's the whole key
 				$conditions[substr($key, 0, -5)]['$nin'] = $value;
 				unset($conditions[$key]);
+				$return = true;
+				continue;
+			}
+			if ($key === 'OR') {
+				unset($conditions[$key]);
+				foreach($value as $key => $part) {
+					$part = array($key => $part);
+					$this->_translateConditions($Model, $part);
+					$conditions['$or'][] = $part;
+				}
 				$return = true;
 				continue;
 			}
@@ -138,6 +182,25 @@ class SqlCompatibleBehavior extends ModelBehavior {
 
 				$conditions[$childKey]['$not'][$operator] = $childValue;
 				unset($conditions['NOT']);
+				$return = true;
+				continue;
+			}
+			if (substr($key, -5) === ' LIKE') {
+				// 'Special' case because it's awkward
+				if ($value[0] === '%') {
+					$value = substr($value, 1);
+				} else {
+					$value = '^' . $value;
+				}
+				if (substr($value, -1) === '%') {
+					$value = substr($value, 0, -1);
+				} else {
+					$value .= '$';
+				}
+				$value = str_replace('%', '.*', $value);
+
+				$conditions[substr($key, 0, -5)] = new MongoRegex("/$value/i");
+				unset($conditions[$key]);
 				$return = true;
 				continue;
 			}

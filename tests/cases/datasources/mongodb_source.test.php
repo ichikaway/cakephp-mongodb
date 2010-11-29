@@ -116,6 +116,8 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->Post->setDataSource('mongo_test');
 
 		$this->mongodb =& ConnectionManager::getDataSource($this->Post->useDbConfig);
+		$this->mongodb->connect();
+
 		$this->dropData();
 	}
 
@@ -202,7 +204,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function testListSources() {
-		$this->assertTrue($this->mongodb->listSources());
+		$this->assertTrue(is_array($this->mongodb->listSources()));
 	}
 
 /**
