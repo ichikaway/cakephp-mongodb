@@ -221,6 +221,10 @@ class MongodbSource extends DboSource {
 		}
 		return true;
 	}
+	
+	public function getDb() {
+		return $this->_db;
+	}
 
 /**
  * Get list of available Collections
