@@ -812,8 +812,14 @@ class MongodbSource extends DboSource {
 		if (empty($offset) && $page && $limit) {
 			$offset = ($page - 1) * $limit;
 		}
-
-		$results = null;
+		/*
+		* if we are asking for all then should return an array
+		*/
+		if($Model->findQueryType=="all"){
+			$results = array();;
+		}else{
+			$results = null;
+		}
 		$this->_prepareLogQuery($Model); // just sets a timer
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
