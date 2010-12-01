@@ -766,7 +766,7 @@ class MongodbSourceTest extends CakeTestCase {
 		*/
 		$count=$MongoArticle->find('count',array(
 			"conditions"=>array(
-				"title"=>"_regexstart_/^Article/_regexend_"
+				"title"=> new MongoRegex('/^Article/')
 			)
 		));
 		$this->assertEqual($count, 3);
