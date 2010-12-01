@@ -737,4 +737,38 @@ class MongodbSourceTest extends CakeTestCase {
 	function testDeleteAllNoCascade() {
 		$this->testDeleteAll(false);
 	}
+	
+	/**
+	* testRegexSearch method
+	*
+	* @return void
+	* @access public
+	*/
+
+	public function testRegexSearch(){
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
+		$MongoArticle->save();
+		$MongoArticle->create(array('title' => 'Article 2', 'cat' => 1));
+		$MongoArticle->save();
+		$MongoArticle->create(array('title' => 'Article 3', 'cat' => 2));
+		$MongoArticle->save();
+		
+		$count=$MongoArticle->find('count',array(
+			"conditions"=>array(
+				"title"=>"Article 2"
+			)
+		));
+		$this->assertEqual($count, 1);
+		
+		/*
+		* should match anything beginning with "Article"
+		*/
+		$count=$MongoArticle->find('count',array(
+			"conditions"=>array(
+				"title"=>"_regexstart_/^Article/_regexend_"
+			)
+		));
+		$this->assertEqual($count, 3);
+	}
 }
