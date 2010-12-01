@@ -771,4 +771,24 @@ class MongodbSourceTest extends CakeTestCase {
 		));
 		$this->assertEqual($count, 3);
 	}
+	
+	/**
+	* testEmptyReturn method
+	* inserts article into table. searches for a different non existing article. should return an empty array in the same that that it does from other datasources
+	* @return void
+	* @access public
+	*/
+	
+	public function testEmptyReturn(){
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
+		$MongoArticle->save();
+		$articles=$MongoArticle->find('all',array(
+			"conditions"=>array(
+				"title"=>"Article 2"
+			)
+		));
+		$this->assertTrue(is_array($articles));
+	}
+	
 }
