@@ -789,6 +789,13 @@ class MongodbSourceTest extends CakeTestCase {
 			)
 		));
 		$this->assertTrue(is_array($articles));
+		$articles=$MongoArticle->find('first',array(
+			"conditions"=>array(
+				"title"=>"Article 2"
+			)
+		));
+		$this->assertFalse(is_array($articles));
+		
 	}
 	
 }
