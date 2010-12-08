@@ -41,9 +41,33 @@ class Post extends AppModel {
  * @var array
  * @access public
  */
+ 	var $validate=array(
+ 		"uniquefield1"=>array(
+ 			'rule' => 'isUnique', 
+ 			'required'=>false
+ 		),
+ 		"uniquefield2"=>array(
+ 			'rule' => 'manualUniqueValidation', 
+ 			'required'=>false
+ 		),
+ 	);
+ 	
+ 	function manualUniqueValidation($check){
+ 		$c=$this->find("count",array(
+ 			"conditions"=>array(
+ 				"uniquefield2"=>$check['uniquefield2']
+ 			)
+ 		));
+ 		if($c==0) return true;
+ 		return false;
+ 	}
+ 	
 	public $mongoSchema = array(
 		'title' => array('type' => 'string'),
 		'body' => array('type' => 'string'),
+		'text' => array('type' => 'text'),
+		'uniquefield1' => array('type' => 'text'),
+		'uniquefield2' => array('type' => 'text'),
 		'text' => array('type' => 'text'),
 		'created' => array('type' => 'datetime'),
 		'modified' => array('type' => 'datetime'),
@@ -795,6 +819,71 @@ class MongodbSourceTest extends CakeTestCase {
 			)
 		));
 		$this->assertFalse(is_array($articles));
+		
+	}
+	
+
+/**
+ * Tests isUnique validation.
+ *
+ * @return void
+ * @access public
+ */
+	public function testSaveUniques() {
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'uniquefield1'=>"uniquenameforthistest"
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+		
+		$data = array(
+			'title' => 'test',
+			'body' => 'asdf',
+			'text' => 'bbbb',
+			'uniquefield1'=>"uniquenameforthistest"
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertFalse($saveResult);
+
+		
+	}
+/**
+ * Tests isUnique validation with custom validation.
+ *
+ * @return void
+ * @access public
+ */
+	public function testSaveUniquesCustom() {
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'uniquefield2'=>"someunqiuename"
+		);
+		$saveData['Post'] = $data;
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+		$data = array(
+			'title' => 'test',
+			'body' => 'asdf',
+			'text' => 'bbbb',
+			'uniquefield2'=>"someunqiuename"
+		);
+		$saveData['Post'] = $data;
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertFalse($saveResult);
+
 		
 	}
 	
