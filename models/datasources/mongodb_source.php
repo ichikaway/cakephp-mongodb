@@ -1067,6 +1067,9 @@ class MongodbSource extends DboSource {
 /**
  * convertId method
  *
+ * $conditions is used to determine if it should try to auto correct _id => array() queries
+ * it only appies to conditions, hence the param name
+ *
  * @param mixed $mixed
  * @param bool $conditions false
  * @return void
@@ -1083,7 +1086,7 @@ class MongodbSource extends DboSource {
 			foreach($mixed as &$row) {
 				$this->_convertId($row, false);
 			}
-			if (!empty($mixed[0])) {
+			if (!empty($mixed[0]) && $conditions) {
 				$mixed = array('$in' => $mixed);
 			}
 		}
