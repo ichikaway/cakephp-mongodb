@@ -11,13 +11,13 @@ this repository should be installed in the same way as any other plugin.
 To install the driver for use in a single application:
 
 	cd my/app/plugins
-	git clone git://github.com/ichikaway/mongoDB-Datasource.git mongodb
+	git clone git://github.com/ichikaway/cakephp-mongodb.git mongodb
 
 To install the driver for use in any/multiple application(s)
 
 	# where ROOT is the name of the directory parent to the base index.php of CakePHP.
 	cd ROOT/plugins
-	git clone git://github.com/ichikaway/mongoDB-Datasource.git mongodb
+	git clone git://github.com/ichikaway/cakephp-mongodb.git mongodb
 	
 ## Sample Code
 
