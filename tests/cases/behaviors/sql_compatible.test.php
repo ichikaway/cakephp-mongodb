@@ -239,6 +239,7 @@ class SqlCompatibleTest extends CakeTestCase {
 		);
 		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
 	}
+
 /**
  * setupData method
  *
