@@ -538,64 +538,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($toSave['starts'], $starts);
 	}
 
-	public function testSqlCompatibleNOT() {
-		$this->_setupTestSqlComparison();
-
-		$expected = array(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
-		$result = $this->Post->find('all', array(
-			'conditions' => array(
-				'title !=' => 10,
-			),
-			'fields' => array('_id', 'title', 'number'),
-			'order' => array('number' => 'ASC')
-		));
-		$result = Set::extract($result, '/Post/title');
-		$this->assertEqual($expected, $result);
-
-		$result = $this->Post->find('all', array(
-			'conditions' => array(
-				'NOT' => array(
-					'title' => 10
-				),
-			),
-			'fields' => array('_id', 'title', 'number'),
-			'order' => array('number' => 'ASC')
-		));
-		$result = Set::extract($result, '/Post/title');
-		$this->assertEqual($expected, $result);
-	}
-
-	public function testSqlCompatibleGTLT() {
-		$this->_setupTestSqlComparison();
-
-		$expected = array(8, 9, 10, 11, 12, 13);
-		$result = $this->Post->find('all', array(
-			'conditions' => array(
-				'title >' => 7,
-				'title <' => 14,
-			),
-			'fields' => array('_id', 'title', 'number'),
-			'order' => array('number' => 'ASC')
-		));
-		$result = Set::extract($result, '/Post/title');
-		$this->assertEqual($expected, $result);
-	}
-
-	public function testSqlCompatibleGTE() {
-		$this->_setupTestSqlComparison();
-
-		$expected = array(19, 20);
-		$result = $this->Post->find('all', array(
-			'conditions' => array(
-				'title >=' => 19,
-			),
-			'fields' => array('_id', 'title', 'number'),
-			'order' => array('number' => 'ASC')
-		));
-		$result = Set::extract($result, '/Post/title');
-		$this->assertEqual($expected, $result);
-	}
-
 /**
  * testSpecificId method
  *
