@@ -145,14 +145,15 @@ class SqlCompatibleBehavior extends ModelBehavior {
 	protected function _translateConditions(&$Model, &$conditions) {
 		$return = false;
 		foreach($conditions as $key => &$value) {
-			if (substr($key, -5) === 'NOT IN') {
+			$uKey = strtoupper($key);
+			if (substr($uKey, -5) === 'NOT IN') {
 				// 'Special' case because it has a space in it, and it's the whole key
 				$conditions[substr($key, 0, -5)]['$nin'] = $value;
 				unset($conditions[$key]);
 				$return = true;
 				continue;
 			}
-			if ($key === 'OR') {
+			if ($uKey === 'OR') {
 				unset($conditions[$key]);
 				foreach($value as $key => $part) {
 					$part = array($key => $part);
@@ -162,7 +163,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				$return = true;
 				continue;
 			}
-			if (substr($key, -3) === 'NOT') {
+			if (substr($uKey, -3) === 'NOT') {
 				// 'Special' case because it's awkward
 				$childKey = key($value);
 				$childValue = current($value);
@@ -185,7 +186,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				$return = true;
 				continue;
 			}
-			if (substr($key, -5) === ' LIKE') {
+			if (substr($uKey, -5) === ' LIKE') {
 				// 'Special' case because it's awkward
 				if ($value[0] === '%') {
 					$value = substr($value, 1);

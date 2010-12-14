@@ -729,12 +729,9 @@ class MongodbSource extends DboSource {
 		$this->_stripAlias($conditions, $Model->alias);
 		if (!empty($id)) {
 			$conditions['_id'] = $id;
-			$this->_convertId($conditions['_id']);
-		} elseif (!empty($conditions['_id'])) {
-			$this->_convertId($conditions['_id']);
-			if (is_array($conditions['_id']) && isset($conditions['_id'][0])) {
-				$conditions['_id'] = array('$in' => $conditions['_id']);
-			}
+		}
+		if (!empty($conditions['_id'])) {
+			$this->_convertId($conditions['_id'], true);
 		}
 
 		$result = false;
@@ -1076,11 +1073,15 @@ class MongodbSource extends DboSource {
 /**
  * convertId method
  *
+ * $conditions is used to determine if it should try to auto correct _id => array() queries
+ * it only appies to conditions, hence the param name
+ *
  * @param mixed $mixed
+ * @param bool $conditions false
  * @return void
  * @access protected
  */
-	protected function _convertId(&$mixed) {
+	protected function _convertId(&$mixed, $conditions = false) {
 		if (is_string($mixed)) {
 			if (strlen($mixed) !== 24) {
 				return;
@@ -1089,7 +1090,10 @@ class MongodbSource extends DboSource {
 		}
 		if (is_array($mixed)) {
 			foreach($mixed as &$row) {
-				$this->_convertId($row);
+				$this->_convertId($row, false);
+			}
+			if (!empty($mixed[0]) && $conditions) {
+				$mixed = array('$in' => $mixed);
 			}
 		}
 	}
