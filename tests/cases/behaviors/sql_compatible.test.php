@@ -135,6 +135,11 @@ class SqlCompatibleTest extends CakeTestCase {
 		$result = Set::extract($result, '/Post/title');
 		$this->assertEqual($expected, $result);
 
+		$conditions = array(
+			'title' => array('$ne' => 10)
+		);
+		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
+
 		$result = $this->Post->find('all', array(
 			'conditions' => array(
 				'NOT' => array(
@@ -146,6 +151,11 @@ class SqlCompatibleTest extends CakeTestCase {
 		));
 		$result = Set::extract($result, '/Post/title');
 		$this->assertEqual($expected, $result);
+
+		$conditions = array(
+			'title' => array('$nin' => array(10))
+		);
+		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
 	}
 
 /**
@@ -166,6 +176,14 @@ class SqlCompatibleTest extends CakeTestCase {
 		));
 		$result = Set::extract($result, '/Post/title');
 		$this->assertEqual($expected, $result);
+
+		$conditions = array(
+			'title' => array(
+				'$gt' => 7,
+				'$lt' => 14
+			)
+		);
+		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
 	}
 
 /**
@@ -185,6 +203,11 @@ class SqlCompatibleTest extends CakeTestCase {
 		));
 		$result = Set::extract($result, '/Post/title');
 		$this->assertEqual($expected, $result);
+
+		$conditions = array(
+			'title' => array('$gte' => 19)
+		);
+		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
 	}
 
 /**
