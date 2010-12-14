@@ -211,6 +211,35 @@ class SqlCompatibleTest extends CakeTestCase {
 	}
 
 /**
+ * testOR method
+ *
+ * @return void
+ * @access public
+ */
+	public function testOR() {
+		$expected = array(1, 2, 19, 20);
+		$result = $this->Post->find('all', array(
+			'conditions' => array(
+				'OR' => array(
+					'title <=' => 2,
+					'title >=' => 19,
+				)
+			),
+			'fields' => array('_id', 'title', 'number'),
+			'order' => array('number' => 'ASC')
+		));
+		$result = Set::extract($result, '/Post/title');
+		$this->assertEqual($expected, $result);
+
+		$conditions = array(
+			'$or' => array(
+				array('title' => array('$lte' => 2)),
+				array('title' => array('$gte' => 19))
+			)
+		);
+		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
+	}
+/**
  * setupData method
  *
  * @return void
