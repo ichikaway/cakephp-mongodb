@@ -133,4 +133,14 @@ class PostsController extends AppController {
 			$this->flash(__('Post updateAll Fail', true), array('action' => 'index'));
 		}
 	}
+
+	public function createindex() {
+
+		$mongo = ConnectionManager::getDataSource($this->Post->useDbConfig);
+		$mongo->ensureIndex($this->Post, array('title' => 1));
+
+	}
+
+
+
 }
