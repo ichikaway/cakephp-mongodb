@@ -1,6 +1,7 @@
 <?php
 
 class Subdocument extends AppModel {
+/*
 	var $mongoSchema = array(
 			'title' => array('type'=>'string'),
 			'body'=>array('type'=>'string'),
@@ -8,10 +9,10 @@ class Subdocument extends AppModel {
 				'name' => array('type'=>'string'),
 				'age' => array('type'=>'integer')
 			),
-			'created'=>array('type'=>'date'),
-			'modified'=>array('type'=>'date'),
+			'created'=>array('type'=>'datetime'),
+			'modified'=>array('type'=>'datetime'),
 			);
-
+*/
 }
 
 ?>
