@@ -214,7 +214,9 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function testGetMongoDb() {
-		$objName = get_class($this->mongodb->getMongoDb());
+		$obj = $this->mongodb->getMongoDb();
+		$this->assertTrue(is_object($obj));
+		$objName = get_class($obj);
 		$this->assertEqual('MongoDB', $objName);
 	}
 
@@ -225,7 +227,9 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function testGetMongoDbFromModel() {
-		$objName = get_class($this->Post->getMongoDb());
+		$obj = $this->Post->getMongoDb();
+		$this->assertTrue(is_object($obj));
+		$objName = get_class($obj);
 		$this->assertEqual('MongoDB', $objName);
 	}
 
@@ -236,7 +240,9 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function testGetMongoCollection() {
-		$objName = get_class($this->mongodb->getMongoCollection($this->Post));
+		$obj = $this->mongodb->getMongoCollection($this->Post);
+		$this->assertTrue(is_object($obj));
+		$objName = get_class($obj);
 		$this->assertEqual('MongoCollection', $objName);
 	}
 
