@@ -219,6 +219,17 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 /**
+ * Tests the Model::getMongoDb() call MongodbSource::getMongoDb
+ *
+ * @return void
+ * @access public
+ */
+	public function testGetMongoDbFromModel() {
+		$objName = get_class($this->Post->getMongoDb());
+		$this->assertEqual('MongoDB', $objName);
+	}
+
+/**
  * Tests the getMongoCollection method of the Mongodb DataSource
  *
  * @return void

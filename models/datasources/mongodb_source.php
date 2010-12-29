@@ -944,6 +944,7 @@ class MongodbSource extends DboSource {
 
 /**
  * query method
+ *  If call getMongoDb() from model, this method call getMongoDb().
  *
  * @param mixed $query
  * @param array $params array()
@@ -954,6 +955,11 @@ class MongodbSource extends DboSource {
 		if (!$this->isConnected()) {
 			return false;
 		}
+
+		if($query === 'getMongoDb') {
+			return $this->getMongoDb();
+		}
+
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
