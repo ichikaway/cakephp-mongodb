@@ -251,6 +251,39 @@ class MongodbSource extends DboSource {
 		return $this->connect();
 	}
 
+
+/**
+ * get MongoDB Object
+ *
+ * @return mixed MongoDB Object
+ * @access public
+ */
+	public function getMongoDb() {
+		if ($this->connected === false) {
+			return false;
+		}
+		return $this->_db;
+	}
+
+/**
+ * get MongoDB Collection Object
+ *
+ * @return mixed MongoDB Collection Object
+ * @access public
+ */
+	public function getMongoCollection(&$Model) {
+		if ($this->connected === false) {
+			return false;
+		}
+
+		$collection = $this->_db
+			->selectCollection($Model->table);
+		return $collection;
+	}
+
+
+
+
 /**
  * isInterfaceSupported method
  *
