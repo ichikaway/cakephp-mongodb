@@ -33,6 +33,7 @@ Mock::generate('AppModel', 'MockPost');
  * @subpackage    app.model.post
  */
 class Post extends AppModel {
+
 	public $useDbConfig = 'mongo_test';
 
 /**
@@ -41,14 +42,14 @@ class Post extends AppModel {
  * @public array
  * @access public
  */
-	public $primaryKey="_id";
+	public $primaryKey='_id';
 
 	public $validate = array(
- 		"uniquefield1" => array(
+ 		'uniquefield1' => array(
  			'rule' => 'isUnique',
  			'required' => false
  		),
- 		"uniquefield2" => array(
+ 		'uniquefield2' => array(
  			'rule' => 'manualUniqueValidation',
  			'required' => false
  		),
@@ -66,12 +67,12 @@ class Post extends AppModel {
 	);
 
 	function manualUniqueValidation($check) {
- 		$c = $this->find("count", array(
- 			"conditions" => array(
- 				"uniquefield2" => $check['uniquefield2']
+ 		$c = $this->find('count', array(
+ 			'conditions' => array(
+ 				'uniquefield2' => $check['uniquefield2']
  			)
  		));
-		if ($c == 0) {
+		if ($c === 0) {
 			return true;
 		}
  		return false;
@@ -297,9 +298,13 @@ class MongodbSourceTest extends CakeTestCase {
 			'title' => array('type' => 'string'),
 			'body' => array('type' => 'string'),
 			'text' => array('type' => 'text'),
+			'uniquefield1' => array('type' => 'text'),
+			'uniquefield2' => array('type' => 'text'),
 			'created' => array('type' => 'datetime'),
 			'modified' => array('type' => 'datetime'),
 		);
+		ksort($result);
+		ksort($expect);
 		$this->assertEqual($expect, $result);
 	}
 
@@ -758,15 +763,15 @@ class MongodbSourceTest extends CakeTestCase {
 		$MongoArticle->save();
 
 		$count=$MongoArticle->find('count',array(
-			"conditions"=>array(
-				"title"=>"Article 2"
+			'conditions'=>array(
+				'title'=>'Article 2'
 			)
 		));
 		$this->assertEqual($count, 1);
 
 		$count = $MongoArticle->find('count',array(
-			"conditions"=>array(
-				"title"=> new MongoRegex('/^Article/')
+			'conditions'=>array(
+				'title'=> new MongoRegex('/^Article/')
 			)
 		));
 		$this->assertEqual($count, 3);
@@ -783,14 +788,14 @@ class MongodbSourceTest extends CakeTestCase {
 		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
 		$MongoArticle->save();
 		$articles=$MongoArticle->find('all',array(
-			"conditions"=>array(
-				"title"=>"Article 2"
+			'conditions'=>array(
+				'title'=>'Article 2'
 			)
 		));
 		$this->assertTrue(is_array($articles));
 		$articles=$MongoArticle->find('first',array(
-			"conditions"=>array(
-				"title"=>"Article 2"
+			'conditions'=>array(
+				'title'=>'Article 2'
 			)
 		));
 		$this->assertFalse(is_array($articles));
@@ -807,24 +812,27 @@ class MongodbSourceTest extends CakeTestCase {
 			'title' => 'test',
 			'body' => 'aaaa',
 			'text' => 'bbbb',
-			'uniquefield1'=>"uniquenameforthistest"
+			'uniquefield1'=>'uniquenameforthistest'
 		);
 		$saveData['Post'] = $data;
 
+		$this->Post->Behaviors->attach('Mongodb.SqlCompatible');
 		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
+		debug ($this->Post->id);
 		$this->assertTrue($saveResult);
 
 		$data = array(
 			'title' => 'test',
 			'body' => 'asdf',
 			'text' => 'bbbb',
-			'uniquefield1'=>"uniquenameforthistest"
+			'uniquefield1'=>'uniquenameforthistest'
 		);
 		$saveData['Post'] = $data;
 
 		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
+		debug ($this->Post->id);
 		$this->assertFalse($saveResult);
 	}
 
@@ -839,7 +847,7 @@ class MongodbSourceTest extends CakeTestCase {
 			'title' => 'test',
 			'body' => 'aaaa',
 			'text' => 'bbbb',
-			'uniquefield2'=>"someunqiuename"
+			'uniquefield2' => 'someunqiuename'
 		);
 		$saveData['Post'] = $data;
 		$this->Post->create();
@@ -849,11 +857,33 @@ class MongodbSourceTest extends CakeTestCase {
 			'title' => 'test',
 			'body' => 'asdf',
 			'text' => 'bbbb',
-			'uniquefield2'=>"someunqiuename"
+			'uniquefield2' => 'someunqiuename'
 		);
 		$saveData['Post'] = $data;
 		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
 		$this->assertFalse($saveResult);
 	}
+
+	public function testReturn() {
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
+		$MongoArticle->save();
+		$MongoArticle->create(array('title' => 'Article 2', 'cat' => 1));
+		$MongoArticle->save();
+
+		$articles = $MongoArticle->find('all', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($articles));
+		$articles = $MongoArticle->find('first', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertFalse(is_array($articles));
+	}
+
 }
