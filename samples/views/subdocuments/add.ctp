@@ -21,7 +21,6 @@
 	</ul>
 </div>
 
-
 	</fieldset>
 <?php echo $form->end('Submit');?>
 </div>
@@ -30,5 +29,3 @@
 		<li><?php echo $html->link(__('List Subdocuments', true), array('action'=>'index'));?></li>
 	</ul>
 </div>
-
-

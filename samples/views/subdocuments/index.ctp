@@ -1,4 +1,3 @@
-
 <?php echo $html->link('Add data', 'add'); ?>
 <br>
 <br>
@@ -8,10 +7,9 @@
 	title: <?php echo $result['Subdocument']['title']; ?><br>
 	body: <?php echo $result['Subdocument']['body']; ?><br>
 	<?php foreach($result['Subdocument']['subdoc'] as $num => $val): ?>
-		subdoc_name:<?php echo h($val['name']) ?><br>	
+		subdoc_name:<?php echo h($val['name']) ?><br>
 		subdoc_age:<?php echo h($val['age']) ?><br>
 	<?php endforeach; ?>
 
 <hr>
 <?php endforeach; ?>
-

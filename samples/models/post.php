@@ -9,9 +9,6 @@ class Post extends AppModel {
 			'hoge'=>array('type'=>'string'),
 			'created'=>array('type'=>'datetime'),
 			'modified'=>array('type'=>'datetime'),
-			);	
+			);
 */
-
 }
-
-?>

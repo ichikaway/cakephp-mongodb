@@ -1,5 +1,4 @@
 <?php
-
 class Subdocument extends AppModel {
 /*
 	var $mongoSchema = array(
@@ -14,5 +13,3 @@ class Subdocument extends AppModel {
 			);
 */
 }
-
-?>

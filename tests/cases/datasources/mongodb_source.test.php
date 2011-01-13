@@ -38,30 +38,44 @@ class Post extends AppModel {
 /**
  * mongoSchema property
  *
- * @var array
+ * @public array
  * @access public
  */
- 	var $primaryKey="_id";
- 	var $validate=array(
- 		"uniquefield1"=>array(
+	public $primaryKey="_id";
+
+	public $validate = array(
+ 		"uniquefield1" => array(
  			'rule' => 'isUnique',
- 			'required'=>false
+ 			'required' => false
  		),
- 		"uniquefield2"=>array(
+ 		"uniquefield2" => array(
  			'rule' => 'manualUniqueValidation',
- 			'required'=>false
+ 			'required' => false
  		),
- 	);
- 	function manualUniqueValidation($check){
- 		$c=$this->find("count",array(
- 			"conditions"=>array(
- 				"uniquefield2"=>$check['uniquefield2']
+	);
+
+	public $mongoSchema = array(
+		'title' => array('type' => 'string'),
+		'body' => array('type' => 'string'),
+		'text' => array('type' => 'text'),
+		'uniquefield1' => array('type' => 'text'),
+		'uniquefield2' => array('type' => 'text'),
+		'text' => array('type' => 'text'),
+		'created' => array('type' => 'datetime'),
+		'modified' => array('type' => 'datetime'),
+	);
+
+	function manualUniqueValidation($check) {
+ 		$c = $this->find("count", array(
+ 			"conditions" => array(
+ 				"uniquefield2" => $check['uniquefield2']
  			)
  		));
- 		if($c==0) return true;
+		if ($c == 0) {
+			return true;
+		}
  		return false;
  	}
-
 
 	function isUnique($fields, $or = true) {
 		if (!is_array($fields)) {
@@ -97,18 +111,6 @@ class Post extends AppModel {
 		}
 		return ($this->find('count', array('conditions' => $fields, 'recursive' => -1)) == 0);
 	}
-
-
-	public $mongoSchema = array(
-		'title' => array('type' => 'string'),
-		'body' => array('type' => 'string'),
-		'text' => array('type' => 'text'),
-		'uniquefield1' => array('type' => 'text'),
-		'uniquefield2' => array('type' => 'text'),
-		'text' => array('type' => 'text'),
-		'created' => array('type' => 'datetime'),
-		'modified' => array('type' => 'datetime'),
-	);
 }
 
 /**
@@ -119,6 +121,7 @@ class Post extends AppModel {
  * @subpackage    mongodb.tests.cases.datasources
  */
 class MongoArticle extends AppModel {
+
 	public $useDbConfig = 'mongo_test';
 }
 
@@ -306,8 +309,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$objName = get_class($obj);
 		$this->assertEqual('MongoCollection', $objName);
 	}
-
-
 
 /**
  * Tests the describe method of the Mongodb DataSource
@@ -812,7 +813,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	public function testEmptyReturn(){
+	public function testEmptyReturn() {
 		$MongoArticle = ClassRegistry::init('MongoArticle');
 		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
 		$MongoArticle->save();

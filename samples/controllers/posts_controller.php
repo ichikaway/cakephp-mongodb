@@ -135,12 +135,8 @@ class PostsController extends AppController {
 	}
 
 	public function createindex() {
-
 		$mongo = ConnectionManager::getDataSource($this->Post->useDbConfig);
 		$mongo->ensureIndex($this->Post, array('title' => 1));
 
 	}
-
-
-
 }
