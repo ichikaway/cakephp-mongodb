@@ -832,7 +832,6 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
-		debug ($this->Post->id);
 		$this->assertFalse($saveResult);
 	}
 
@@ -872,18 +871,82 @@ class MongodbSourceTest extends CakeTestCase {
 		$MongoArticle->create(array('title' => 'Article 2', 'cat' => 1));
 		$MongoArticle->save();
 
-		$articles = $MongoArticle->find('all', array(
+		$return = $MongoArticle->find('all', array(
 			'conditions' => array(
 				'title' => 'Article 2'
 			)
 		));
-		$this->assertTrue(is_array($articles));
-		$articles = $MongoArticle->find('first', array(
-			'conditions' => array(
-				'title' => 'Article 2'
-			)
-		));
-		$this->assertFalse(is_array($articles));
-	}
+		$this->assertTrue(is_array($return));
 
+		$return = $MongoArticle->find('first', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('first', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('count', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_int($return));
+
+		$return = $MongoArticle->find('neighbors', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('list', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('all', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('first', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertFalse($return);
+
+		$return = $MongoArticle->find('count', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertTrue(is_int($return));
+
+		$return = $MongoArticle->find('neighbors', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('list', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+	}
 }
