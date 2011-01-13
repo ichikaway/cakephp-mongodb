@@ -41,9 +41,70 @@ class Post extends AppModel {
  * @var array
  * @access public
  */
+ 	var $primaryKey="_id";
+ 	var $validate=array(
+ 		"uniquefield1"=>array(
+ 			'rule' => 'isUnique',
+ 			'required'=>false
+ 		),
+ 		"uniquefield2"=>array(
+ 			'rule' => 'manualUniqueValidation',
+ 			'required'=>false
+ 		),
+ 	);
+ 	function manualUniqueValidation($check){
+ 		$c=$this->find("count",array(
+ 			"conditions"=>array(
+ 				"uniquefield2"=>$check['uniquefield2']
+ 			)
+ 		));
+ 		if($c==0) return true;
+ 		return false;
+ 	}
+
+
+	function isUnique($fields, $or = true) {
+		if (!is_array($fields)) {
+			$fields = func_get_args();
+			if (is_bool($fields[count($fields) - 1])) {
+				$or = $fields[count($fields) - 1];
+				unset($fields[count($fields) - 1]);
+			}
+		}
+
+		foreach ($fields as $field => $value) {
+			if (is_numeric($field)) {
+				unset($fields[$field]);
+
+				$field = $value;
+				if (isset($this->data[$this->alias][$field])) {
+					$value = $this->data[$this->alias][$field];
+				} else {
+					$value = null;
+				}
+			}
+
+			if (strpos($field, '.') === false) {
+				unset($fields[$field]);
+				$fields[$this->alias . '.' . $field] = $value;
+			}
+		}
+		if ($or) {
+			$fields = array('$or' => $fields);
+		}
+		if (!empty($this->id)) {
+			$fields[$this->alias . '.' . $this->primaryKey . ' !='] =  $this->id;
+		}
+		return ($this->find('count', array('conditions' => $fields, 'recursive' => -1)) == 0);
+	}
+
+
 	public $mongoSchema = array(
 		'title' => array('type' => 'string'),
 		'body' => array('type' => 'string'),
+		'text' => array('type' => 'text'),
+		'uniquefield1' => array('type' => 'text'),
+		'uniquefield2' => array('type' => 'text'),
 		'text' => array('type' => 'text'),
 		'created' => array('type' => 'datetime'),
 		'modified' => array('type' => 'datetime'),
@@ -737,10 +798,7 @@ class MongodbSourceTest extends CakeTestCase {
 		));
 		$this->assertEqual($count, 1);
 
-		/*
-		* should match anything beginning with "Article"
-		*/
-		$count=$MongoArticle->find('count',array(
+		$count = $MongoArticle->find('count',array(
 			"conditions"=>array(
 				"title"=> new MongoRegex('/^Article/')
 			)
@@ -748,15 +806,88 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($count, 3);
 	}
 
-	protected function _setupTestSqlComparison() {
-		$this->Post->Behaviors->attach('Mongodb.SqlCompatible');
-		for ($i = 1; $i <= 20; $i++) {
-			$data = array(
-				'title' => $i,
-			);
-			$saveData['Post'] = $data;
-			$this->Post->create();
-			$this->Post->save($saveData);
-		}
+/**
+ * testEmptyReturn method
+ * inserts article into table. searches for a different non existing article. should return an empty array in the same that that it does from other datasources
+ * @return void
+ * @access public
+ */
+	public function testEmptyReturn(){
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
+		$MongoArticle->save();
+		$articles=$MongoArticle->find('all',array(
+			"conditions"=>array(
+				"title"=>"Article 2"
+			)
+		));
+		$this->assertTrue(is_array($articles));
+		$articles=$MongoArticle->find('first',array(
+			"conditions"=>array(
+				"title"=>"Article 2"
+			)
+		));
+		$this->assertFalse(is_array($articles));
+	}
+
+/**
+ * Tests isUnique validation.
+ *
+ * @return void
+ * @access public
+ */
+	public function testSaveUniques() {
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'uniquefield1'=>"uniquenameforthistest"
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$data = array(
+			'title' => 'test',
+			'body' => 'asdf',
+			'text' => 'bbbb',
+			'uniquefield1'=>"uniquenameforthistest"
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertFalse($saveResult);
+	}
+
+/**
+ * Tests isUnique validation with custom validation.
+ *
+ * @return void
+ * @access public
+ */
+	public function testSaveUniquesCustom() {
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'uniquefield2'=>"someunqiuename"
+		);
+		$saveData['Post'] = $data;
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+		$data = array(
+			'title' => 'test',
+			'body' => 'asdf',
+			'text' => 'bbbb',
+			'uniquefield2'=>"someunqiuename"
+		);
+		$saveData['Post'] = $data;
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertFalse($saveResult);
 	}
 }
