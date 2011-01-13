@@ -226,7 +226,7 @@ class MongodbSource extends DboSource {
 		}
 		$this->_prepareLogQuery($table); // just sets a timer
 		try{
-			$result = $this->_db
+			$return = $this->_db
 				->selectCollection($table)
 				->batchInsert($data, array('safe' => true));
 		} catch (MongoException $e) {
@@ -435,7 +435,7 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
-			$result = $this->_db
+			$return = $this->_db
 				->selectCollection($Model->table)
 				->insert($data, true);
 		} catch (MongoException $e) {
@@ -446,7 +446,7 @@ class MongodbSource extends DboSource {
 			$this->logQuery("db.{$Model->useTable}.insert( :data , true)", compact('data'));
 		}
 
-		if (!empty($result) && $result['ok']) {
+		if (!empty($return) && $return['ok']) {
 			$id = is_object($data['_id']) ? $data['_id']->__toString() : null;
 			$Model->setInsertID($id);
 			$Model->id = $id;
@@ -529,7 +529,7 @@ class MongodbSource extends DboSource {
 			$params = $params['conditions'];
 		}
 		try{
-			return $this->_db
+			$return = $this->_db
 				->selectCollection($Model->table)
 				->distinct($keys, $params);
 		} catch (MongoException $e) {
@@ -540,7 +540,7 @@ class MongodbSource extends DboSource {
 			$this->logQuery("db.{$Model->useTable}.distinct( :keys, :params )", compact('keys', 'params'));
 		}
 
-		return false;
+		return $return;
 	}
 
 /**
@@ -560,7 +560,7 @@ class MongodbSource extends DboSource {
 		$this->_prepareLogQuery($Model); // just sets a timer
 
 		try{
-			return $this->_db
+			$return = $this->_db
 				->selectCollection($Model->table)
 				->ensureIndex($keys, $params);
 		} catch (MongoException $e) {
@@ -571,7 +571,7 @@ class MongodbSource extends DboSource {
 			$this->logQuery("db.{$Model->useTable}.ensureIndex( :keys, :params )", compact('keys', 'params'));
 		}
 
-		return false;
+		return $return;
 	}
 
 /**
@@ -663,7 +663,7 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
-			$result = $this->_db
+			$return = $this->_db
 				->selectCollection($Model->table)
 				->update($conditions, $fields, array("multiple" => true));
 		} catch (MongoException $e) {
@@ -676,7 +676,7 @@ class MongodbSource extends DboSource {
 				array('fields' => $fields, 'params' => array("multiple" => true))
 			);
 		}
-		return $result;
+		return $return;
 	}
 
 /**
@@ -763,7 +763,7 @@ class MongodbSource extends DboSource {
 			$this->_convertId($conditions['_id'], true);
 		}
 
-		$result = false;
+		$return = false;
 		$r = false;
 		try{
 			$this->_prepareLogQuery($Model); // just sets a timer
@@ -773,12 +773,12 @@ class MongodbSource extends DboSource {
 					compact('conditions')
 				);
 			}
-			$result = true;
+			$return = true;
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
-		return $result;
+		return $return;
 	}
 
 /**
@@ -839,7 +839,7 @@ class MongodbSource extends DboSource {
 			$offset = ($page - 1) * $limit;
 		}
 
-		$results = array();
+		$return = array();
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		if (empty($modify)) {
@@ -855,14 +855,14 @@ class MongodbSource extends DboSource {
 				return array(array($Model->alias => array('count' => $count)));
 			}
 
-			$result = $this->_db
+			$return = $this->_db
 				->selectCollection($Model->table)
 				->find($conditions, $fields)
 				->sort($order)
 				->limit($limit)
 				->skip($offset);
 			if ($this->fullDebug) {
-				$count = $result->count();
+				$count = $return->count();
 				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
 					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
 				);
@@ -878,15 +878,15 @@ class MongodbSource extends DboSource {
 				'fields' => $fields,
 				'upsert' => !empty($upsert)
 			));
-			$result = $this->_db
+			$return = $this->_db
 				->command($options);
 			if ($this->fullDebug) {
-				if ($result['ok']) {
+				if ($return['ok']) {
 					$count = 1;
-					if ($this->config['set_string_id'] && !empty($result['value']['_id']) && is_object($result['value']['_id'])) {
-						$result['value']['_id'] = $result['value']['_id']->__toString();
+					if ($this->config['set_string_id'] && !empty($return['value']['_id']) && is_object($return['value']['_id'])) {
+						$return['value']['_id'] = $return['value']['_id']->__toString();
 					}
-					$results[][$Model->alias] = $result['value'];
+					$return[][$Model->alias] = $return['value'];
 				} else {
 					$count = 0;
 				}
@@ -897,19 +897,19 @@ class MongodbSource extends DboSource {
 		}
 
 		if ($Model->findQueryType === 'count') {
-			return array(array($Model->alias => array('count' => $result->count())));
+			return array(array($Model->alias => array('count' => $return->count())));
 		}
 
-		if (is_object($result)) {
-			while ($result->hasNext()) {
-				$mongodata = $result->getNext();
+		if (is_object($return)) {
+			while ($return->hasNext()) {
+				$mongodata = $return->getNext();
 				if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 					$mongodata['_id'] = $mongodata['_id']->__toString();
 				}
-				$results[][$Model->alias] = $mongodata;
+				$return[][$Model->alias] = $mongodata;
 			}
 		}
-		return $results;
+		return $return;
 	}
 
 /**
@@ -958,15 +958,15 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
-		$result = $this->_db
+		$return = $this->_db
 			->command($query);
 		if ($this->fullDebug) {
 			$this->logQuery("db.runCommand( :query )", 	compact('query'));
 		}
-		if ($result['ok']) {
-			return $result['values'];
+		if ($return['ok']) {
+			return $return['values'];
 		}
-		return $result;
+		return $return;
 	}
 
 /**
@@ -1006,7 +1006,7 @@ class MongodbSource extends DboSource {
 			return;
 		}
 		$this->_prepareLogQuery($Model); // just sets a timer
-		$result = $this->_db
+		$return = $this->_db
 			->execute($query, $params);
 		if ($this->fullDebug) {
 			if ($params) {
@@ -1017,10 +1017,10 @@ class MongodbSource extends DboSource {
 				$this->logQuery($query);
 			}
 		}
-		if ($result['ok']) {
-			return $result['retval'];
+		if ($return['ok']) {
+			return $return['retval'];
 		}
-		return $result;
+		return $return;
 	}
 
 /**
