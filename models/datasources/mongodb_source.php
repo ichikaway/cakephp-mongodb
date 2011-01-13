@@ -251,7 +251,6 @@ class MongodbSource extends DboSource {
 		return $this->connect();
 	}
 
-
 /**
  * get MongoDB Object
  *
@@ -280,9 +279,6 @@ class MongodbSource extends DboSource {
 			->selectCollection($Model->table);
 		return $collection;
 	}
-
-
-
 
 /**
  * isInterfaceSupported method
@@ -842,14 +838,9 @@ class MongodbSource extends DboSource {
 		if (empty($offset) && $page && $limit) {
 			$offset = ($page - 1) * $limit;
 		}
-		/*
-		* if we are asking for all then should return an array
-		*/
-		if($Model->findQueryType=="all"){
-			$results = array();;
-		}else{
-			$results = null;
-		}
+
+		$results = array();
+
 		$this->_prepareLogQuery($Model); // just sets a timer
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
@@ -965,7 +956,6 @@ class MongodbSource extends DboSource {
 		if($query === 'getMongoDb') {
 			return $this->getMongoDb();
 		}
-
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$result = $this->_db
