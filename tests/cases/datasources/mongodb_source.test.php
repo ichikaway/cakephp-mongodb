@@ -819,7 +819,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->Post->Behaviors->attach('Mongodb.SqlCompatible');
 		$this->Post->create();
 		$saveResult = $this->Post->save($saveData);
-		debug ($this->Post->id);
 		$this->assertTrue($saveResult);
 
 		$data = array(
