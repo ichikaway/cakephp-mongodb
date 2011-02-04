@@ -160,6 +160,9 @@ class MongodbSourceTest extends CakeTestCase {
 	public function endTest() {
 		$this->dropData();
 		unset($this->Post);
+		unset($this->Mongo);
+		unset($this->mongodb);
+		ClassRegistry::flush();
 	}
 
 /**
