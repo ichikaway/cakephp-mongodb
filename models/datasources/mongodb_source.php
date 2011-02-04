@@ -364,7 +364,7 @@ class MongodbSource extends DboSource {
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
 			$schema = $Model->mongoSchema;
 			return $schema + $this->_defaultSchema;
-		} elseif ($this->connected && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
+		} elseif ($this->isConnected() && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
 			$Model->Behaviors->attach('Mongodb.Schemaless');
 			if (!$Model->data) {
 				if ($this->_db->selectCollection($Model->table)->count()) {
