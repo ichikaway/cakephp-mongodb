@@ -39,7 +39,7 @@ class MongoArticleSchemafree extends AppModel {
  * @package       app
  * @subpackage    app.model.datasources
  */
-class MongodbSourceWithoutConnectionTest extends CakeTestCase {
+class FirstMongodbSourceTest extends CakeTestCase {
 
 /**
  * Database Instance
