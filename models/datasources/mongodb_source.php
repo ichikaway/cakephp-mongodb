@@ -584,6 +584,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function update(&$Model, $fields = null, $values = null, $conditions = null) {
+
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -615,7 +616,11 @@ class MongodbSource extends DboSource {
 			$this->_convertId($data['_id']);
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
-			$data = array('$set' => $data);
+
+			$keys = array_keys($data);
+			if(substr($keys[0],0,1) !== '$') {
+				$data = array('$set' => $data);
+			}
 
 			try{
 				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
