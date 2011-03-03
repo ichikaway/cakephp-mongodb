@@ -543,6 +543,57 @@ class MongodbSource extends DboSource {
 		return $return;
 	}
 
+
+/**
+ * group method
+ *
+ * @param mixed $Model
+ * @param array $params array()
+ *   Set params  same as MongoCollection::group()
+ *    key,initial, reduce, options(conditions, finalize)
+ *
+ *   Ex. $params = array(
+ *           'key' => array('field' => true),
+ *           'initial' => array('csum' => 0),
+ *           'reduce' => 'function(obj, prev){prev.csum += 1;}',
+ *           'options' => array(
+ *                'condition' => array('age' => array('$gt' => 20)),
+ *                'finalize' => array(),
+ *           ),
+ *       );
+ * @return void
+ * @access public
+ */
+	public function group(&$Model, $params = array()) {
+
+		if (!$this->isConnected() || count($params) === 0 ) {
+			return false;
+		}
+
+		$this->_prepareLogQuery($Model); // just sets a timer
+
+		$key = (empty($params['key'])) ? array() : $params['key'];
+		$initial = (empty($params['initial'])) ? array() : $params['initial'];
+		$reduce = (empty($params['reduce'])) ? array() : $params['reduce'];
+		$options = (empty($params['options'])) ? array() : $params['options'];
+
+		try{
+			$return = $this->_db
+				->selectCollection($Model->table)
+				->group($key, $initial, $reduce, $options);
+		} catch (MongoException $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$Model->useTable}.group( :key, :initial, :reduce, :options )", $params);
+		}
+
+
+		return $return;
+	}
+
+
 /**
  * ensureIndex method
  *
