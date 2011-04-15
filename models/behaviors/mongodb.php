@@ -24,5 +24,7 @@ class MongoBehavior extends ModelBehavior {
 	
 	public function upsert(&$Model){
 		$Model->upsert = true;
+		
+		return true;
 	}
 }
