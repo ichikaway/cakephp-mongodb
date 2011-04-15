@@ -14,7 +14,7 @@
  * @license    http://www.opensource.org/licenses/mit-license.php The MIT License
  */
 
-class MongoBehavior extends ModelBehavior {
+class MongodbBehavior extends ModelBehavior {
 	/**
 	 * Behavior name
 	 *
