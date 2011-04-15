@@ -31,7 +31,7 @@ class MongodbBehavior extends ModelBehavior {
 	 */
 	
 	public function setup(&$Model, $config = array()){
-		$this->Model &= $Model;
+		$this->Model = $Model;
 	}
 	
 	public function upsert(&$Model){
