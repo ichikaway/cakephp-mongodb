@@ -22,9 +22,29 @@ class MongodbBehavior extends ModelBehavior {
 	 */
 	public $name = 'Mongo';
 	
+	/**
+	 * Sets upserting to true for the model
+	 *
+	 * @param string $Model 
+	 * @return void
+	 * @author Robert Ross
+	 */
+	
+	public function setup(&$Model, $config = array()){
+		$this->Model &= $Model;
+	}
+	
 	public function upsert(&$Model){
 		$Model->upsert = true;
 		
 		return true;
+	}
+	
+	function exists(){
+		if($this->Model->upsert == true){
+			return true;
+		} else {
+			return $this->Model->exists();
+		}
 	}
 }
