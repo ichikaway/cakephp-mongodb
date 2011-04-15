@@ -86,4 +86,8 @@ class SchemalessBehavior extends ModelBehavior {
 		$Model->schema(true);
 		return true;
 	}
+	
+	public function upsert(&$Model){
+		die('upserted');
+	}
 }
