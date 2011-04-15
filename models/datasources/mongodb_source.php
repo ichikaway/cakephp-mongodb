@@ -612,21 +612,21 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
-		if (!empty($data['_id']) || (isset($Model->upsert) && $Model->upsert == true)) {
+		if (!empty($data['_id'])) {
 			$this->_convertId($data['_id']);
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 			$data = array('$set' => $data);
 
 			try{
-				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false, 'upsert' => true));
+				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
 			} catch (MongoException $e) {
 				$this->error = $e->getMessage();
 				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$Model->useTable}.update( :conditions, :data, :params )",
-					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false, 'upsert' => true))
+					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false))
 				);
 			}
 		} else {
