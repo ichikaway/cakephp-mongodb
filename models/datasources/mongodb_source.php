@@ -616,7 +616,10 @@ class MongodbSource extends DboSource {
 			$this->_convertId($data['_id']);
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
-			$data = array('$set' => $data);
+			
+			if(!$Model->Behaviors->attached('Mongodb.SqlCompatible')){
+				$data = array('$set' => $data);
+			}
 
 			try{
 				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));

@@ -114,6 +114,56 @@ class SqlCompatibleBehavior extends ModelBehavior {
 		}
 		return true;
 	}
+	
+/**
+ * beforeSave method
+ *
+ * Checks for some basic mongoDB functions, for example "$inc" to increment numbers
+ *
+ * @param string $Model 
+ * @return void
+ * @author Robert Ross
+ */
+	public function beforeSave(&$Model){
+		$resetData = array('_id' => $Model->id);
+		
+		$exists = $Model->exists();
+		
+		$updateFunctions = array('INC' => '$inc');
+		
+		foreach($Model->data[$Model->alias] as $key => $value){
+			$uKey = strtoupper($key);
+			
+			if($key == '_id'){
+				continue;
+			}
+			
+			foreach($updateFunctions as $term => $function){
+				if(substr($uKey, -1 * strlen($term)) === $term){
+					$realKey = trim(substr($key, 0, -1 * strlen($term)));
+				}
+				else {
+					$realKey = $key;
+				}
+				
+				if(substr($uKey, -1 * strlen($term)) === $term && $exists){
+					$resetData[$function][$realKey] = $value;
+				}
+				else if($exists){
+					$resetData['$set'][$realKey] = $value;
+				}
+				else {
+					$resetData[$realKey] = $value;
+				}
+			}
+		}
+		
+		pr($resetData);
+		
+		$Model->data[$Model->alias] = $resetData;
+		
+		return true;
+	}
 
 /**
  * Convert MongoDate objects to strings for the purpose of view simplicity
