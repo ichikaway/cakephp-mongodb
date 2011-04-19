@@ -1,4 +1,3 @@
-
 <?php echo $html->link('Add data', 'add'); ?>
 <br>
 <br>
@@ -11,4 +10,3 @@
 
 <hr>
 <?php endforeach; ?>
-

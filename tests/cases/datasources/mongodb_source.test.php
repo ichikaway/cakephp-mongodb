@@ -33,21 +33,50 @@ Mock::generate('AppModel', 'MockPost');
  * @subpackage    app.model.post
  */
 class Post extends AppModel {
+
 	public $useDbConfig = 'mongo_test';
 
 /**
  * mongoSchema property
  *
- * @var array
+ * @public array
  * @access public
  */
+	public $primaryKey='_id';
+
+	public $validate = array(
+ 		'uniquefield1' => array(
+ 			'rule' => 'isUnique',
+ 			'required' => false
+ 		),
+ 		'uniquefield2' => array(
+ 			'rule' => 'manualUniqueValidation',
+ 			'required' => false
+ 		),
+	);
+
 	public $mongoSchema = array(
 		'title' => array('type' => 'string'),
 		'body' => array('type' => 'string'),
 		'text' => array('type' => 'text'),
+		'uniquefield1' => array('type' => 'text'),
+		'uniquefield2' => array('type' => 'text'),
+		'text' => array('type' => 'text'),
 		'created' => array('type' => 'datetime'),
 		'modified' => array('type' => 'datetime'),
 	);
+
+	function manualUniqueValidation($check) {
+ 		$c = $this->find('count', array(
+ 			'conditions' => array(
+ 				'uniquefield2' => $check['uniquefield2']
+ 			)
+ 		));
+		if ($c === 0) {
+			return true;
+		}
+ 		return false;
+ 	}
 }
 
 /**
@@ -58,6 +87,7 @@ class Post extends AppModel {
  * @subpackage    mongodb.tests.cases.datasources
  */
 class MongoArticle extends AppModel {
+
 	public $useDbConfig = 'mongo_test';
 }
 
@@ -116,6 +146,8 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->Post->setDataSource('mongo_test');
 
 		$this->mongodb =& ConnectionManager::getDataSource($this->Post->useDbConfig);
+		$this->mongodb->connect();
+
 		$this->dropData();
 	}
 
@@ -128,6 +160,9 @@ class MongodbSourceTest extends CakeTestCase {
 	public function endTest() {
 		$this->dropData();
 		unset($this->Post);
+		unset($this->Mongo);
+		unset($this->mongodb);
+		ClassRegistry::flush();
 	}
 
 /**
@@ -202,7 +237,46 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function testListSources() {
-		$this->assertTrue($this->mongodb->listSources());
+		$this->assertTrue(is_array($this->mongodb->listSources()));
+	}
+
+/**
+ * Tests the getMongoDb method of the Mongodb DataSource
+ *
+ * @return void
+ * @access public
+ */
+	public function testGetMongoDb() {
+		$obj = $this->mongodb->getMongoDb();
+		$this->assertTrue(is_object($obj));
+		$objName = get_class($obj);
+		$this->assertEqual('MongoDB', $objName);
+	}
+
+/**
+ * Tests the Model::getMongoDb() call MongodbSource::getMongoDb
+ *
+ * @return void
+ * @access public
+ */
+	public function testGetMongoDbFromModel() {
+		$obj = $this->Post->getMongoDb();
+		$this->assertTrue(is_object($obj));
+		$objName = get_class($obj);
+		$this->assertEqual('MongoDB', $objName);
+	}
+
+/**
+ * Tests the getMongoCollection method of the Mongodb DataSource
+ *
+ * @return void
+ * @access public
+ */
+	public function testGetMongoCollection() {
+		$obj = $this->mongodb->getMongoCollection($this->Post);
+		$this->assertTrue(is_object($obj));
+		$objName = get_class($obj);
+		$this->assertEqual('MongoCollection', $objName);
 	}
 
 /**
@@ -227,9 +301,13 @@ class MongodbSourceTest extends CakeTestCase {
 			'title' => array('type' => 'string'),
 			'body' => array('type' => 'string'),
 			'text' => array('type' => 'text'),
+			'uniquefield1' => array('type' => 'text'),
+			'uniquefield2' => array('type' => 'text'),
 			'created' => array('type' => 'datetime'),
 			'modified' => array('type' => 'datetime'),
 		);
+		ksort($result);
+		ksort($expect);
 		$this->assertEqual($expect, $result);
 	}
 
@@ -537,70 +615,6 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 /**
- * testSqlComparisonOperators method
- *
- * @return void
- * @access public
- */
-	public function testSqlComparisonOperators() {
-		$this->Post->Behaviors->attach('Mongodb.SqlCompatible');
-		for ($i = 1; $i <= 20; $i++) {
-			$data = array(
-				'title' => $i,
-			);
-			$saveData['Post'] = $data;
-			$this->Post->create();
-			$this->Post->save($saveData);
-		}
-
-		$expected = array(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
-		$result = $this->Post->find('all', array(
-			'conditions' => array(
-				'title !=' => 10,
-			),
-			'fields' => array('_id', 'title', 'number'),
-			'order' => array('number' => 'ASC')
-		));
-		$result = Set::extract($result, '/Post/title');
-		$this->assertEqual($expected, $result);
-
-		$result = $this->Post->find('all', array(
-			'conditions' => array(
-				'NOT' => array(
-					'title' => 10
-				),
-			),
-			'fields' => array('_id', 'title', 'number'),
-			'order' => array('number' => 'ASC')
-		));
-		$result = Set::extract($result, '/Post/title');
-		$this->assertEqual($expected, $result);
-
-		$expected = array(8, 9, 10, 11, 12, 13);
-		$result = $this->Post->find('all', array(
-			'conditions' => array(
-				'title >' => 7,
-				'title <' => 14,
-			),
-			'fields' => array('_id', 'title', 'number'),
-			'order' => array('number' => 'ASC')
-		));
-		$result = Set::extract($result, '/Post/title');
-		$this->assertEqual($expected, $result);
-
-		$expected = array(19, 20);
-		$result = $this->Post->find('all', array(
-			'conditions' => array(
-				'title >=' => 19,
-			),
-			'fields' => array('_id', 'title', 'number'),
-			'order' => array('number' => 'ASC')
-		));
-		$result = Set::extract($result, '/Post/title');
-		$this->assertEqual($expected, $result);
-	}
-
-/**
  * testSpecificId method
  *
  * Test you can save specifying your own _id values - and update by _id
@@ -734,5 +748,207 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	function testDeleteAllNoCascade() {
 		$this->testDeleteAll(false);
+	}
+
+/**
+ * testRegexSearch method
+ *
+ * @return void
+ * @access public
+ */
+	public function testRegexSearch() {
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
+		$MongoArticle->save();
+		$MongoArticle->create(array('title' => 'Article 2', 'cat' => 1));
+		$MongoArticle->save();
+		$MongoArticle->create(array('title' => 'Article 3', 'cat' => 2));
+		$MongoArticle->save();
+
+		$count=$MongoArticle->find('count',array(
+			'conditions'=>array(
+				'title'=>'Article 2'
+			)
+		));
+		$this->assertEqual($count, 1);
+
+		$count = $MongoArticle->find('count',array(
+			'conditions'=>array(
+				'title'=> new MongoRegex('/^Article/')
+			)
+		));
+		$this->assertEqual($count, 3);
+	}
+
+/**
+ * testEmptyReturn method
+ * inserts article into table. searches for a different non existing article. should return an empty array in the same that that it does from other datasources
+ * @return void
+ * @access public
+ */
+	public function testEmptyReturn() {
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
+		$MongoArticle->save();
+		$articles=$MongoArticle->find('all',array(
+			'conditions'=>array(
+				'title'=>'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($articles));
+		$articles=$MongoArticle->find('first',array(
+			'conditions'=>array(
+				'title'=>'Article 2'
+			)
+		));
+		$this->assertFalse(is_array($articles));
+	}
+
+/**
+ * Tests isUnique validation.
+ *
+ * @return void
+ * @access public
+ */
+	public function testSaveUniques() {
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'uniquefield1'=>'uniquenameforthistest'
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->Behaviors->attach('Mongodb.SqlCompatible');
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$data = array(
+			'title' => 'test',
+			'body' => 'asdf',
+			'text' => 'bbbb',
+			'uniquefield1'=>'uniquenameforthistest'
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertFalse($saveResult);
+	}
+
+/**
+ * Tests isUnique validation with custom validation.
+ *
+ * @return void
+ * @access public
+ */
+	public function testSaveUniquesCustom() {
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'uniquefield2' => 'someunqiuename'
+		);
+		$saveData['Post'] = $data;
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+		$data = array(
+			'title' => 'test',
+			'body' => 'asdf',
+			'text' => 'bbbb',
+			'uniquefield2' => 'someunqiuename'
+		);
+		$saveData['Post'] = $data;
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertFalse($saveResult);
+	}
+
+	public function testReturn() {
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+		$MongoArticle->create(array('title' => 'Article 1', 'cat' => 1));
+		$MongoArticle->save();
+		$MongoArticle->create(array('title' => 'Article 2', 'cat' => 1));
+		$MongoArticle->save();
+
+		$return = $MongoArticle->find('all', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('first', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('first', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('count', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_int($return));
+
+		$return = $MongoArticle->find('neighbors', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('list', array(
+			'conditions' => array(
+				'title' => 'Article 2'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('all', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('first', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertFalse($return);
+
+		$return = $MongoArticle->find('count', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertTrue(is_int($return));
+
+		$return = $MongoArticle->find('neighbors', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
+		$return = $MongoArticle->find('list', array(
+			'conditions' => array(
+				'title' => 'Doesn\'t exist'
+			)
+		));
+		$this->assertTrue(is_array($return));
+
 	}
 }

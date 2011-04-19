@@ -15,5 +15,3 @@
 		<li><?php echo $html->link(__('List Posts', true), array('action'=>'index'));?></li>
 	</ul>
 </div>
-
-
