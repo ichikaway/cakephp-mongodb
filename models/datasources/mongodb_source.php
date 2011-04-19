@@ -230,8 +230,6 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function listSources($data = null) {
-		return true;
-	/*
 		$list = $this->_db->listCollections();
 		if (empty($list)) {
 			return array();
@@ -242,7 +240,6 @@ class MongodbSource extends DboSource {
 			}
 			return $collections;
 		}
-	 */
 	}
 
 /**
