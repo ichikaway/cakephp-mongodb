@@ -679,6 +679,61 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 
+/**
+ * Tests groupBy
+ *
+ * @return void
+ * @access public
+ */
+	public function testGroupBy() {
+		for($i = 0 ; $i < 30 ; $i++) {
+			$saveData[$i]['Post'] = array(
+					'title' => 'test'.$i,
+					'body' => 'aaaa'.$i,
+					'text' => 'bbbb'.$i,
+					'count' => $i,
+					);
+		}
+
+		$saveData[30]['Post'] = array(
+			'title' => 'test1',
+			'body' => 'aaaa1',
+			'text' => 'bbbb1',
+			'count' => 1,
+		);
+		$saveData[31]['Post'] = array(
+			'title' => 'test2',
+			'body' => 'aaaa2',
+			'text' => 'bbbb2',
+			'count' => 2,
+		);
+
+		$this->Post->create();
+		$saveResult = $this->Post->saveAll($saveData);
+
+		$cond_count = 5;
+		$query = array(
+				'key' => array('title' => true ),
+				'initial' => array('csum' => 0),
+				'reduce' => 'function(obj, prev){prev.csum += 1;}',
+				'options' => array(
+					'condition' => array('count' => array('$lt' => $cond_count)),
+					),
+				);
+
+		$mongo = $this->Post->getDataSource();
+		$result =  $mongo->group($this->Post, $query);
+
+		$this->assertTrue($result['ok'] == 1 && count($result['retval']) > 0);
+		$this->assertEqual($cond_count, count($result['retval']));
+		$this->assertEqual('test0', $result['retval'][0]['title']);
+		$this->assertEqual('test1', $result['retval'][1]['title']);
+		$this->assertEqual('test2', $result['retval'][2]['title']);
+		$this->assertEqual(1, $result['retval'][0]['csum']);
+		$this->assertEqual(2, $result['retval'][1]['csum']);
+		$this->assertEqual(2, $result['retval'][2]['csum']);
+
+}
 
 
 /**
