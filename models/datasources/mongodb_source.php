@@ -1046,12 +1046,7 @@ class MongodbSource extends DboSource {
 		if ($this->fullDebug) {
 			$this->logQuery("db.runCommand( :query )", 	compact('query'));
 		}
-		if ($return['ok']) {
-			if (!empty($return['values'])) {
-				return $return['values'];
-			}
-			return true;
-		}
+
 		return $return;
 	}
 
