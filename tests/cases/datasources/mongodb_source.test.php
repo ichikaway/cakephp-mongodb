@@ -61,7 +61,6 @@ class Post extends AppModel {
 		'text' => array('type' => 'text'),
 		'uniquefield1' => array('type' => 'text'),
 		'uniquefield2' => array('type' => 'text'),
-		'text' => array('type' => 'text'),
 		'created' => array('type' => 'datetime'),
 		'modified' => array('type' => 'datetime'),
 	);
