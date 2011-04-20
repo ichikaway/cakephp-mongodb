@@ -44,7 +44,7 @@ class MongodbSource extends DboSource {
  * @var boolean
  * @access public
  */
-	var $connected = null;
+	public $connected = null;
 
 /**
  * Database Instance
