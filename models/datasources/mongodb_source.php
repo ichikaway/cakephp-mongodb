@@ -1051,6 +1051,25 @@ class MongodbSource extends DboSource {
 	}
 
 /**
+ * getMapReduceResults
+ *
+ * @param mixed $query
+ * @return void
+ * @access public
+ */
+	public function getMapReduceResults($query) {
+
+		$result = $this->query($query);
+		if($result['ok']) {
+			$data = $this->_db->selectCollection($result['result'])->find();
+			return $data;
+		}
+		return false;
+	}
+
+
+
+/**
  * Prepares a value, or an array of values for database queries by quoting and escaping them.
  *
  * @param mixed $data A value or an array of values to prepare.
