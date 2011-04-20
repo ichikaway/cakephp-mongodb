@@ -61,6 +61,7 @@ class Post extends AppModel {
 		'text' => array('type' => 'text'),
 		'uniquefield1' => array('type' => 'text'),
 		'uniquefield2' => array('type' => 'text'),
+		'count' => array('type' => 'integer'),
 		'created' => array('type' => 'datetime'),
 		'modified' => array('type' => 'datetime'),
 	);
@@ -302,6 +303,7 @@ class MongodbSourceTest extends CakeTestCase {
 			'text' => array('type' => 'text'),
 			'uniquefield1' => array('type' => 'text'),
 			'uniquefield2' => array('type' => 'text'),
+			'count' => array('type' => 'integer'),
 			'created' => array('type' => 'datetime'),
 			'modified' => array('type' => 'datetime'),
 		);
@@ -426,7 +428,8 @@ class MongodbSourceTest extends CakeTestCase {
 		$data = array(
 			'title' => 'test',
 			'body' => 'aaaa',
-			'text' => 'bbbb'
+			'text' => 'bbbb',
+			'count' => 0
 		);
 		$saveData['Post'] = $data;
 
@@ -440,6 +443,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertTrue($saveResult);
 		$this->assertTrue($postId);
 		$findresult = $this->Post->find('all');
+		$this->assertEqual(0, $findresult[0]['Post']['count']);
 
 		$updatedata = array(
 			'title' => 'test2',
@@ -492,13 +496,190 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->assertEqual(1, count($result));
 		$resultData = $result[0]['Post'];
-		$this->assertEqual(6, count($resultData));
+		$this->assertEqual(7, count($resultData));
 		$this->assertTrue(!empty($resultData['_id']));
 		$this->assertEqual($this->Post->id, $resultData['_id']);
 		$this->assertEqual($updatedata['title'], $resultData['title']);
 		$this->assertEqual($updatedata['body'], $resultData['body']);
 		$this->assertEqual($updatedata['text'], $resultData['text']);
+		$this->assertEqual(0, $resultData['count']);
+
+
+		// using $inc operator
+		$this->Post->mongoNoSetOperator = '$inc';
+		$this->Post->create();
+		$updatedataIncrement = array(
+			'_id' => $postId,
+			'count' => 1,
+		);
+		$saveData['Post'] = $updatedataIncrement;
+		$saveResult = $this->Post->save($saveData);
+
+		$this->assertTrue($saveResult);
+		$this->assertIdentical($this->Post->id, $postId);
+
+		$result = $this->Post->find('all');
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0]['Post'];
+		$this->assertEqual(7, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$this->assertEqual($this->Post->id, $resultData['_id']);
+		$this->assertEqual($updatedata['title'], $resultData['title']); //not update
+		$this->assertEqual($updatedata['body'], $resultData['body']); //not update
+		$this->assertEqual($updatedata['text'], $resultData['text']); //not update
+		$this->assertEqual(1, $resultData['count']); //increment
+		unset($this->Post->mongoNoSetOperator);
 	}
+
+
+/**
+ * Tests update method without $set operator.
+ *
+ * @return void
+ * @access public
+ */
+	public function testUpdateWithout_mongoSchemaProperty() {
+		$MongoArticle = ClassRegistry::init('MongoArticle');
+
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'count' => 0,
+		);
+		$saveData['MongoArticle'] = $data;
+
+		$MongoArticle->create();
+		$saveResult = $MongoArticle->save($saveData);
+		$postId = $MongoArticle->id;
+
+		//using $set operator
+		$MongoArticle->create();
+		$updatedata = array(
+			'_id' => $postId,
+			'title' => 'test3',
+			'body' => 'aaaa3',
+		);
+		$saveData['MongoArticle'] = $updatedata;
+		$saveResult = $MongoArticle->save($saveData); // using $set operator
+
+		$this->assertTrue($saveResult);
+		$this->assertIdentical($MongoArticle->id, $postId);
+
+		$result = null;
+		$result = $MongoArticle->find('all');
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0]['MongoArticle'];
+		$this->assertEqual($MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($updatedata['title'], $resultData['title']); //update
+		$this->assertEqual($updatedata['body'], $resultData['body']); //update
+		$this->assertEqual($data['text'], $resultData['text']); //not update
+		$this->assertEqual($data['count'], $resultData['count']); //not update
+
+
+
+		//using $inc operator insted of $set operator
+		$MongoArticle->create();
+		$updatedataInc = array(
+			'_id' => $postId,
+			'$inc' => array('count' => 1),
+		);
+		$saveData['MongoArticle'] = $updatedataInc;
+		$saveResult = $MongoArticle->save($saveData); // using $set operator
+
+		$this->assertTrue($saveResult);
+		$this->assertIdentical($MongoArticle->id, $postId);
+		$result = null;
+		$result = $MongoArticle->find('all');
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0]['MongoArticle'];
+		$this->assertEqual($MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($updatedata['title'], $resultData['title']); //not update
+		$this->assertEqual($updatedata['body'], $resultData['body']); //not update
+		$this->assertEqual($data['text'], $resultData['text']); //not update
+		$this->assertEqual(1, $resultData['count']); //increment
+
+
+
+		//no $set operator
+		$MongoArticle->mongoNoSetOperator = true;
+
+		$MongoArticle->create();
+		$updatedata = array(
+			'_id' => $postId,
+			'title' => 'test4',
+			'body' => 'aaaa4',
+			'count' => '1',
+		);
+		$saveData['MongoArticle'] = $updatedata;
+		$saveResult = $MongoArticle->save($saveData);
+
+		$this->assertTrue($saveResult);
+		$this->assertIdentical($MongoArticle->id, $postId);
+
+		$result = null;
+		$result = $MongoArticle->find('all');
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0]['MongoArticle'];
+		$this->assertEqual($MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($updatedata['title'], $resultData['title']); //update
+		$this->assertEqual($updatedata['body'], $resultData['body']); //update
+		$this->assertTrue(empty($resultData['text']));
+		$this->assertEqual(1, $resultData['count']);
+
+		$MongoArticle->mongoNoSetOperator = null;
+
+
+		//use $push
+		$MongoArticle->create();
+		$updatedata = array(
+			'_id' => $postId,
+			'push_column' => array('push1'),
+		);
+		$saveData['MongoArticle'] = $updatedata;
+		$saveResult = $MongoArticle->save($saveData); //use $set
+
+		$result = $MongoArticle->find('all');
+		$resultData = $result[0]['MongoArticle'];
+		$this->assertEqual('test4', $resultData['title']); // no update
+		$this->assertEqual(array('push1'), $resultData['push_column']);
+
+
+		$MongoArticle->mongoNoSetOperator = '$push';
+		$MongoArticle->create();
+		$updatedata = array(
+			'_id' => $postId,
+			'push_column' => 'push2',
+		);
+		$saveData['MongoArticle'] = $updatedata;
+		$saveResult = $MongoArticle->save($saveData); //use $push
+
+		$this->assertTrue($saveResult);
+		$this->assertIdentical($MongoArticle->id, $postId);
+
+		$result = null;
+		$result = $MongoArticle->find('all');
+
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0]['MongoArticle'];
+		$this->assertEqual($MongoArticle->id, $resultData['_id']);
+		$this->assertEqual('test4', $resultData['title']); // no update
+		$this->assertEqual(array('push1','push2'), $resultData['push_column']); //update
+
+		$MongoArticle->mongoNoSetOperator = null;
+
+
+		unset($MongoArticle);
+
+	}
+
+
+
 
 /**
  * testSort method

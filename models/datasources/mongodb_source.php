@@ -629,6 +629,17 @@ class MongodbSource extends DboSource {
 /**
  * Update Data
  *
+ * This method uses $set operator automatically with MongoCollection::update().
+ * If you don't want to use $set operator, you can chose any one as follw.
+ *  1. Set TRUE in Model::mongoNoSetOperator property.
+ *  2. Set a mongodb operator in a key of save data as follow.
+ *      Model->save(array('_id' => $id, '$inc' => array('count' => 1)));
+ *      Don't use Model::mongoSchema property,
+ *       CakePHP delete '$inc' data in Model::Save().
+ *  3. Set a Mongo operator in Model::mongoNoSetOperator property.
+ *      Model->mongoNoSetOperator = '$inc';
+ *      Model->save(array('_id' => $id, array('count' => 1)));
+ *
  * @param Model $Model Model Instance
  * @param array $fields Field data
  * @param array $values Save data
@@ -669,10 +680,23 @@ class MongodbSource extends DboSource {
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 
-			$keys = array_keys($data);
-			if(substr($keys[0],0,1) !== '$') {
-				$data = array('$set' => $data);
+			//setting Mongo operator
+			if(empty($Model->mongoNoSetOperator)) {
+				$keys = array_keys($data);
+				if(substr($keys[0],0,1) !== '$') {
+					$data = array('$set' => $data);
+				}
+			} elseif(substr($Model->mongoNoSetOperator,0,1) === '$') {
+				if(!empty($data['modified'])) {
+					$modified = $data['modified'];
+					unset($data['modified']);
+					$data = array($Model->mongoNoSetOperator => $data, '$set' => array('modified' => $modified));
+				} else {
+					$data = array($Model->mongoNoSetOperator => $data);
+
+				}
 			}
+
 
 			try{
 				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
