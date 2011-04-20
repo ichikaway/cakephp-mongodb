@@ -74,14 +74,14 @@ class MongodbSource extends DboSource {
 
 /**
  * Base Config
- *
- * @TODO must be public because the parent var is public
- * @var array
- * @access protected
- *
+ * 
  * set_string_id:
  *    true: In read() method, convert MongoId object to string and set it to array 'id'.
  *    false: not convert and set.
+ *
+ * @var array
+ * @access public
+ *
  */
 	public $_baseConfig = array(
 		'set_string_id' => true,
