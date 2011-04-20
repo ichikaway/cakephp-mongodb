@@ -736,6 +736,160 @@ class MongodbSourceTest extends CakeTestCase {
 }
 
 
+
+/**
+ * Tests query
+ *  Distinct, Group
+ *
+ * @return void
+ * @access public
+ */
+	public function testQuery() {
+		for($i = 0 ; $i < 30 ; $i++) {
+			$saveData[$i]['Post'] = array(
+					'title' => 'test'.$i,
+					'body' => 'aaaa'.$i,
+					'text' => 'bbbb'.$i,
+					'count' => $i,
+					);
+		}
+
+		$saveData[30]['Post'] = array(
+			'title' => 'test1',
+			'body' => 'aaaa1',
+			'text' => 'bbbb1',
+			'count' => 1,
+		);
+		$saveData[31]['Post'] = array(
+			'title' => 'test2',
+			'body' => 'aaaa2',
+			'text' => 'bbbb2',
+			'count' => 2,
+		);
+
+		$saveData[32]['Post'] = array(
+			'title' => 'test2',
+			'body' => 'aaaa2',
+			'text' => 'bbbb2',
+			'count' => 32,
+		);
+
+		$this->Post->create();
+		$saveResult = $this->Post->saveAll($saveData);
+
+
+		//using query() Distinct
+		$params = array(
+				'distinct' => 'posts',
+				'key' => 'count',
+				);
+		$result = $this->Post->query( $params );
+		$this->assertEqual(1, $result['values'][1]);
+		$this->assertEqual(2, $result['values'][2]);
+		$this->assertEqual(32, $result['values'][30]);
+
+
+		//using query() group
+		$cond_count = 5;
+		$reduce = "function(obj,prev){prev.csum++;}";
+		$params = array(
+				'group'=>array(
+					'ns'=>'posts',
+					'cond'=>array('count' => array('$lt' => $cond_count)),
+					'key'=>array('title'=>true),
+					'initial'=>array('csum'=>0),
+					'$reduce'=>$reduce
+					)
+				);
+
+		$result = $this->Post->query( $params );
+
+		$this->assertTrue($result['ok'] == 1 && count($result['retval']) > 0);
+		$this->assertEqual($cond_count, count($result['retval']));
+		$this->assertEqual('test0', $result['retval'][0]['title']);
+		$this->assertEqual('test1', $result['retval'][1]['title']);
+		$this->assertEqual('test2', $result['retval'][2]['title']);
+		$this->assertEqual(1, $result['retval'][0]['csum']);
+		$this->assertEqual(2, $result['retval'][1]['csum']);
+		$this->assertEqual(2, $result['retval'][2]['csum']);
+
+}
+
+/**
+ * Tests MapReduce
+ *
+ * @return void
+ * @access public
+ */
+public function testMapReduce() {
+	for($i = 0 ; $i < 30 ; $i++) {
+		$saveData[$i]['Post'] = array(
+				'title' => 'test'.$i,
+				'body' => 'aaaa'.$i,
+				'text' => 'bbbb'.$i,
+				'count' => $i,
+				);
+	}
+
+	$saveData[30]['Post'] = array(
+			'title' => 'test1',
+			'body' => 'aaaa1',
+			'text' => 'bbbb1',
+			'count' => 1,
+			);
+	$saveData[31]['Post'] = array(
+			'title' => 'test2',
+			'body' => 'aaaa2',
+			'text' => 'bbbb2',
+			'count' => 2,
+			);
+
+	$saveData[32]['Post'] = array(
+			'title' => 'test2',
+			'body' => 'aaaa2',
+			'text' => 'bbbb2',
+			'count' => 32,
+			);
+
+	$this->Post->create();
+	$saveResult = $this->Post->saveAll($saveData);
+
+	$map = new MongoCode("function() { emit(this.title,1); }");
+	$reduce = new MongoCode("function(k, vals) { ".
+			"var sum = 0;".
+			"for (var i in vals) {".
+			"sum += vals[i];".
+			"}".
+			"return sum; }"
+			);
+
+	$params = array(
+			"mapreduce" => "posts",
+			"map" => $map,
+			"reduce" => $reduce,
+			"query" => array(
+				//"count" => array('$gt' => 2),
+				),
+			);
+
+	$mongo = $this->Post->getDataSource();
+	$results = $mongo->getMapReduceResults($params);
+
+	$posts = array();
+	foreach ($results as $post) {
+		$posts[$post['_id']] = $post['value'];
+	}
+
+	$this->assertEqual(30, count($posts));
+	$this->assertEqual(1, $posts['test0']);
+	$this->assertEqual(2, $posts['test1']);
+	$this->assertEqual(3, $posts['test2']);
+	$this->assertEqual(1, $posts['test3']);
+
+}
+
+
+
 /**
  * testSort method
  *
