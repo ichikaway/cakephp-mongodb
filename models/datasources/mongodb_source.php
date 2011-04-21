@@ -1178,7 +1178,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function setTimeout($ms){
-		MongoCursor::$timeout = $ms
+		MongoCursor::$timeout = $ms;
 		
 		return true;
 	}
