@@ -873,7 +873,7 @@ public function testMapReduce() {
 			);
 
 	$mongo = $this->Post->getDataSource();
-	$results = $mongo->getMapReduceResults($params);
+	$results = $mongo->mapReduce($params);
 
 	$posts = array();
 	foreach ($results as $post) {
