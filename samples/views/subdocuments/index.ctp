@@ -1,9 +1,9 @@
-<?php echo $html->link('Add data', 'add'); ?>
+<?php echo $this->Html->link('Add data', 'add'); ?>
 <br>
 <br>
 <?php foreach($results as $result): ?>
 
-	id: <?php echo $result['Subdocument']['_id']; ?> [<?php echo $html->link('edit','edit/'.$result['Subdocument']['_id']); ?>] [<?php echo $html->link('delete','delete/'.$result['Subdocument']['_id']); ?>]<br>
+	id: <?php echo $result['Subdocument']['_id']; ?> [<?php echo $this->Html->link('edit','edit/'.$result['Subdocument']['_id']); ?>] [<?php echo $this->Html->link('delete','delete/'.$result['Subdocument']['_id']); ?>]<br>
 	title: <?php echo $result['Subdocument']['title']; ?><br>
 	body: <?php echo $result['Subdocument']['body']; ?><br>
 	<?php foreach($result['Subdocument']['subdoc'] as $num => $val): ?>
