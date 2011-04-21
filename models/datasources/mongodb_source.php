@@ -1060,13 +1060,13 @@ class MongodbSource extends DboSource {
 	}
 
 /**
- * getMapReduceResults
+ * mapReduce
  *
  * @param mixed $query
- * @return void
+ * @return mixed false or array 
  * @access public
  */
-	public function getMapReduceResults($query) {
+	public function mapReduce($query) {
 
 		$result = $this->query($query);
 		if($result['ok']) {
