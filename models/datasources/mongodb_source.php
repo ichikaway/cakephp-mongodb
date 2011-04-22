@@ -1063,14 +1063,18 @@ class MongodbSource extends DboSource {
  * mapReduce
  *
  * @param mixed $query
+ * @param integer $timeout (milli second)
  * @return mixed false or array 
  * @access public
  */
-	public function mapReduce($query) {
+	public function mapReduce($query, $timeout = null) {
 
 		$result = $this->query($query);
 		if($result['ok']) {
 			$data = $this->_db->selectCollection($result['result'])->find();
+			if(!empty($timeout)) {
+				$data->timeout($timeout);
+			}
 			return $data;
 		}
 		return false;
@@ -1173,6 +1177,22 @@ class MongodbSource extends DboSource {
 		$this->affected = null;
 		$this->error = null;
 		$this->numRows = null;
+		return true;
+	}
+	
+/**
+ * setTimeout Method
+ * 
+ * Sets the MongoCursor timeout so long queries (like map / reduce) can run at will.
+ * Expressed in milliseconds, for an infinite timeout, set to -1
+ *
+ * @param int $ms 
+ * @return boolean
+ * @access public
+ */
+	public function setTimeout($ms){
+		MongoCursor::$timeout = $ms;
+		
 		return true;
 	}
 
