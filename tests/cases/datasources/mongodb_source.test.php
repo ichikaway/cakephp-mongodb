@@ -868,8 +868,9 @@ public function testMapReduce() {
 			"map" => $map,
 			"reduce" => $reduce,
 			"query" => array(
-				//"count" => array('$gt' => 2),
+				"count" => array('$gt' => -2),
 				),
+			'out' => 'test_mapreduce_posts',
 			);
 
 	$mongo = $this->Post->getDataSource();
