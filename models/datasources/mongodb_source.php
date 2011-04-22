@@ -1166,6 +1166,22 @@ class MongodbSource extends DboSource {
 		$this->numRows = null;
 		return true;
 	}
+	
+/**
+ * setTimeout Method
+ * 
+ * Sets the MongoCursor timeout so long queries (like map / reduce) can run at will.
+ * Expressed in milliseconds, for an infinite timeout, set to -1
+ *
+ * @param int $ms 
+ * @return void
+ * @access public
+ */
+	public function setTimeout($ms){
+		MongoCursor::$timeout = $ms;
+		
+		return true;
+	}
 
 /**
  * logQuery method
