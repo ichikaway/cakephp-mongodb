@@ -1174,7 +1174,7 @@ class MongodbSource extends DboSource {
  * Expressed in milliseconds, for an infinite timeout, set to -1
  *
  * @param int $ms 
- * @return void
+ * @return boolean
  * @access public
  */
 	public function setTimeout($ms){
