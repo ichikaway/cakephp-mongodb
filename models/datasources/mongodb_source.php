@@ -1069,6 +1069,11 @@ class MongodbSource extends DboSource {
  */
 	public function mapReduce($query, $timeout = null) {
 
+		//above MongoDB1.8, query must object.
+		if(isset($query['query']) && !is_object($query['query'])) {
+			$query['query'] = (object)$query['query'];
+		}
+
 		$result = $this->query($query);
 		if($result['ok']) {
 			$data = $this->_db->selectCollection($result['result'])->find();
