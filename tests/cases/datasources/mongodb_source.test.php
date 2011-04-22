@@ -886,6 +886,21 @@ public function testMapReduce() {
 	$this->assertEqual(3, $posts['test2']);
 	$this->assertEqual(1, $posts['test3']);
 
+
+	//set timeout
+	$results = $mongo->mapReduce($params, 100); //set timeout 100msec
+	$posts = array();
+	foreach ($results as $post) {
+		$posts[$post['_id']] = $post['value'];
+	}
+
+	$this->assertEqual(30, count($posts));
+	$this->assertEqual(1, $posts['test0']);
+	$this->assertEqual(2, $posts['test1']);
+	$this->assertEqual(3, $posts['test2']);
+	$this->assertEqual(1, $posts['test3']);
+
+
 }
 
 

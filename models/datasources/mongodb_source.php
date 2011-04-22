@@ -1054,14 +1054,18 @@ class MongodbSource extends DboSource {
  * mapReduce
  *
  * @param mixed $query
+ * @param integer $timeout (milli second)
  * @return mixed false or array 
  * @access public
  */
-	public function mapReduce($query) {
+	public function mapReduce($query, $timeout = null) {
 
 		$result = $this->query($query);
 		if($result['ok']) {
 			$data = $this->_db->selectCollection($result['result'])->find();
+			if(!empty($timeout)) {
+				$data->timeout($timeout);
+			}
 			return $data;
 		}
 		return false;
