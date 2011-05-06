@@ -448,7 +448,11 @@ class MongodbSource extends DboSource {
 		}
 
 		if (!empty($return) && $return['ok']) {
-			$id = is_object($data['_id']) ? $data['_id']->__toString() : null;
+
+			$id = $data['_id'];
+			if($this->config['set_string_id'] && is_object($data['_id'])) {
+				$id = $data['_id']->__toString();
+			}
 			$Model->setInsertID($id);
 			$Model->id = $id;
 			return true;
@@ -1060,17 +1064,26 @@ class MongodbSource extends DboSource {
 	}
 
 /**
- * getMapReduceResults
+ * mapReduce
  *
  * @param mixed $query
- * @return void
+ * @param integer $timeout (milli second)
+ * @return mixed false or array 
  * @access public
  */
-	public function getMapReduceResults($query) {
+	public function mapReduce($query, $timeout = null) {
+
+		//above MongoDB1.8, query must object.
+		if(isset($query['query']) && !is_object($query['query'])) {
+			$query['query'] = (object)$query['query'];
+		}
 
 		$result = $this->query($query);
 		if($result['ok']) {
 			$data = $this->_db->selectCollection($result['result'])->find();
+			if(!empty($timeout)) {
+				$data->timeout($timeout);
+			}
 			return $data;
 		}
 		return false;
@@ -1173,6 +1186,22 @@ class MongodbSource extends DboSource {
 		$this->affected = null;
 		$this->error = null;
 		$this->numRows = null;
+		return true;
+	}
+	
+/**
+ * setTimeout Method
+ * 
+ * Sets the MongoCursor timeout so long queries (like map / reduce) can run at will.
+ * Expressed in milliseconds, for an infinite timeout, set to -1
+ *
+ * @param int $ms 
+ * @return boolean
+ * @access public
+ */
+	public function setTimeout($ms){
+		MongoCursor::$timeout = $ms;
+		
 		return true;
 	}
 

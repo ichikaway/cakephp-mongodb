@@ -93,7 +93,7 @@
 		</div>
 		<div class="info-box-body">			
 			<div class="method-summary">
-																																																																																																																																																																																																																																																																																																																																						
+																																																																																																																																																																																																																																																																																																																																														
 				<div class="method-definition">
 											<span class="method-result">void</span>
 										<a href="#__construct" title="details" class="method-name">__construct</a>
@@ -197,12 +197,6 @@
 									</div>
 														
 				<div class="method-definition">
-											<span class="method-result">void</span>
-										<a href="#getMapReduceResults" title="details" class="method-name">getMapReduceResults</a>
-											(<span class="var-type">mixed</span>&nbsp;<span class="var-name">$query</span>)
-									</div>
-														
-				<div class="method-definition">
 											<span class="method-result">mixed</span>
 										<a href="#getMongoCollection" title="details" class="method-name">getMongoCollection</a>
 											(<span class="var-type"></span>&nbsp;<span class="var-name">&$Model</span>)
@@ -251,6 +245,12 @@
 									</div>
 														
 				<div class="method-definition">
+											<span class="method-result">mixed</span>
+										<a href="#mapReduce" title="details" class="method-name">mapReduce</a>
+											(<span class="var-type">mixed</span>&nbsp;<span class="var-name">$query</span>, [<span class="var-type">integer</span>&nbsp;<span class="var-name">$timeout</span> = <span class="var-default">null</span>])
+									</div>
+														
+				<div class="method-definition">
 											<span class="method-result">string</span>
 										<a href="#name" title="details" class="method-name">name</a>
 											(<span class="var-type">string</span>&nbsp;<span class="var-name">$name</span>)
@@ -272,6 +272,12 @@
 											<span class="method-result">void</span>
 										<a href="#rollback" title="details" class="method-name">rollback</a>
 										()
+									</div>
+														
+				<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#setTimeout" title="details" class="method-name">setTimeout</a>
+											(<span class="var-type">int</span>&nbsp;<span class="var-name">$ms</span>)
 									</div>
 														
 				<div class="method-definition">
@@ -1025,7 +1031,7 @@
 <div class="oddrow">
 	
 	<div class="method-header">
-		<span class="method-title">execute</span> (line <span class="line-number">1100</span>)
+		<span class="method-title">execute</span> (line <span class="line-number">1104</span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -1054,37 +1060,8 @@
 		
 			
 	</div>
-<a name="methodgetMapReduceResults" id="getMapReduceResults"><!-- --></a>
-<div class="evenrow">
-	
-	<div class="method-header">
-		<span class="method-title">getMapReduceResults</span> (line <span class="line-number">1060</span>)
-	</div> 
-	
-	<!-- ========== Info from phpDoc block ========= -->
-<p class="short-description">getMapReduceResults</p>
-	<ul class="tags">
-				<li><span class="field">access:</span> public</li>
-			</ul>
-	
-	<div class="method-signature">
-		<span class="method-result">void</span>
-		<span class="method-name">
-			getMapReduceResults
-		</span>
-					(<span class="var-type">mixed</span>&nbsp;<span class="var-name">$query</span>)
-			</div>
-	
-			<ul class="parameters">
-					<li>
-				<span class="var-type">mixed</span>
-				<span class="var-name">$query</span>			</li>
-				</ul>
-		
-			
-	</div>
 <a name="methodgetMongoCollection" id="getMongoCollection"><!-- --></a>
-<div class="oddrow">
+<div class="evenrow">
 	
 	<div class="method-header">
 		<span class="method-title">getMongoCollection</span> (line <span class="line-number">273</span>)
@@ -1114,7 +1091,7 @@
 			
 	</div>
 <a name="methodgetMongoDb" id="getMongoDb"><!-- --></a>
-<div class="evenrow">
+<div class="oddrow">
 	
 	<div class="method-header">
 		<span class="method-title">getMongoDb</span> (line <span class="line-number">260</span>)
@@ -1139,7 +1116,7 @@
 			
 	</div>
 <a name="methodgroup" id="group"><!-- --></a>
-<div class="oddrow">
+<div class="evenrow">
 	
 	<div class="method-header">
 		<span class="method-title">group</span> (line <span class="line-number">568</span>)
@@ -1174,7 +1151,7 @@
 			
 	</div>
 <a name="methodinsertMulti" id="insertMulti"><!-- --></a>
-<div class="evenrow">
+<div class="oddrow">
 	
 	<div class="method-header">
 		<span class="method-title">insertMulti</span> (line <span class="line-number">214</span>)
@@ -1209,7 +1186,7 @@
 			
 	</div>
 <a name="methodisConnected" id="isConnected"><!-- --></a>
-<div class="oddrow">
+<div class="evenrow">
 	
 	<div class="method-header">
 		<span class="method-title">isConnected</span> (line <span class="line-number">247</span>)
@@ -1234,7 +1211,7 @@
 			
 	</div>
 <a name="methodisInterfaceSupported" id="isInterfaceSupported"><!-- --></a>
-<div class="evenrow">
+<div class="oddrow">
 	
 	<div class="method-header">
 		<span class="method-title">isInterfaceSupported</span> (line <span class="line-number">295</span>)
@@ -1264,7 +1241,7 @@
 			
 	</div>
 <a name="methodlistSources" id="listSources"><!-- --></a>
-<div class="oddrow">
+<div class="evenrow">
 	
 	<div class="method-header">
 		<span class="method-title">listSources</span> (line <span class="line-number">334</span>)
@@ -1294,10 +1271,10 @@
 			
 	</div>
 <a name="methodlogQuery" id="logQuery"><!-- --></a>
-<div class="evenrow">
+<div class="oddrow">
 	
 	<div class="method-header">
-		<span class="method-title">logQuery</span> (line <span class="line-number">1183</span>)
+		<span class="method-title">logQuery</span> (line <span class="line-number">1203</span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -1322,6 +1299,39 @@
 					<li>
 				<span class="var-type">array</span>
 				<span class="var-name">$args</span><span class="var-description">: array()</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodmapReduce" id="mapReduce"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">mapReduce</span> (line <span class="line-number">1061</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">mapReduce</p>
+	<ul class="tags">
+				<li><span class="field">return:</span> false or array</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">mixed</span>
+		<span class="method-name">
+			mapReduce
+		</span>
+					(<span class="var-type">mixed</span>&nbsp;<span class="var-name">$query</span>, [<span class="var-type">integer</span>&nbsp;<span class="var-name">$timeout</span> = <span class="var-default">null</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">mixed</span>
+				<span class="var-name">$query</span>			</li>
+					<li>
+				<span class="var-type">integer</span>
+				<span class="var-name">$timeout</span><span class="var-description">: (milli second)</span>			</li>
 				</ul>
 		
 			
@@ -1451,8 +1461,38 @@
 		
 			
 	</div>
-<a name="methodtruncate" id="truncate"><!-- --></a>
+<a name="methodsetTimeout" id="setTimeout"><!-- --></a>
 <div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">setTimeout</span> (line <span class="line-number">1184</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">setTimeout Method</p>
+<p class="description"><p>Sets the MongoCursor timeout so long queries (like map / reduce) can run at will.  Expressed in milliseconds, for an infinite timeout, set to -1</p></p>
+	<ul class="tags">
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			setTimeout
+		</span>
+					(<span class="var-type">int</span>&nbsp;<span class="var-name">$ms</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$ms</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodtruncate" id="truncate"><!-- --></a>
+<div class="evenrow">
 	
 	<div class="method-header">
 		<span class="method-title">truncate</span> (line <span class="line-number">1017</span>)
@@ -1481,7 +1521,7 @@
 			
 	</div>
 <a name="methodupdate" id="update"><!-- --></a>
-<div class="evenrow">
+<div class="oddrow">
 	
 	<div class="method-header">
 		<span class="method-title">update</span> (line <span class="line-number">649</span>)
@@ -1529,7 +1569,7 @@
 			
 	</div>
 <a name="methodupdateAll" id="updateAll"><!-- --></a>
-<div class="oddrow">
+<div class="evenrow">
 	
 	<div class="method-header">
 		<span class="method-title">updateAll</span> (line <span class="line-number">735</span>)
@@ -1568,10 +1608,10 @@
 			
 	</div>
 <a name="methodvalue" id="value"><!-- --></a>
-<div class="evenrow">
+<div class="oddrow">
 	
 	<div class="method-header">
-		<span class="method-title">value</span> (line <span class="line-number">1081</span>)
+		<span class="method-title">value</span> (line <span class="line-number">1085</span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -1604,10 +1644,10 @@
 			
 	</div>
 <a name="method_convertId" id="_convertId"><!-- --></a>
-<div class="oddrow">
+<div class="evenrow">
 	
 	<div class="method-header">
-		<span class="method-title">_convertId</span> (line <span class="line-number">1213</span>)
+		<span class="method-title">_convertId</span> (line <span class="line-number">1233</span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -1640,10 +1680,10 @@
 			
 	</div>
 <a name="method_prepareLogQuery" id="_prepareLogQuery"><!-- --></a>
-<div class="evenrow">
+<div class="oddrow">
 	
 	<div class="method-header">
-		<span class="method-title">_prepareLogQuery</span> (line <span class="line-number">1158</span>)
+		<span class="method-title">_prepareLogQuery</span> (line <span class="line-number">1162</span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -1673,10 +1713,10 @@
 			
 	</div>
 <a name="method_setEmptyValues" id="_setEmptyValues"><!-- --></a>
-<div class="oddrow">
+<div class="evenrow">
 	
 	<div class="method-header">
-		<span class="method-title">_setEmptyValues</span> (line <span class="line-number">1134</span>)
+		<span class="method-title">_setEmptyValues</span> (line <span class="line-number">1138</span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -1708,10 +1748,10 @@
 			
 	</div>
 <a name="method_stringify" id="_stringify"><!-- --></a>
-<div class="evenrow">
+<div class="oddrow">
 	
 	<div class="method-header">
-		<span class="method-title">_stringify</span> (line <span class="line-number">1241</span>)
+		<span class="method-title">_stringify</span> (line <span class="line-number">1261</span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -1744,10 +1784,10 @@
 			
 	</div>
 <a name="method_stripAlias" id="_stripAlias"><!-- --></a>
-<div class="oddrow">
+<div class="evenrow">
 	
 	<div class="method-header">
-		<span class="method-title">_stripAlias</span> (line <span class="line-number">1281</span>)
+		<span class="method-title">_stripAlias</span> (line <span class="line-number">1301</span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -1791,7 +1831,7 @@
 
 
 	<p class="notes" id="credit">
-		Documentation generated on Thu, 21 Apr 2011 01:07:44 +0900 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.3</a>
+		Documentation generated on Fri, 22 Apr 2011 11:45:07 +0900 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.3</a>
 	</p>
 	</div></body>
 </html>

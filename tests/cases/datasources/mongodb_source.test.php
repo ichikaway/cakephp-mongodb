@@ -369,6 +369,53 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 /**
+ * Tests insertId after saving
+ *
+ * @return void
+ * @access public
+ */
+	public function testCheckInsertIdAfterSaving() {
+		$saveData['Post'] = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb'
+		);
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$this->assertEqual($this->Post->id, $this->Post->getInsertId());
+		$this->assertTrue(is_string($this->Post->id));
+		$this->assertTrue(is_string($this->Post->getInsertId()));
+
+		//set Numeric _id
+		$saveData['Post'] = array(
+			'_id' => 123456789,
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb'
+		);
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$this->assertEqual($saveData['Post']['_id'] ,$this->Post->id);
+		$this->assertEqual($this->Post->id, $this->Post->getInsertId());
+		$this->assertTrue(is_numeric($this->Post->id));
+		$this->assertTrue(is_numeric($this->Post->getInsertId()));
+
+		$readArray1 = $this->Post->read();
+		$readArray2 = $this->Post->read(null, $saveData['Post']['_id']);
+		$this->assertEqual($readArray1, $readArray2);
+		$this->assertEqual($saveData['Post']['_id'], $readArray2['Post']['_id']);
+
+	}
+
+
+
+/**
  * Tests saveAll method.
  *
  * @return void
@@ -868,12 +915,13 @@ public function testMapReduce() {
 			"map" => $map,
 			"reduce" => $reduce,
 			"query" => array(
-				//"count" => array('$gt' => 2),
+				"count" => array('$gt' => -2),
 				),
+			'out' => 'test_mapreduce_posts',
 			);
 
 	$mongo = $this->Post->getDataSource();
-	$results = $mongo->getMapReduceResults($params);
+	$results = $mongo->mapReduce($params);
 
 	$posts = array();
 	foreach ($results as $post) {
@@ -885,6 +933,21 @@ public function testMapReduce() {
 	$this->assertEqual(2, $posts['test1']);
 	$this->assertEqual(3, $posts['test2']);
 	$this->assertEqual(1, $posts['test3']);
+
+
+	//set timeout
+	$results = $mongo->mapReduce($params, 100); //set timeout 100msec
+	$posts = array();
+	foreach ($results as $post) {
+		$posts[$post['_id']] = $post['value'];
+	}
+
+	$this->assertEqual(30, count($posts));
+	$this->assertEqual(1, $posts['test0']);
+	$this->assertEqual(2, $posts['test1']);
+	$this->assertEqual(3, $posts['test2']);
+	$this->assertEqual(1, $posts['test3']);
+
 
 }
 
