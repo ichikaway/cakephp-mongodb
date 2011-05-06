@@ -369,6 +369,53 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 /**
+ * Tests insertId after saving
+ *
+ * @return void
+ * @access public
+ */
+	public function testCheckInsertIdAfterSaving() {
+		$saveData['Post'] = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb'
+		);
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$this->assertEqual($this->Post->id, $this->Post->getInsertId());
+		$this->assertTrue(is_string($this->Post->id));
+		$this->assertTrue(is_string($this->Post->getInsertId()));
+
+		//set Numeric _id
+		$saveData['Post'] = array(
+			'_id' => 123456789,
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb'
+		);
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue($saveResult);
+
+		$this->assertEqual($saveData['Post']['_id'] ,$this->Post->id);
+		$this->assertEqual($this->Post->id, $this->Post->getInsertId());
+		$this->assertTrue(is_numeric($this->Post->id));
+		$this->assertTrue(is_numeric($this->Post->getInsertId()));
+
+		$readArray1 = $this->Post->read();
+		$readArray2 = $this->Post->read(null, $saveData['Post']['_id']);
+		$this->assertEqual($readArray1, $readArray2);
+		$this->assertEqual($saveData['Post']['_id'], $readArray2['Post']['_id']);
+
+	}
+
+
+
+/**
  * Tests saveAll method.
  *
  * @return void

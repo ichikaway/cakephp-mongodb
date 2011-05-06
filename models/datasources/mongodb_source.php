@@ -448,7 +448,11 @@ class MongodbSource extends DboSource {
 		}
 
 		if (!empty($return) && $return['ok']) {
-			$id = is_object($data['_id']) ? $data['_id']->__toString() : null;
+
+			$id = $data['_id'];
+			if($this->config['set_string_id'] && is_object($data['_id'])) {
+				$id = $data['_id']->__toString();
+			}
 			$Model->setInsertID($id);
 			$Model->id = $id;
 			return true;
