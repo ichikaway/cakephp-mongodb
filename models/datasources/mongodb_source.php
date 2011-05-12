@@ -1083,18 +1083,22 @@ class MongodbSource extends DboSource {
 									'recursive' => $recursive - 1,
 									);
 							$hasOneResult = $linkModel->find('all', $params);
+
 							if(!empty($hasOneResult)) {
 								//aggregate retrieving data using array key(foreigin key _id)
 								$hasOneResultSet = array();
 								foreach($hasOneResult as $key => $val) {
-									$hasOneResultSet[ $val[$linkModel->alias][$assocData['foreignKey']] ] = $val;
+									$foreignKey = $val[$linkModel->alias][$assocData['foreignKey']];
+									if(!empty($foreignKey)) {
+										$hasOneResultSet[$foreignKey] = $val[$linkModel->alias];
+									}
 								}
 								//set relational retrieving data to return data
 								foreach($return as $key => $val) {
 									if(!empty($hasOneResultSet[ $val[$Model->alias][$Model->primaryKey] ])) {
-										$return[$key][$linkModel->alias] = $hasOneResultSet[ $val[$Model->alias][$Model->primaryKey] ];
+										$return[$key][$Model->alias][$linkModel->alias] = $hasOneResultSet[ $val[$Model->alias][$Model->primaryKey] ];
 									} else {
-										$return[$key][$linkModel->alias] = array();
+										$return[$key][$Model->alias][$linkModel->alias] = array();
 									}
 								}
 							}
