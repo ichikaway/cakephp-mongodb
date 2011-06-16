@@ -240,6 +240,60 @@ class SqlCompatibleTest extends CakeTestCase {
 		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
 	}
 
+
+	/**
+	 * Tests find method with conditions _id=>array()
+	 *
+	 * @return void
+	 * @access public
+	 */
+	public function testFindConditionIn() {
+
+		for ($i = 1; $i <= 5; $i++) {
+			$data = array(
+					'_id' => 'A1' . $i,
+					'title' => $i,
+					);
+			$saveData['Post'] = $data;
+			$this->Post->create();
+			$this->Post->save($saveData);
+		}
+
+		$params = array('conditions' => array('_id' => array('A11', 'A12')));
+		$result = $this->Post->find('all', $params);
+
+		$expected = array('A11','A12');
+		$result = Set::extract($result, '/Post/_id');
+		$this->assertEqual($expected, $result);
+		$this->assertEqual(2, count($result));
+
+		$conditions = array(
+			'_id' => array(
+				'$in' => array('A11', 'A12')
+			)
+		);
+		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
+
+
+		$params = array('conditions' => array('_id' => array('$nin' => array('A11', 'A12'))));
+		$result = $this->Post->find('all', $params);
+		//$expected = array('A13','A14');
+		$result = Set::extract($result, '/Post/_id');
+		$this->assertTrue(in_array('A13', $result));
+		$this->assertFalse(in_array('A11', $result));
+		$this->assertFalse(in_array('A12', $result));
+		$this->assertEqual(23, count($result));
+
+
+		$conditions = array(
+			'_id' => array(
+				'$nin' => array('A11', 'A12')
+			)
+		);
+		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
+	}
+
+
 /**
  * setupData method
  *
