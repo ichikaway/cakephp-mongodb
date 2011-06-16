@@ -594,6 +594,8 @@ class MongodbSourceTest extends CakeTestCase {
 			'body' => 'aaaa',
 			'text' => 'bbbb',
 			'count' => 0,
+			'created' => new mongoDate(),
+			'modified' => new mongoDate(),
 		);
 		$saveData['MongoArticle'] = $data;
 
@@ -649,6 +651,41 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($data['text'], $resultData['text']); //not update
 		$this->assertEqual(1, $resultData['count']); //increment
 
+		//using $inc and $push
+		$MongoArticle->create();
+		$updatedataInc = array(
+				'_id' => $postId,
+				'$push' => array(
+					'comments' => array(
+						'_id' => new MongoId(),
+						'created' => new MongoDate(),
+						'vote_count' => 0,
+						'user' => 'user1',
+						'body' => 'comment',
+						)
+					),
+				'$inc' => array('count' => 1),
+				);
+		$saveData['MongoArticle'] = $updatedataInc;
+		$saveResult = $MongoArticle->save($saveData); // using $set operator
+
+		$this->assertTrue($saveResult);
+		$this->assertIdentical($MongoArticle->id, $postId);
+		$result = null;
+		$result = $MongoArticle->find('all');
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0]['MongoArticle'];
+		$this->assertEqual($MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($updatedata['title'], $resultData['title']); //not update
+		$this->assertEqual($updatedata['body'], $resultData['body']); //not update
+		$this->assertEqual($data['text'], $resultData['text']); //not update
+		$this->assertEqual(2, $resultData['count']); //increment
+		$this->assertEqual('user1', $resultData['comments'][0]['user']); //push
+		$this->assertEqual('comment', $resultData['comments'][0]['body']); //push
+		$this->assertEqual(1, count($resultData['comments'])); //push
+		$this->assertTrue(!empty($resultData['created']));
+		$this->assertTrue(!empty($resultData['modified']));
 
 
 		//no $set operator
