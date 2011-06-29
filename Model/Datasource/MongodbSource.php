@@ -338,7 +338,7 @@ class MongodbSource extends DboSource {
 		}
 		
 		$collections = $this->_db->listCollections();
-		$sources = array();
+		$sources = null;
 		
 		if(!empty($collections)){
 			foreach($collections as $collection){
