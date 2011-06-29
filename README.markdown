@@ -24,6 +24,10 @@ To install the driver for use in any/multiple application(s)
 To use this DB driver, install (obviously) and define a db source such as follows:
 
 	<?php
+	//app/config/bootstrap.php
+	CakePlugin::loadAll();
+
+
 	// app/config/database.php
 	class DATABASE_CONFIG {
 
