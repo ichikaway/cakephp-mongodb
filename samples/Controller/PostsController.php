@@ -8,7 +8,6 @@
  */
 class PostsController extends AppController {
 
-	public $Post;
 
 /**
  * name property
