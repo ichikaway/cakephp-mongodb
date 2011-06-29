@@ -163,6 +163,23 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				$return = true;
 				continue;
 			}
+			if ($key === $Model->primaryKey && is_array($value)) {
+				//_id=>array(1,2,3) pattern, set  $in operator
+				$isMongoOperator = false;
+				foreach($value as $idKey => $idValue) {
+					//check a mongo operator exists
+					if(substr($idKey,0,1) === '$') {
+						$isMongoOperator = true;
+						continue;
+					}
+				}
+				unset($idKey, $idValue);
+				if($isMongoOperator === false) {
+					$conditions[$key] = array('$in' => $value);
+				}
+				$return = true;
+				continue;
+			}
 			if (substr($uKey, -3) === 'NOT') {
 				// 'Special' case because it's awkward
 				$childKey = key($value);

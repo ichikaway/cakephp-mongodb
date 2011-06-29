@@ -686,9 +686,14 @@ class MongodbSource extends DboSource {
 
 			//setting Mongo operator
 			if(empty($Model->mongoNoSetOperator)) {
-				$keys = array_keys($data);
-				if(substr($keys[0],0,1) !== '$') {
+				if(!preg_grep('/^\$/', array_keys($data))) {
 					$data = array('$set' => $data);
+				} else {
+					if(!empty($data['modified'])) {
+						$modified = $data['modified'];
+						unset($data['modified']);
+						$data['$set'] = array('modified' => $modified);
+					}
 				}
 			} elseif(substr($Model->mongoNoSetOperator,0,1) === '$') {
 				if(!empty($data['modified'])) {
