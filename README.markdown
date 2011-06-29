@@ -10,14 +10,14 @@ this repository should be installed in the same way as any other plugin.
 
 To install the driver for use in a single application:
 
-	cd my/app/plugins
-	git clone git://github.com/ichikaway/cakephp-mongodb.git mongodb
+	cd my/app/Plugin
+	git clone git://github.com/ichikaway/cakephp-mongodb.git Mongodb
 
 To install the driver for use in any/multiple application(s)
 
 	# where ROOT is the name of the directory parent to the base index.php of CakePHP.
-	cd ROOT/plugins
-	git clone git://github.com/ichikaway/cakephp-mongodb.git mongodb
+	cd ROOT/Plugin
+	git clone git://github.com/ichikaway/cakephp-mongodb.git Mongodb
 	
 ## Sample Code
 
@@ -27,16 +27,29 @@ To use this DB driver, install (obviously) and define a db source such as follow
 	// app/config/database.php
 	class DATABASE_CONFIG {
 
-		public $mongo = array(
-			'driver' => 'mongodb.mongodbSource',
-			'database' => 'driver',
+		public $default = array(
+			'datasource' => 'Mongodb.MongodbSource',
 			'host' => 'localhost',
+			'login' => '',
+			'password' => '',
+			'database' => 'blog',
 			'port' => 27017,
-			/* optional auth fields
-			'login' => 'mongo',	
-			'password' => 'awesomeness',	
-			*/
-		);  
+			'prefix' => '',
+			'persistent' => 'true',
+		);
+
+		public $test = array(
+			'datasource' => 'Mongodb.MongodbSource',
+			'host' => 'localhost',
+			'login' => '',
+			'password' => '',
+			'database' => 'blog_test',
+			'port' => 27017,
+			'prefix' => '',
+			'persistent' => 'true',
+		);
+	}
+
 
 Model files need to have mongoSchema property - or make use of the schemaless behavior. 
 
