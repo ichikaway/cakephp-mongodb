@@ -18,10 +18,12 @@
  * @license       http://www.opensource.org/licenses/mit-license.php The MIT License
  */
 
-/**
- * Import relevant classes for testing, rely on main test for loading clases
- */
-require_once(dirname(dirname(__FILE__)) . DS . 'datasources' . DS . 'mongodb_source.test.php');
+
+App::uses('Model', 'Model');
+App::uses('AppModel', 'Model');
+
+
+
 
 /**
  * SqlCompatiblePost class
@@ -30,7 +32,7 @@ require_once(dirname(dirname(__FILE__)) . DS . 'datasources' . DS . 'mongodb_sou
  * @package       mongodb
  * @subpackage    mongodb.tests.cases.behaviors
  */
-class SqlCompatiblePost extends Post {
+class SqlCompatiblePost extends AppModel {
 
 /**
  * useDbConfig property
@@ -74,7 +76,7 @@ class SqlCompatibleTest extends CakeTestCase {
  * @access protected
  */
 	protected $_config = array(
-		'datasource' => 'mongodb',
+		'datasource' => 'Mongodb.MongodbSource',
 		'host' => 'localhost',
 		'login' => '',
 		'password' => '',
