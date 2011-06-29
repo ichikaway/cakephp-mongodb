@@ -25,6 +25,7 @@
  */
 
 App::uses('DboSource', 'Model/Datasource');
+App::uses('SchemalessBehavior', 'Mongodb.Model/Behavior');
 
 /**
  * MongoDB Source
