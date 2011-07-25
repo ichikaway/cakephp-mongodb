@@ -120,7 +120,7 @@ class MongodbSourceTest extends CakeTestCase {
 		'database' => 'test_mongo',
 		'port' => 27017,
 		'prefix' => '',
-		'persistent' => false,
+		'persistent' => true,
 	);
 
 /**
@@ -202,10 +202,61 @@ class MongodbSourceTest extends CakeTestCase {
 		}
 	}
 
-	public function testHogeonnect() {
-	$this->assertTrue(true);
 
-	}
+/**
+ * testCreateConnectionName
+ *
+ * @return void
+ * @access public
+ */
+ public function testCreateConnectionName() {
+	 $config = array(
+			 'datasource' => 'mongodb',
+			 'host' => 'localhost',
+			 'login' => '',
+			 'password' => '',
+			 'database' => 'test_mongo',
+			 'port' => 27017,
+			 'prefix' => '',
+			 'persistent' => false,
+			 );
+		$version = '1.2.2';
+		$expect = 'mongodb://localhost:27017';
+		$host = $this->mongodb->createConnectionName($config, $version);
+		$this->assertIdentical($expect, $host);
+
+
+		 $config = array(
+			 'datasource' => 'mongodb',
+			 'host' => 'localhost',
+			 'login' => 'user',
+			 'password' => 'pass',
+			 'database' => 'test_mongo',
+			 'port' => 27017,
+			 'prefix' => '',
+			 'persistent' => false,
+			 );
+		$version = '1.2.2';
+		$expect = 'mongodb://user:pass@localhost:27017/test_mongo';
+		$host = $this->mongodb->createConnectionName($config, $version);
+		$this->assertIdentical($expect, $host);
+
+
+		 $config = array(
+			 'datasource' => 'mongodb',
+			 'host' => 'localhost',
+			 'login' => 'user',
+			 'password' => 'pass',
+			 'database' => 'test_mongo',
+			 'port' => 27017,
+			 'prefix' => '',
+			 'persistent' => false,
+			 );
+		$version = '1.0.0';
+		$expect = 'user:pass@localhost:27017/test_mongo';
+		$host = $this->mongodb->createConnectionName($config, $version);
+		$this->assertIdentical($expect, $host);
+ }
 
 
 /**

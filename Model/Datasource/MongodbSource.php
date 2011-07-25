@@ -86,7 +86,7 @@ class MongodbSource extends DboSource {
  */
 	public $_baseConfig = array(
 		'set_string_id' => true,
-		'persistent' => false,
+		'persistent' => true,
 		'host'       => 'localhost',
 		'database'   => '',
 		'port'       => '27017',
@@ -174,35 +174,59 @@ class MongodbSource extends DboSource {
 		$this->connected = false;
 
 		try{
-			if (false && $this->_driverVersion >= '1.0.2' && $this->config['host'] != 'localhost') {
-				$host = "mongodb://";
-			} else {
-				$host = '';
-			}
-			$host .= $this->config['host'] . ':' . $this->config['port'];
 
-			if (false && $this->_driverVersion >= '1.0.2') {
+			$host = $this->createConnectionName($this->config, $this->_driverVersion);
+
+			if ($this->_driverVersion >= '1.2.0') {
 				$this->connection = new Mongo($host, array("persist" => $this->config['persistent']));
 			} else {
 				$this->connection = new Mongo($host, true, $this->config['persistent']);
 			}
 
 			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
-				if (!empty($this->config['login'])) {
+				if (!empty($this->config['login']) && $this->_driverVersion < '1.2.0') {
 					$return = $this->_db->authenticate($this->config['login'], $this->config['password']);
 					if (!$return || !$return['ok']) {
 						trigger_error('MongodbSource::connect ' . $return['errmsg']);
 						return false;
 					}
 				}
+
 				$this->connected = true;
 			}
+
 		} catch(MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		return $this->connected;
 	}
+
+/**
+ * create connection name.
+ *
+ * @param array $config
+ * @param string $version  version of MongoDriver
+ */
+		public function createConnectionName($config, $version) {
+			$host = null;
+
+			if ($version >= '1.0.2') {
+				$host = "mongodb://";
+			} else {
+				$host = '';
+			}
+			$hostname = $config['host'] . ':' . $config['port'];
+
+			if(!empty($config['login'])){
+				$host .= $config['login'] .':'. $config['password'] . '@' . $hostname . '/'. $config['database'];
+			} else {
+				$host .= $hostname;
+			}
+
+			return $host;
+		}
+
 
 /**
  * Inserts multiple values into a table
