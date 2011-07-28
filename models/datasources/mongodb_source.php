@@ -976,7 +976,7 @@ class MongodbSource extends DboSource {
 				->limit($limit)
 				->skip($offset);
 			if ($this->fullDebug) {
-				$count = $return->count();
+				$count = $return->count(true);
 				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
 					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
 				);
