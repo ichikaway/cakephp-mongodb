@@ -1105,11 +1105,25 @@ class MongodbSource extends DboSource {
 		}
 
 		$result = $this->query($query);
-		if($result['ok']) {
-			$data = $this->_db->selectCollection($result['result'])->find();
-			if(!empty($timeout)) {
-				$data->timeout($timeout);
-			}
+  	if($result['ok']) {
+      if (isset($query['out']['inline']) && $query['out']['inline'] == 1)
+      {
+        if (is_array($result['results']))
+        {
+          $data = current($result['results']);
+        }
+        else
+        {
+          $data = false;
+        }
+      }
+      else
+      {
+			  $data = $this->_db->selectCollection($result['result'])->find();
+			  if(!empty($timeout)) {
+				  $data->timeout($timeout);
+			  }
+      }
 			return $data;
 		}
 		return false;
