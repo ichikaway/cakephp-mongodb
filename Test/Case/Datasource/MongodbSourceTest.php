@@ -361,6 +361,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$expected = array(
 			'_id' => array('type' => 'string', 'length' => 24, 'key' => 'primary'),
 			'created' => array('type' => 'datetime', 'default' => null),
+			'modified' => array('type' => 'datetime', 'default' => null),
 		);
 		$this->assertEqual($expected, $result);
 
