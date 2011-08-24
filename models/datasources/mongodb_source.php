@@ -708,34 +708,7 @@ class MongodbSource extends DboSource {
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 
-			if(isset($data['updated'])) {
-				$updateField = 'updated';
-			} else {
-				$updateField = 'modified';			
-			}
-
-			//setting Mongo operator
-			if(empty($Model->mongoNoSetOperator)) {
-				if(!preg_grep('/^\$/', array_keys($data))) {
-					$data = array('$set' => $data);
-				} else {
-					if(!empty($data[$updateField])) {
-						$modified = $data[$updateField];
-						unset($data[$updateField]);
-						$data['$set'] = array($updateField => $modified);
-					}
-				}
-			} elseif(substr($Model->mongoNoSetOperator,0,1) === '$') {
-				if(!empty($data[$updateField])) {
-					$modified = $data[$updateField];
-					unset($data[$updateField]);
-					$data = array($Model->mongoNoSetOperator => $data, '$set' => array($updateField => $modified));
-				} else {
-					$data = array($Model->mongoNoSetOperator => $data);
-
-				}
-			}
-
+			$data = $this->setMongoUpdateOperator($Model, $data);
 
 			try{
 				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
@@ -760,6 +733,50 @@ class MongodbSource extends DboSource {
 			}
 		}
 		return $return;
+	}
+
+
+/**
+ * setMongoUpdateOperator
+ *
+ * Set Mongo update operator following saving data.
+ * This method is for update() and updateAll.
+ *
+ * @param Model $Model Model Instance
+ * @param array $values Save data
+ * @return array $data
+ * @access public
+ */
+	public function setMongoUpdateOperator(&$Model, $data) {
+		if(isset($data['updated'])) {
+			$updateField = 'updated';
+		} else {
+			$updateField = 'modified';			
+		}
+
+		//setting Mongo operator
+		if(empty($Model->mongoNoSetOperator)) {
+			if(!preg_grep('/^\$/', array_keys($data))) {
+				$data = array('$set' => $data);
+			} else {
+				if(!empty($data[$updateField])) {
+					$modified = $data[$updateField];
+					unset($data[$updateField]);
+					$data['$set'] = array($updateField => $modified);
+				}
+			}
+		} elseif(substr($Model->mongoNoSetOperator,0,1) === '$') {
+			if(!empty($data[$updateField])) {
+				$modified = $data[$updateField];
+				unset($data[$updateField]);
+				$data = array($Model->mongoNoSetOperator => $data, '$set' => array($updateField => $modified));
+			} else {
+				$data = array($Model->mongoNoSetOperator => $data);
+
+			}
+		}
+
+		return $data;
 	}
 
 /**

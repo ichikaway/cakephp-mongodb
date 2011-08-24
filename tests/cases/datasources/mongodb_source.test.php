@@ -704,6 +704,82 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertTrue(is_a($resultData['modified'], 'MongoDate'));
 	}
 
+/**
+ * Tests updateAll method.
+ *
+ * @return void
+ * @access public
+ */
+	public function testSetMongoUpdateOperator() {
+
+		$ds = $this->Post->getDataSource();
+
+		//normal
+		$data = array('title' => 'test1', 'name' => 'ichikawa');
+		$expect = array('$set' => array('title' => 'test1', 'name' => 'ichikawa'));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+		//using $inc
+		$data = array('title' => 'test1', 'name' => 'ichikawa', '$inc' => array('count' => 1));
+		$expect = array('title' => 'test1', 'name' => 'ichikawa', '$inc' => array('count' => 1));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+		//using $inc and modified
+		$data = array('modified' => '2011/8/1', '$inc' => array('count' => 1));
+		$expect = array('$set' => array('modified' => '2011/8/1'), '$inc' => array('count' => 1));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+		//using $inc and updated
+		$data = array('updated' => '2011/8/1', '$inc' => array('count' => 1));
+		$expect = array('$set' => array('updated' => '2011/8/1'), '$inc' => array('count' => 1));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+		//using $inc, $push and modified
+		$data = array('$push' => array('tag' => 'tag1'), 'modified' => '2011/8/1', '$inc' => array('count' => 1));
+		$expect = array('$push' => array('tag' => 'tag1'),'$set' => array('modified' => '2011/8/1'), '$inc' => array('count' => 1));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+		//mongoNoSetOperator is true,
+		// using $inc, $push and modified
+		$this->Post->mongoNoSetOperator = true;
+		$data = array('$push' => array('tag' => 'tag1'), 'modified' => '2011/8/1', '$inc' => array('count' => 1));
+		$expect = array('$push' => array('tag' => 'tag1'),'modified' => '2011/8/1', '$inc' => array('count' => 1));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+
+		//mongoNoSetOperator is $inc,
+		$this->Post->mongoNoSetOperator = '$inc';
+		$data = array('count' => 1);
+		$expect = array('$inc' => array('count' => 1));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+
+		//mongoNoSetOperator is $inc,
+		// with modified field
+		$this->Post->mongoNoSetOperator = '$inc';
+		$data = array('count' => 1, 'modified' => '2011/8/1');
+		$expect = array('$inc' => array('count' => 1),'$set' => array('modified' => '2011/8/1'));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+		//mongoNoSetOperator is $inc,
+		// with updated field
+		$this->Post->mongoNoSetOperator = '$inc';
+		$data = array('count' => 1, 'updated' => '2011/8/1');
+		$expect = array('$inc' => array('count' => 1),'$set' => array('updated' => '2011/8/1'));
+		$result = $ds->setMongoUpdateOperator($this->Post, $data);
+		$this->assertEqual($expect, $result);
+
+
+	}
+
 
 /**
  * Tests update method without $set operator.
