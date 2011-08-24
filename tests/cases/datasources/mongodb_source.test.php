@@ -649,6 +649,63 @@ class MongodbSourceTest extends CakeTestCase {
 
 
 /**
+ * Tests updateAll method.
+ *
+ * @return void
+ * @access public
+ */
+	public function testUpdateAll() {
+		$saveData[0]['Post'] = array(
+			'title' => 'test',
+			'name' => 'ichi',
+			'body' => 'aaaa1',
+			'text' => 'bbbb1'
+		);
+
+		$saveData[1]['Post'] = array(
+			'title' => 'test',
+			'name' => 'ichi',
+			'body' => 'aaaa2',
+			'text' => 'bbbb2'
+		);
+
+		$this->Post->create();
+		$this->Post->saveAll($saveData);
+
+		$updateData = array('name' => 'ichikawa');
+		$conditions = array('title' => 'test');
+
+		$resultUpdateAll = $this->Post->updateAll($updateData, $conditions);
+		$this->assertTrue($resultUpdateAll);
+
+		$result = $this->Post->find('all');
+		$this->assertEqual(2, count($result));
+		$resultData = $result[0]['Post'];
+		$this->assertEqual(7, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$data = $saveData[0]['Post'];
+		$this->assertEqual($data['title'], $resultData['title']);
+		$this->assertEqual('ichikawa', $resultData['name']);
+		$this->assertEqual($data['body'], $resultData['body']);
+		$this->assertEqual($data['text'], $resultData['text']);
+		$this->assertTrue(is_a($resultData['created'], 'MongoDate'));
+		$this->assertTrue(is_a($resultData['modified'], 'MongoDate'));
+
+
+		$resultData = $result[1]['Post'];
+		$this->assertEqual(7, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$data = $saveData[1]['Post'];
+		$this->assertEqual($data['title'], $resultData['title']);
+		$this->assertEqual('ichikawa', $resultData['name']);
+		$this->assertEqual($data['body'], $resultData['body']);
+		$this->assertEqual($data['text'], $resultData['text']);
+		$this->assertTrue(is_a($resultData['created'], 'MongoDate'));
+		$this->assertTrue(is_a($resultData['modified'], 'MongoDate'));
+	}
+
+
+/**
  * Tests update method without $set operator.
  *
  * @return void
