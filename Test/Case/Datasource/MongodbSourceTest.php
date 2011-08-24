@@ -163,6 +163,18 @@ class MongodbSourceTest extends CakeTestCase {
 		ClassRegistry::flush();
 	}
 
+
+/**
+ * get Mongod server version
+ *
+ * @return numeric
+ * @access public
+ */
+	public function getMongodVersion() {
+		$mongo = $this->Post->getDataSource();
+		return $mongo->execute('db.version()');
+	}
+
 /**
  * Insert data method for mongodb.
  *
@@ -1043,6 +1055,34 @@ public function testMapReduce() {
 	$this->assertEqual(2, $posts['test1']);
 	$this->assertEqual(3, $posts['test2']);
 	$this->assertEqual(1, $posts['test3']);
+
+
+	//get results as inline data
+	$version = $this->getMongodVersion();
+	if( $version >= '1.7.4') {
+		$params = array(
+				"mapreduce" => "posts",
+				"map" => $map,
+				"reduce" => $reduce,
+				"query" => array(
+					"count" => array('$gt' => -2),
+					),
+				'out' => array('inline' => 1),
+				);
+
+		$results = $mongo->mapReduce($params);
+
+		$posts = array();
+		foreach ($results as $post) {
+			$posts[$post['_id']] = $post['value'];
+		}
+
+		$this->assertEqual(30, count($posts));
+		$this->assertEqual(1, $posts['test0']);
+		$this->assertEqual(2, $posts['test1']);
+		$this->assertEqual(3, $posts['test2']);
+		$this->assertEqual(1, $posts['test3']);
+	}
 
 
 }

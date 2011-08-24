@@ -709,22 +709,28 @@ class MongodbSource extends DboSource {
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 
+			if(isset($data['updated'])) {
+				$updateField = 'updated';
+			} else {
+				$updateField = 'modified';			
+			}
+
 			//setting Mongo operator
 			if(empty($Model->mongoNoSetOperator)) {
 				if(!preg_grep('/^\$/', array_keys($data))) {
 					$data = array('$set' => $data);
 				} else {
-					if(!empty($data['modified'])) {
-						$modified = $data['modified'];
-						unset($data['modified']);
-						$data['$set'] = array('modified' => $modified);
+					if(!empty($data[$updateField])) {
+						$modified = $data[$updateField];
+						unset($data[$updateField]);
+						$data['$set'] = array($updateField => $modified);
 					}
 				}
 			} elseif(substr($Model->mongoNoSetOperator,0,1) === '$') {
-				if(!empty($data['modified'])) {
-					$modified = $data['modified'];
-					unset($data['modified']);
-					$data = array($Model->mongoNoSetOperator => $data, '$set' => array('modified' => $modified));
+				if(!empty($data[$updateField])) {
+					$modified = $data[$updateField];
+					unset($data[$updateField]);
+					$data = array($Model->mongoNoSetOperator => $data, '$set' => array($updateField => $modified));
 				} else {
 					$data = array($Model->mongoNoSetOperator => $data);
 
@@ -986,7 +992,7 @@ class MongodbSource extends DboSource {
 				->limit($limit)
 				->skip($offset);
 			if ($this->fullDebug) {
-				$count = $return->count();
+				$count = $return->count(true);
 				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
 					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
 				);
@@ -1109,10 +1115,19 @@ class MongodbSource extends DboSource {
 		}
 
 		$result = $this->query($query);
+
 		if($result['ok']) {
-			$data = $this->_db->selectCollection($result['result'])->find();
-			if(!empty($timeout)) {
-				$data->timeout($timeout);
+			if (isset($query['out']['inline']) && $query['out']['inline'] === 1) {
+				if (is_array($result['results'])) {
+					$data = $result['results'];
+				}else{
+					$data = false;
+				}
+			}else {
+				$data = $this->_db->selectCollection($result['result'])->find();
+				if(!empty($timeout)) {
+					$data->timeout($timeout);
+				}
 			}
 			return $data;
 		}
