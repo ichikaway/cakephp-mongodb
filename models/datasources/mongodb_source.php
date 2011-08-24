@@ -119,7 +119,8 @@ class MongodbSource extends DboSource {
  */
 	protected $_defaultSchema = array(
 		'_id' => array('type' => 'string', 'length' => 24, 'key' => 'primary'),
-		'created' => array('type' => 'datetime', 'default' => null)
+		'created' => array('type' => 'datetime', 'default' => null),
+		'modified' => array('type' => 'datetime', 'default' => null)
 	);
 
 /**
