@@ -792,8 +792,8 @@ class MongodbSource extends DboSource {
 		}
 
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.update( :fields, :params )",
-				array('fields' => $fields, 'params' => array("multiple" => true))
+			$this->logQuery("db.{$Model->useTable}.update( :conditions, :fields, :params )",
+				array('conditions' => $conditions, 'fields' => $fields, 'params' => array("multiple" => true))
 			);
 		}
 		return $return;
