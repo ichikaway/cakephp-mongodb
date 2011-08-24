@@ -793,10 +793,10 @@ class MongodbSource extends DboSource {
 			return false;
 		}
 
-		$fields = array('$set' => $fields);
-
 		$this->_stripAlias($conditions, $Model->alias);
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
+
+		$fields = $this->setMongoUpdateOperator($Model, $fields);
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
