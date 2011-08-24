@@ -35,15 +35,16 @@ To use this DB driver, install (obviously) and define a db source such as follow
 			/* optional auth fields
 			'login' => 'mongo',	
 			'password' => 'awesomeness',
-			'replicaset' => array('host' => 'mongodb://hoge:hogehoge@localhost:27021,localhost:27022/blog', 'name' => 'myRepl'),
+			'replicaset' => array('host' => 'mongodb://hoge:hogehoge@localhost:27021,localhost:27022/blog', 
+			                      'options' => array('replicaSet' => 'myRepl')
+					     ),
 			*/
 		);  
 
 
-If set 'replicaset' key, it doesn't use host, port, login, password keys. 
-Please set all connection info in replicaset host and set your replicaset name in replicaset name.
-This example shows connecting to localhost:27021 or localhost:27022 with auth info(id:hoge, password:hogehoge), 
-and using blog database.
+More detail of replicaset in wiki:
+https://github.com/ichikaway/cakephp-mongodb/wiki/How-to-connect-to-replicaset-servers
+
 
 Model files need to have mongoSchema property - or make use of the schemaless behavior. 
 
