@@ -43,7 +43,7 @@ To use this DB driver, install (obviously) and define a db source such as follow
 If set 'replicaset' key, it doesn't use host, port, login, password keys. 
 Please set all connection info in replicaset host and set your replicaset name in replicaset name.
 This example shows connecting to localhost:27021 or localhost:27022 with auth info(id:hoge, password:hogehoge), 
-and useing blog database.
+and using blog database.
 
 Model files need to have mongoSchema property - or make use of the schemaless behavior. 
 
