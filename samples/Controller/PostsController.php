@@ -68,7 +68,7 @@ class PostsController extends AppController {
 			$this->flash(__('Invalid Post', true), array('action' => 'index'));
 		}
 		if (!empty($this->data)) {
-
+			$this->Post->id = $id;
 			if ($this->Post->save($this->data)) {
 				$this->flash(__('The Post has been saved.', true), array('action' => 'index'));
 			} else {
