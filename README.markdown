@@ -30,30 +30,26 @@ To use this DB driver, install (obviously) and define a db source such as follow
 
 	// app/config/database.php
 	class DATABASE_CONFIG {
-
 		public $default = array(
 			'datasource' => 'Mongodb.MongodbSource',
 			'host' => 'localhost',
-			'login' => '',
-			'password' => '',
 			'database' => 'blog',
 			'port' => 27017,
 			'prefix' => '',
 			'persistent' => 'true',
-		);
-
-		public $test = array(
-			'datasource' => 'Mongodb.MongodbSource',
-			'host' => 'localhost',
-			'login' => '',
-			'password' => '',
-			'database' => 'blog_test',
-			'port' => 27017,
-			'prefix' => '',
-			'persistent' => 'true',
+			/* optional auth fields
+			'login' => 'mongo',	
+			'password' => 'awesomeness',
+			'replicaset' => array('host' => 'mongodb://hoge:hogehoge@localhost:27021,localhost:27022/blog', 'name' => 'myRepl'),
+			*/
 		);
 	}
 
+
+If set 'replicaset' key, it doesn't use host, port, login, password keys. 
+Please set all connection info in replicaset host and set your replicaset name in replicaset name.
+This example shows connecting to localhost:27021 or localhost:27022 with auth info(id:hoge, password:hogehoge), 
+and using blog database.
 
 Model files need to have mongoSchema property - or make use of the schemaless behavior. 
 
