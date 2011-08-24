@@ -1,5 +1,6 @@
 <?php
 class Subdocument extends AppModel {
+	public $primaryKey = '_id';
 /*
 	var $mongoSchema = array(
 			'title' => array('type'=>'string'),

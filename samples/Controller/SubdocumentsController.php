@@ -60,7 +60,6 @@ class SubdocumentsController extends AppController {
 			$this->flash(__('Invalid Subdocument', true), array('action' => 'index'));
 		}
 		if (!empty($this->data)) {
-			$this->Subdocument->id = $id;
 			if ($this->Subdocument->save($this->data)) {
 				$this->flash(__('The Subdocument has been saved.', true), array('action' => 'index'));
 			} else {
