@@ -364,17 +364,7 @@ class MongodbSource extends DboSource {
 		if (!$this->isConnected()) {
 			return false;
 		}
-		
-		$collections = $this->_db->listCollections();
-		$sources = null;
-		
-		if(!empty($collections)){
-			foreach($collections as $collection){
-				$sources[] = $collection->getName();
-			}
-		}
-		
-		return $sources;
+		return true;	
 	}
 
 /**
