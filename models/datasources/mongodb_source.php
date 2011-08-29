@@ -181,7 +181,7 @@ class MongodbSource extends DboSource {
 			if (isset($this->config['replicaset']) && count($this->config['replicaset']) === 2) {
 				$this->connection = new Mongo($this->config['replicaset']['host'], $this->config['replicaset']['options']);
 				if (isset($this->config['slaveok'])) {
-					$this->connection->setSlaveOk($this->config['slaveok']);
+					$this->connection->setSlaveOkay($this->config['slaveok']);
 				}
 			} else if ($this->_driverVersion >= '1.2.0') {
 				$this->connection = new Mongo($host, array("persist" => $this->config['persistent']));
