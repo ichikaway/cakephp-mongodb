@@ -791,7 +791,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	public function testUpdateWithout_mongoSchemaProperty() {
+	public function testUpdateWithoutMongoSchemaProperty() {
 		$MongoArticle = ClassRegistry::init('MongoArticle');
 
 		$data = array(
