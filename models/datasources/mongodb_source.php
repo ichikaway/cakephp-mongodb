@@ -944,6 +944,13 @@ class MongodbSource extends DboSource {
 		extract($query);
 
 		if (!empty($order[0])) {
+			if (is_string($order[0])) {
+				$order = explode(' ', $order[0]);
+				if (empty($order[1])) {
+					$order[1] = 'ASC';
+				}
+				$order = array(array($order[0] => $order[1]));
+			}
 			$order = array_shift($order);
 		}
 		$this->_stripAlias($conditions, $Model->alias);
