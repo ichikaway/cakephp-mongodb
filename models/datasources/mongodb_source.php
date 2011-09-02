@@ -92,6 +92,7 @@ class MongodbSource extends DboSource {
 		'login'		=> '',
 		'password'	=> '',
 		'replicaset'	=> '',
+		'collection_options' => array()
 	);
 
 /**
@@ -256,16 +257,17 @@ class MongodbSource extends DboSource {
 			$data[] = array_combine($fields, $row);
 		}
 		$this->_prepareLogQuery($table); // just sets a timer
+		$params = array_merge($this->config['collection_options'], array('safe' => true));
 		try{
 			$return = $this->_db
 				->selectCollection($table)
-				->batchInsert($data, array('safe' => true));
+				->batchInsert($data, $params);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$table}.insertMulti( :data , array('safe' => true))", compact('data'));
+			$this->logQuery("db.{$table}.insertMulti( :data , :params )", compact('data','params'));
 		}
 	}
 
@@ -466,16 +468,17 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
+		$params = $this->config['collection_options'];
 		try{
 			$return = $this->_db
 				->selectCollection($Model->table)
-				->insert($data, true);
+				->insert($data, true, $params);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.insert( :data , true)", compact('data'));
+			$this->logQuery("db.{$Model->useTable}.insert( :data , true, :params )", compact('data','params'));
 		}
 
 		if (!empty($return) && $return['ok']) {
@@ -716,27 +719,28 @@ class MongodbSource extends DboSource {
 			unset($data['_id']);
 
 			$data = $this->setMongoUpdateOperator($Model, $data);
-
+			$params = array_merge($this->config['collection_options'], array("multiple" => true));
 			try{
-				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
+				$return = $mongoCollectionObj->update($cond, $data, $params);
 			} catch (MongoException $e) {
 				$this->error = $e->getMessage();
 				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$Model->useTable}.update( :conditions, :data, :params )",
-					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false))
+					array('conditions' => $cond, 'data' => $data, 'params' => $params)
 				);
 			}
 		} else {
+			$params = $this->config['collection_options'];
 			try{
-				$return = $mongoCollectionObj->save($data);
+				$return = $mongoCollectionObj->save($data, $params);
 			} catch (MongoException $e) {
 				$this->error = $e->getMessage();
 				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$Model->useTable}.save( :data )", compact('data'));
+				$this->logQuery("db.{$Model->useTable}.save( :data, :params )", compact('data', 'params'));
 			}
 		}
 		return $return;
@@ -804,12 +808,13 @@ class MongodbSource extends DboSource {
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
 
 		$fields = $this->setMongoUpdateOperator($Model, $fields);
-
+		$params = array_merge($this->config['collection_options'], array("multiple" => true));
+		
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
 			$return = $this->_db
 				->selectCollection($Model->table)
-				->update($conditions, $fields, array("multiple" => true));
+				->update($conditions, $fields, $params);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
@@ -817,7 +822,7 @@ class MongodbSource extends DboSource {
 
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$Model->useTable}.update( :conditions, :fields, :params )",
-				array('conditions' => $conditions, 'fields' => $fields, 'params' => array("multiple" => true))
+				array('conditions' => $conditions, 'fields' => $fields, 'params' => $params)
 			);
 		}
 		return $return;
