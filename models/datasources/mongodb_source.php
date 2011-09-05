@@ -190,6 +190,8 @@ class MongodbSource extends DboSource {
 				$this->connection = new Mongo($host, true, $this->config['persistent']);
 			}
 			
+			$this->connection->setSlaveOkay($this->config['slaveok']);
+			
 			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
 				if (!empty($this->config['login']) && $this->_driverVersion < '1.2.0') {
 					$return = $this->_db->authenticate($this->config['login'], $this->config['password']);
@@ -201,7 +203,7 @@ class MongodbSource extends DboSource {
 
 				$this->connected = true;
 			}
-
+			
 		} catch(MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
@@ -472,13 +474,13 @@ class MongodbSource extends DboSource {
 		try{
 			$return = $this->_db
 				->selectCollection($Model->table)
-				->insert($data, true, $params);
+				->insert($data, $params);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.insert( :data , true, :params )", compact('data','params'));
+			$this->logQuery("db.{$Model->useTable}.insert( :data , :params )", compact('data','params'));
 		}
 
 		if (!empty($return) && $return['ok']) {
@@ -713,6 +715,7 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
+		$return = false;
 		if (!empty($data['_id'])) {
 			$this->_convertId($data['_id']);
 			$cond = array('_id' => $data['_id']);
