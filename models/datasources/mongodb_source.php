@@ -1017,7 +1017,7 @@ class MongodbSource extends DboSource {
 				'query' => $conditions,
 				'sort' => $order,
 				'remove' => !empty($remove),
-				'update' => array('$set' => $modify),
+				'update' => $this->setMongoUpdateOperator($Model, $modify),
 				'new' => !empty($new),
 				'fields' => $fields,
 				'upsert' => !empty($upsert)
