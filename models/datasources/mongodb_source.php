@@ -91,10 +91,29 @@ class MongodbSource extends DboSource {
 		'port'       => '27017',
 		'login'		=> '',
 		'password'	=> '',
-		'replicaset'	=> '',
-		'collection_options' => array()
+		'replicaset'	=> ''
 	);
 
+/**
+ * collection options
+ *
+ * set collection options for various mongo write operations.
+ * options can be found in the php manual
+ * http://www.php.net/manual/en/mongocollection.save.php
+ * http://www.php.net/manual/en/mongocollection.insert.php
+ * http://www.php.net/manual/en/mongocollection.batchinsert.php
+ * http://www.php.net/manual/en/mongocollection.update.php
+ * 
+ * @var array
+ */
+
+	public $collectionOptions = array(
+		'save' => array(),
+		'insert' => array(),
+		'batchInsert' => array(),
+		'update' => array()
+	);
+	
 /**
  * column definition
  *
@@ -190,8 +209,6 @@ class MongodbSource extends DboSource {
 				$this->connection = new Mongo($host, true, $this->config['persistent']);
 			}
 			
-			$this->connection->setSlaveOkay($this->config['slaveok']);
-			
 			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
 				if (!empty($this->config['login']) && $this->_driverVersion < '1.2.0') {
 					$return = $this->_db->authenticate($this->config['login'], $this->config['password']);
@@ -259,7 +276,7 @@ class MongodbSource extends DboSource {
 			$data[] = array_combine($fields, $row);
 		}
 		$this->_prepareLogQuery($table); // just sets a timer
-		$params = array_merge($this->config['collection_options'], array('safe' => true));
+		$params = array_merge($this->collectionOptions['batchInsert'], array('safe' => true));
 		try{
 			$return = $this->_db
 				->selectCollection($table)
@@ -470,7 +487,7 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
-		$params = $this->config['collection_options'];
+		$params = $this->collectionOptions['insert'];
 		try{
 			$return = $this->_db
 				->selectCollection($Model->table)
@@ -722,7 +739,7 @@ class MongodbSource extends DboSource {
 			unset($data['_id']);
 
 			$data = $this->setMongoUpdateOperator($Model, $data);
-			$params = array_merge($this->config['collection_options'], array("multiple" => true));
+			$params = array_merge($this->collectionOptions['update'], array("multiple" => true));
 			try{
 				$return = $mongoCollectionObj->update($cond, $data, $params);
 			} catch (MongoException $e) {
@@ -735,7 +752,7 @@ class MongodbSource extends DboSource {
 				);
 			}
 		} else {
-			$params = $this->config['collection_options'];
+			$params = $this->collectionOptions['save'];
 			try{
 				$return = $mongoCollectionObj->save($data, $params);
 			} catch (MongoException $e) {
@@ -811,7 +828,7 @@ class MongodbSource extends DboSource {
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
 
 		$fields = $this->setMongoUpdateOperator($Model, $fields);
-		$params = array_merge($this->config['collection_options'], array("multiple" => true));
+		$params = array_merge($this->collectionOptions['update'], array("multiple" => true));
 		
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
