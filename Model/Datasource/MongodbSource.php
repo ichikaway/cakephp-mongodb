@@ -452,6 +452,9 @@ class MongodbSource extends DboSource {
 		} else {
 			$data = $Model->data;
 		}
+		foreach ($data as $field => $value) {
+			$data[$field] = $this->value($value, $Model->getColumnType($field));
+		}
 		if (!empty($data['_id'])) {
 			$this->_convertId($data['_id']);
 		}
@@ -1159,12 +1162,19 @@ class MongodbSource extends DboSource {
  * @return mixed Prepared value or array of values.
  * @access public
  */
-	public function value($data, $column = null, $read = true) {
-		$return = parent::value($data, $column, $read);
+	public function value($data, $column = null) {
+		/*
+		$return = parent::value($data, $column);
 		if ($return === null && $data !== null) {
 			return $data;
 		}
-		return $return;
+		 *
+		 */
+		if ($column == 'integer') {
+			return intval($data);
+		}
+		
+		return $data;
 	}
 
 /**
