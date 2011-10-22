@@ -1154,26 +1154,22 @@ class MongodbSource extends DboSource {
 
 
 /**
- * Prepares a value, or an array of values for database queries by quoting and escaping them.
+ * Prepares a value
+ *
+ * From CakePHP: "Returns a quoted and escaped string of $data for use in an SQL statement."
+ *
+ * For MongodbSource: Casts type into that defined in the schema using appropriate formatter
  *
  * @param mixed $data A value or an array of values to prepare.
- * @param string $column The column into which this data will be inserted
- * @param boolean $read Value to be used in READ or WRITE context
+ * @param string $column The column data type
  * @return mixed Prepared value or array of values.
  * @access public
  */
 	public function value($data, $column = null) {
-		/*
-		$return = parent::value($data, $column);
-		if ($return === null && $data !== null) {
-			return $data;
+		$ignore = array('date', 'datetime', 'timestamp', 'time'); // Model::save only juggles date types?
+		if (!in_array($column, $ignore) && isset($this->columns[$column]['formatter'])) {
+			return $this->columns[$column]['formatter']($data);
 		}
-		 *
-		 */
-		if ($column == 'integer') {
-			return intval($data);
-		}
-		
 		return $data;
 	}
 
