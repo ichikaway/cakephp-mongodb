@@ -295,6 +295,66 @@ class SqlCompatibleTest extends CakeTestCase {
 
 
 /**
+ * Order method
+ *
+ * @return void
+ * @access public
+ */
+	public function testOrderDESC() {
+		$expected = array(20, 19);
+		$result = $this->Post->find('all', array(
+			'conditions' => array('title >' => 18),
+			'fields' => array('_id', 'title'),
+			'order' => array('title DESC')
+		));
+		$result = Set::extract($result, '/Post/title');
+		$this->assertEqual($expected, $result);
+
+		$order = array(array('title' => 'DESC'));
+		$this->assertEqual($order, $this->Post->lastQuery['order']);
+	}
+
+/**
+ * Order method
+ *
+ * @return void
+ * @access public
+ */
+	public function testOrderASC() {
+		$expected = array(19, 20);
+		$result = $this->Post->find('all', array(
+			'conditions' => array('title >' => 18),
+			'fields' => array('_id', 'title'),
+			'order' => array('title ASC')
+		));
+		$result = Set::extract($result, '/Post/title');
+		$this->assertEqual($expected, $result);
+
+		$order = array(array('title' => 'ASC'));
+		$this->assertEqual($order, $this->Post->lastQuery['order']);
+	}
+
+
+/**
+ * Order method with model alias
+ *
+ * @return void
+ * @access public
+ */
+	public function testOrderWithModelAlias() {
+		$expected = array(20, 19);
+		$result = $this->Post->find('all', array(
+			'conditions' => array('title >' => 18),
+			'fields' => array('_id', 'title'),
+			'order' => array('Post.title DESC')
+		));
+		$result = Set::extract($result, '/Post/title');
+		$this->assertEqual($expected, $result);
+	}
+
+
+
+/**
  * setupData method
  *
  * @return void

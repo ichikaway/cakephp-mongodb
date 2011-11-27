@@ -109,10 +109,13 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @access public
  */
 	public function beforeFind(&$Model, $query) {
+		if (is_array($query['order'])) {
+			$this->_translateOrders($Model, $query['order']);
+		}
 		if (is_array($query['conditions']) && $this->_translateConditions($Model, $query['conditions'])) {
 			return $query;
 		}
-		return true;
+		return $query;
 	}
 
 /**
@@ -131,6 +134,28 @@ class SqlCompatibleBehavior extends ModelBehavior {
 			$results = date('Y-M-d h:i:s', $results->sec);
 		}
 	}
+
+
+/**
+ * translateOrders method
+ * change order syntax from SQL style to Mongo style
+ *
+ * @param mixed $Model
+ * @param mixed $orders
+ * @return void
+ * @access protected
+ */
+	protected function _translateOrders(&$Model, &$orders) {
+		if(!empty($orders[0])) {
+			foreach($orders[0] as $key => $val) {
+				if(preg_match('/^(.+) (ASC|DESC)$/i', $val, $match)) {
+					$orders[0][$match[1]] = $match[2];
+					unset($orders[0][$key]);
+				}
+			}
+		}
+	}
+
 
 /**
  * translateConditions method
