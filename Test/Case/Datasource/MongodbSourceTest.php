@@ -439,6 +439,59 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertTrue(is_a($resultData['modified'], 'MongoDate'));
 	}
 
+
+/**
+ * Test data types after storage
+ * http://php.net/manual/en/class.mongodb.php
+ *
+ * @return void
+ * @access public
+ */
+	public function testTypesAfterSave() {
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'count' => 4 // native PHP Mongo casting
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue(!empty($saveResult) && is_array($saveResult));
+
+		$result = $this->Post->find('all');
+
+		$this->assertEqual(1, count($result));
+		$resultData = $result[0]['Post'];
+
+		$this->assertEqual(7, count($resultData));
+		$this->assertTrue($resultData['count'] === 4);
+		$this->assertFalse($resultData['count'] === '4');
+
+		$data = array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+			'count' => '4' // force type cast by schema
+		);
+		$saveData['Post'] = $data;
+
+		$this->Post->create();
+		$saveResult = $this->Post->save($saveData);
+		$this->assertTrue(!empty($saveResult) && is_array($saveResult));
+
+		$result = $this->Post->find('all');
+
+		$this->assertEqual(2, count($result));
+		$resultData = $result[1]['Post'];
+
+		$this->assertEqual(7, count($resultData));
+		$this->assertTrue($resultData['count'] === 4);
+		$this->assertFalse($resultData['count'] === '4');
+	}
+
+
 /**
  * Tests insertId after saving
  *
