@@ -185,11 +185,11 @@ class MongodbSource extends DboSource {
 			} else {
 				$this->connection = new Mongo($host, true, $this->config['persistent']);
 			}
-			
-      if (isset($this->config['slaveok'])) {
-        $this->connection->setSlaveOkay($this->config['slaveok']);
-      }
-      
+
+			if (isset($this->config['slaveok'])) {
+				$this->connection->setSlaveOkay($this->config['slaveok']);
+			}
+
 			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
 				if (!empty($this->config['login']) && $this->_driverVersion < '1.2.0') {
 					$return = $this->_db->authenticate($this->config['login'], $this->config['password']);
