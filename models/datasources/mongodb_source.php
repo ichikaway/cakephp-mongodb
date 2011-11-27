@@ -394,8 +394,7 @@ class MongodbSource extends DboSource {
 		$Model->primaryKey = '_id';
 		$schema = array();
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
-			$schema = $Model->mongoSchema;
-			return $schema + $this->_defaultSchema;
+			return $Model->mongoSchema;
 		} elseif ($this->isConnected() && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
 			$Model->Behaviors->attach('Mongodb.Schemaless');
 			if (!$Model->data) {
@@ -944,6 +943,13 @@ class MongodbSource extends DboSource {
 		extract($query);
 
 		if (!empty($order[0])) {
+			if (is_string($order[0])) {
+				$order = explode(' ', $order[0]);
+				if (empty($order[1])) {
+					$order[1] = 'ASC';
+				}
+				$order = array(array($order[0] => $order[1]));
+			}
 			$order = array_shift($order);
 		}
 		$this->_stripAlias($conditions, $Model->alias);
@@ -1017,7 +1023,7 @@ class MongodbSource extends DboSource {
 				'query' => $conditions,
 				'sort' => $order,
 				'remove' => !empty($remove),
-				'update' => array('$set' => $modify),
+				'update' => $this->setMongoUpdateOperator($Model, $modify),
 				'new' => !empty($new),
 				'fields' => $fields,
 				'upsert' => !empty($upsert)
