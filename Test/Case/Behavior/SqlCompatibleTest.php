@@ -354,7 +354,36 @@ class SqlCompatibleTest extends CakeTestCase {
 		$this->assertEqual($expected, $result);
 	}
 
+/**
+ * Convert MongoDate objects to strings
+ *
+ * @return void
+ * @access public
+ */
+	public function testConvertDates() {
+		$expected = '2011-Nov-22 00:00:00';
+		$data = array('title' => 'date', 'created_at' => new MongoDate(strtotime('2011-11-22 00:00:00')));
+		$this->Post->save($data);
+		$result = $this->Post->read();
+		$this->assertEqual($expected, $result['Post']['created_at']);
+	}
 
+/**
+ * Convert MongoDate objects to another format strings
+ *
+ * @return void
+ * @access public
+ */
+	public function testConvertDatesAnotherFormat() {
+		$this->Post->Behaviors->detach('SqlCompatible');
+		$this->Post->Behaviors->attach('Mongodb.SqlCompatible', array('dateFormat' => 'Y-m-d H:i:s'));
+
+		$expected = '2011-11-22 00:00:00';
+		$data = array('title' => 'date', 'created_at' => new MongoDate(strtotime('2011-11-22 00:00:00')));
+		$this->Post->save($data);
+		$result = $this->Post->read();
+		$this->assertEqual($expected, $result['Post']['created_at']);
+	}
 
 /**
  * setupData method
