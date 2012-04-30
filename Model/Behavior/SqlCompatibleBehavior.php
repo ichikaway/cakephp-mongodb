@@ -56,6 +56,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  */
 	protected $_defaultSettings = array(
 		'convertDates' => true,
+		'dateFormat' => 'Y-M-d H:i:s',
 		'operators' => array(
 			'!=' => '$ne',
 			'>' => '$gt',
@@ -93,7 +94,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  */
 	public function afterFind(&$Model, $results, $primary) {
 		if ($this->settings[$Model->alias]['convertDates']) {
-			$this->convertDates($results);
+			$this->convertDates($this->settings[$Model->alias]['dateFormat'], $results);
 		}
 		return $results;
 	}
@@ -121,17 +122,18 @@ class SqlCompatibleBehavior extends ModelBehavior {
 /**
  * Convert MongoDate objects to strings for the purpose of view simplicity
  *
- * @param mixed $results
+ * @param string $format
+ * @param mixed  $results
  * @return void
  * @access public
  */
-	public function convertDates(&$results) {
+	public function convertDates($format, &$results) {
 		if (is_array($results)) {
 			foreach($results as &$row) {
-				$this->convertDates($row);
+				$this->convertDates($format, $row);
 			}
 		} elseif (is_a($results, 'MongoDate')) {
-			$results = date('Y-M-d h:i:s', $results->sec);
+			$results = date($format, $results->sec);
 		}
 	}
 
