@@ -106,10 +106,10 @@ class MongodbSource extends DboSource {
 		'text' => array('name' => 'text'),
 		'integer' => array('name' => 'integer', 'format' => null, 'formatter' => 'intval'),
 		'float' => array('name' => 'float', 'format' => null, 'formatter' => 'floatval'),
-		'datetime' => array('name' => 'datetime', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
-		'timestamp' => array('name' => 'timestamp', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
-		'time' => array('name' => 'time', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
-		'date' => array('name' => 'date', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
+		'datetime' => array('name' => 'datetime', 'format' => 'Y-m-d H:i:s', 'formatter' => 'MongodbDateFormatter'),
+		'timestamp' => array('name' => 'timestamp', 'format' => 'Y-m-d H:i:s', 'formatter' => 'MongodbDateFormatter'),
+		'time' => array('name' => 'time', 'format' => 'H:i:s', 'formatter' => 'MongodbDateFormatter'),
+		'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'MongodbDateFormatter'),
 	);
 
 /**
@@ -1412,11 +1412,12 @@ class MongodbSource extends DboSource {
  *
  * This function cannot be in the class because of the way model save is written
  *
+ * @param string $format
  * @param mixed $date null
  * @return MongoDate
  * @access public
  */
-function MongoDbDateFormatter($date = null) {
+function MongoDbDateFormatter($format, $date = null) {
 	if ($date) {
 		if (is_string($date)) {
 			$date = strtotime($date);
