@@ -55,8 +55,7 @@ class SchemalessBehavior extends ModelBehavior {
  * @var array
  * @access protected
  */
-	protected $_defaultSettings = array(
-	);
+	protected $_defaultSettings = array();
 
 /**
  * setup method
@@ -78,7 +77,7 @@ class SchemalessBehavior extends ModelBehavior {
  * Set the schema to allow saving whatever has been passed
  *
  * @param mixed $Model
- * @return void
+ * @return boolean
  * @access public
  */
 	public function beforeSave(&$Model) {
