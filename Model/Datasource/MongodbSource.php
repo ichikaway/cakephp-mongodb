@@ -75,7 +75,7 @@ class MongodbSource extends DboSource {
 
 /**
  * Base Config
- * 
+ *
  * set_string_id:
  *    true: In read() method, convert MongoId object to string and set it to array 'id'.
  *    false: not convert and set.
@@ -368,7 +368,7 @@ class MongodbSource extends DboSource {
 		if (!$this->isConnected()) {
 			return false;
 		}
-		return true;	
+		return true;
 	}
 
 /**
@@ -750,7 +750,7 @@ class MongodbSource extends DboSource {
 		if(isset($data['updated'])) {
 			$updateField = 'updated';
 		} else {
-			$updateField = 'modified';			
+			$updateField = 'modified';
 		}
 
 		//setting Mongo operator
@@ -1119,7 +1119,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $query
  * @param integer $timeout (milli second)
- * @return mixed false or array 
+ * @return mixed false or array
  * @access public
  */
 	public function mapReduce($query, $timeout = null) {
@@ -1248,20 +1248,20 @@ class MongodbSource extends DboSource {
 		$this->numRows = null;
 		return true;
 	}
-	
+
 /**
  * setTimeout Method
- * 
+ *
  * Sets the MongoCursor timeout so long queries (like map / reduce) can run at will.
  * Expressed in milliseconds, for an infinite timeout, set to -1
  *
- * @param int $ms 
+ * @param int $ms
  * @return boolean
  * @access public
  */
 	public function setTimeout($ms){
 		MongoCursor::$timeout = $ms;
-		
+
 		return true;
 	}
 
@@ -1409,12 +1409,17 @@ class MongodbSource extends DboSource {
  * This function cannot be in the class because of the way model save is written
  *
  * @param mixed $date null
- * @return void
+ * @return MongoDate
  * @access public
  */
 function MongoDbDateFormatter($date = null) {
 	if ($date) {
+		if (is_string($date)) {
+			$date = strtotime($date);
+		}
+
 		return new MongoDate($date);
 	}
+
 	return new MongoDate();
 }
