@@ -798,6 +798,11 @@ class MongodbSource extends DboSource {
 		$fields = $this->setMongoUpdateOperator($Model, $fields);
 
 		$this->_prepareLogQuery($Model); // just sets a timer
+
+		if (!empty($conditions['_id'])) {
+			$this->_convertId($conditions['_id']);
+		}
+		
 		try{
 			$return = $this->_db
 				->selectCollection($Model->table)
