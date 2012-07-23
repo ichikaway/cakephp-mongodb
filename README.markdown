@@ -45,16 +45,15 @@ To use this DB driver, install (obviously) and define a db source such as follow
 					     ),
 			*/
 		);
-	}
-	
-	// To make sure all tests are passing create the following entry in app/Config/database.php
-	public $test = array(
-		'datasource' => 'Mongodb.MongodbSource',
-    'database' => 'test_mongo',
-		'host' => 'localhost',
-		'port' => 27017,
-  ); 
 
+		// To make sure all tests are passing create the following entry in app/Config/database.php
+		public $test = array(
+			'datasource' => 'Mongodb.MongodbSource',
+			'database' => 'test_mongo',
+			'host' => 'localhost',
+			'port' => 27017,
+		); 
+	}
 
 More detail of replicaset in wiki:
 https://github.com/ichikaway/cakephp-mongodb/wiki/How-to-connect-to-replicaset-servers
