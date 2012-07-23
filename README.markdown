@@ -25,7 +25,7 @@ To use this DB driver, install (obviously) and define a db source such as follow
 
 	<?php
 	//app/Config/bootstrap.php
-	CakePlugin::loadAll();
+	CakePlugin::load('Mongodb');
 
 
 	// app/Config/database.php
