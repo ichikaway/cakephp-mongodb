@@ -1263,28 +1263,28 @@ public function testMapReduce() {
 			'fields' => array('_id', 'title'),
 			'order' => array('title' => 1)
 		));
-		$result = Set::extract($result, '/Post/title');
+		$result = Hash::extract($result, '{n}.Post.title');
 
 		$this->assertEqual($expected, $result);
 		$result = $this->Post->find('all', array(
 			'fields' => array('_id', 'title'),
 			'order' => array('title' => 'ASC')
 		));
-		$result = Set::extract($result, '/Post/title');
+		$result = Hash::extract($result, '{n}.Post.title');
 
 		$expected = array_reverse($expected);
 		$result = $this->Post->find('all', array(
 			'fields' => array('_id', 'title'),
 			'order' => array('title' => '-1')
 		));
-		$result = Set::extract($result, '/Post/title');
+		$result = Hash::extract($result, '{n}.Post.title');
 		$this->assertEqual($expected, $result);
 
 		$result = $this->Post->find('all', array(
 			'fields' => array('_id', 'title'),
 			'order' => array('title' => 'DESC')
 		));
-		$result = Set::extract($result, '/Post/title');
+		$result = Hash::extract($result, '{n}.Post.title');
 		$this->assertEqual($expected, $result);
 	}
 
