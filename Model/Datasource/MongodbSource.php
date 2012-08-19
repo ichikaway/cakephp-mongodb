@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * A CakePHP datasource for the mongoDB (http://www.mongodb.org/) document-oriented database.
  *
@@ -378,25 +378,25 @@ class MongodbSource extends DboSource {
  * When called, if there is model data it will be used to derive a schema. a row is plucked
  * out of the db and the data obtained used to derive the schema.
  *
- * @param Model $Model
+ * @param Model $model
  * @return array if model instance has mongoSchema, return it.
  * @access public
  */
-	public function describe(&$Model, $field = null) {
-		$Model->primaryKey = '_id';
+	public function describe($model) {
+		$model->primaryKey = '_id';
 		$schema = array();
-		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
-			$schema = $Model->mongoSchema;
+		if (!empty($model->mongoSchema) && is_array($model->mongoSchema)) {
+			$schema = $model->mongoSchema;
 			return $schema + array('_id' => $this->_defaultSchema['_id']);
-		} elseif ($this->isConnected() && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
-			$Model->Behaviors->attach('Mongodb.Schemaless');
-			if (!$Model->data) {
-				if ($this->_db->selectCollection($Model->table)->count()) {
-					return $this->deriveSchemaFromData($Model, $this->_db->selectCollection($Model->table)->findOne());
+		} elseif ($this->isConnected() && is_a($model, 'Model') && !empty($model->Behaviors)) {
+			$model->Behaviors->attach('Mongodb.Schemaless');
+			if (!$model->data) {
+				if ($this->_db->selectCollection($model->table)->count()) {
+					return $this->deriveSchemaFromData($model, $this->_db->selectCollection($model->table)->findOne());
 				}
 			}
 		}
-		return $this->deriveSchemaFromData($Model);
+		return $this->deriveSchemaFromData($model);
 	}
 
 /**
@@ -414,12 +414,20 @@ class MongodbSource extends DboSource {
 /**
  * Calculate
  *
- * @param Model $Model
+ * @param Model $model
+ * @param string $func Lowercase name of SQL function, i.e. 'count' or 'max'
+ * @param array $params Function parameters (any values must be quoted manually)
  * @return array
  * @access public
  */
-	public function calculate(&$Model) {
-		return array('count' => true);
+	public function calculate(Model $model, $func, $params = array()) {
+	
+		switch (strtolower($func)) {
+			case 'count':
+				array('count' => true);
+			default:
+				return null;
+		}
 	}
 
 /**
@@ -437,13 +445,13 @@ class MongodbSource extends DboSource {
 /**
  * Create Data
  *
- * @param Model $Model Model Instance
+ * @param Model $model Model Instance
  * @param array $fields Field data
  * @param array $values Save data
  * @return boolean Insert result
  * @access public
  */
-	public function create(&$Model, $fields = null, $values = null) {
+	public function create(Model $model, $fields = null, $values = null) {
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -451,23 +459,23 @@ class MongodbSource extends DboSource {
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
 		} else {
-			$data = $Model->data;
+			$data = $model->data;
 		}
 		if (!empty($data['_id'])) {
 			$this->_convertId($data['_id']);
 		}
 
-		$this->_prepareLogQuery($Model); // just sets a timer
+		$this->_prepareLogQuery($model); // just sets a timer
 		try{
 			$return = $this->_db
-				->selectCollection($Model->table)
+				->selectCollection($model->table)
 				->insert($data, true);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.insert( :data , true)", compact('data'));
+			$this->logQuery("db.{$model->useTable}.insert( :data , true)", compact('data'));
 		}
 
 		if (!empty($return) && $return['ok']) {
@@ -476,8 +484,8 @@ class MongodbSource extends DboSource {
 			if($this->config['set_string_id'] && is_object($data['_id'])) {
 				$id = $data['_id']->__toString();
 			}
-			$Model->setInsertID($id);
-			$Model->id = $id;
+			$model->setInsertID($id);
+			$model->id = $id;
 			return true;
 		}
 		return false;
@@ -503,26 +511,22 @@ class MongodbSource extends DboSource {
  * Return a command to drop each table
  *
  * @param mixed $schema
- * @param mixed $tableName null
+ * @param mixed $table null
  * @return void
  * @access public
  */
-	public function dropSchema($schema, $tableName = null) {
+	public function dropSchema(CakeSchema $schema, $table = null) {
 		if (!$this->isConnected()) {
 			return false;
 		}
 
-		if (!is_a($schema, 'CakeSchema')) {
-			trigger_error(__('Invalid schema object', true), E_USER_WARNING);
-			return null;
-		}
-		if ($tableName) {
-			return "db.{$tableName}.drop();";
+		if ($table) {
+			return "db.{$table}.drop();";
 		}
 
 		$toDrop = array();
 		foreach ($schema->tables as $curTable => $columns) {
-			if ($tableName === $curTable) {
+			if ($table === $curTable) {
 				$toDrop[] = $curTable;
 			}
 		}
@@ -575,8 +579,7 @@ class MongodbSource extends DboSource {
 /**
  * group method
  *
- * @param mixed $Model
- * @param array $params array()
+ * @param array $group array()
  *   Set params  same as MongoCollection::group()
  *    key,initial, reduce, options(conditions, finalize)
  *
@@ -589,21 +592,25 @@ class MongodbSource extends DboSource {
  *                'finalize' => array(),
  *           ),
  *       );
+ * @param mixed $Model
  * @return void
  * @access public
  */
-	public function group(&$Model, $params = array()) {
+	public function group($group, $Model = null) {
 
-		if (!$this->isConnected() || count($params) === 0 ) {
+		if (!$this->isConnected() || count($group) === 0 ) {
 			return false;
 		}
+		
+		if (!is_object($Model))
+			return null;
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 
-		$key = (empty($params['key'])) ? array() : $params['key'];
-		$initial = (empty($params['initial'])) ? array() : $params['initial'];
-		$reduce = (empty($params['reduce'])) ? array() : $params['reduce'];
-		$options = (empty($params['options'])) ? array() : $params['options'];
+		$key = (empty($group['key'])) ? array() : $group['key'];
+		$initial = (empty($group['initial'])) ? array() : $group['initial'];
+		$reduce = (empty($group['reduce'])) ? array() : $group['reduce'];
+		$options = (empty($group['options'])) ? array() : $group['options'];
 
 		try{
 			$return = $this->_db
@@ -614,7 +621,7 @@ class MongodbSource extends DboSource {
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.group( :key, :initial, :reduce, :options )", $params);
+			$this->logQuery("db.{$Model->useTable}.group( :key, :initial, :reduce, :options )", $group);
 		}
 
 
@@ -673,7 +680,7 @@ class MongodbSource extends DboSource {
  * @return boolean Update result
  * @access public
  */
-	public function update(&$Model, $fields = null, $values = null, $conditions = null) {
+	public function update(Model $model, $fields = null, $values = null, $conditions = null) {
 
 		if (!$this->isConnected()) {
 			return false;
@@ -681,33 +688,33 @@ class MongodbSource extends DboSource {
 
 		if ($fields !== null && $values !== null) {
 			$data = array_combine($fields, $values);
-		} elseif($fields !== null && $conditions !== null) {
-			return $this->updateAll($Model, $fields, $conditions);
+		} elseif($fields !== null) {
+			return $this->updateAll($model, $fields);
 		} else{
-			$data = $Model->data;
+			$data = $model->data;
 		}
 
 		if (empty($data['_id'])) {
-			$data['_id'] = $Model->id;
+			$data['_id'] = $model->id;
 		}
 		$this->_convertId($data['_id']);
 
 		try{
 			$mongoCollectionObj = $this->_db
-				->selectCollection($Model->table);
+				->selectCollection($model->table);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 			return false;
 		}
 
-		$this->_prepareLogQuery($Model); // just sets a timer
+		$this->_prepareLogQuery($model); // just sets a timer
 		if (!empty($data['_id'])) {
 			$this->_convertId($data['_id']);
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
 
-			$data = $this->setMongoUpdateOperator($Model, $data);
+			$data = $this->setMongoUpdateOperator($model, $data);
 
 			try{
 				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
@@ -716,8 +723,8 @@ class MongodbSource extends DboSource {
 				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$Model->useTable}.update( :conditions, :data, :params )",
-					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false))
+				$this->logQuery("db.{$model->useTable}.update( :data, :params )",
+					array('data' => $data, 'params' => array("multiple" => false))
 				);
 			}
 		} else {
@@ -728,7 +735,7 @@ class MongodbSource extends DboSource {
 				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$Model->useTable}.save( :data )", compact('data'));
+				$this->logQuery("db.{$model->useTable}.save( :data )", compact('data'));
 			}
 		}
 		return $return;
@@ -787,20 +794,20 @@ class MongodbSource extends DboSource {
  * @return boolean Update result
  * @access public
  */
-	public function updateAll(&$Model, $fields = null,  $conditions = null) {
+	public function updateAll(Model $model, $fields = null,  $conditions = null) {
 		if (!$this->isConnected()) {
 			return false;
 		}
 
-		$this->_stripAlias($conditions, $Model->alias);
-		$this->_stripAlias($fields, $Model->alias, false, 'value');
+		$this->_stripAlias($conditions, $model->alias);
+		$this->_stripAlias($fields, $model->alias, false, 'value');
 
-		$fields = $this->setMongoUpdateOperator($Model, $fields);
+		$fields = $this->setMongoUpdateOperator($model, $fields);
 
-		$this->_prepareLogQuery($Model); // just sets a timer
+		$this->_prepareLogQuery($model); // just sets a timer
 		try{
 			$return = $this->_db
-				->selectCollection($Model->table)
+				->selectCollection($model->table)
 				->update($conditions, $fields, array("multiple" => true));
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
@@ -808,7 +815,7 @@ class MongodbSource extends DboSource {
 		}
 
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.update( :conditions, :fields, :params )",
+			$this->logQuery("db.{$model->useTable}.update( :conditions, :fields, :params )",
 				array('conditions' => $conditions, 'fields' => $fields, 'params' => array("multiple" => true))
 			);
 		}
@@ -865,24 +872,25 @@ class MongodbSource extends DboSource {
  *
  * @TODO bench remove() v drop. if it's faster to drop - just drop the collection taking into
  *  	account existing indexes (recreate just the indexes)
- * @param Model $Model Model Instance
+ * @param Model $model Model Instance
  * @param array $conditions
  * @return boolean Update result
  * @access public
  */
-	public function delete(&$Model, $conditions = null) {
+	public function delete(Model $model, $id = NULL) {
 		if (!$this->isConnected()) {
 			return false;
 		}
 
+		$conditions = $id;
 		$id = null;
 
-		$this->_stripAlias($conditions, $Model->alias);
+		$this->_stripAlias($conditions, $model->alias);
 
 		if ($conditions === true) {
 			$conditions = array();
 		} elseif (empty($conditions)) {
-			$id = $Model->id;
+			$id = $model->id;
 		} elseif (!empty($conditions) && !is_array($conditions)) {
 			$id = $conditions;
 			$conditions = array();
@@ -892,9 +900,9 @@ class MongodbSource extends DboSource {
 		}
 
 		$mongoCollectionObj = $this->_db
-			->selectCollection($Model->table);
+			->selectCollection($model->table);
 
-		$this->_stripAlias($conditions, $Model->alias);
+		$this->_stripAlias($conditions, $model->alias);
 		if (!empty($id)) {
 			$conditions['_id'] = $id;
 		}
@@ -905,10 +913,10 @@ class MongodbSource extends DboSource {
 		$return = false;
 		$r = false;
 		try{
-			$this->_prepareLogQuery($Model); // just sets a timer
+			$this->_prepareLogQuery($model); // just sets a timer
 			$return = $mongoCollectionObj->remove($conditions);
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$Model->useTable}.remove( :conditions )",
+				$this->logQuery("db.{$model->useTable}.remove( :conditions )",
 					compact('conditions')
 				);
 			}
@@ -925,25 +933,25 @@ class MongodbSource extends DboSource {
  *
  * For deleteAll(true) calls - the conditions will arrive here as true - account for that and switch to an empty array
  *
- * @param Model $Model Model Instance
- * @param array $query Query data
+ * @param Model $model Model Instance
+ * @param array $queryData Query data
  * @return array Results
  * @access public
  */
-	public function read(&$Model, $query = array()) {
+	public function read(Model $model, $queryData = array(), $recursive = null) {
 		if (!$this->isConnected()) {
 			return false;
 		}
 
-		$this->_setEmptyValues($query);
-		extract($query);
+		$this->_setEmptyValues($queryData);
+		extract($queryData);
 
 		if (!empty($order[0])) {
 			$order = array_shift($order);
 		}
-		$this->_stripAlias($conditions, $Model->alias);
-		$this->_stripAlias($fields, $Model->alias, false, 'value');
-		$this->_stripAlias($order, $Model->alias, false, 'both');
+		$this->_stripAlias($conditions, $model->alias);
+		$this->_stripAlias($fields, $model->alias, false, 'value');
+		$this->_stripAlias($order, $model->alias, false, 'both');
 
 		//for cakephp2.0. it doesn't call describe()
 		if(!empty($conditions['id']) && empty($conditions['_id'])) {
@@ -986,39 +994,39 @@ class MongodbSource extends DboSource {
 
 		$return = array();
 
-		$this->_prepareLogQuery($Model); // just sets a timer
+		$this->_prepareLogQuery($model); // just sets a timer
 		if (empty($modify)) {
-			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
+			if ($model->findQueryType === 'count' && $fields == array('count' => true)) {
 				$count = $this->_db
-					->selectCollection($Model->table)
+					->selectCollection($model->table)
 					->count($conditions);
 				if ($this->fullDebug) {
-					$this->logQuery("db.{$Model->useTable}.count( :conditions )",
+					$this->logQuery("db.{$model->useTable}.count( :conditions )",
 						compact('conditions', 'count')
 					);
 				}
-				return array(array($Model->alias => array('count' => $count)));
+				return array(array($model->alias => array('count' => $count)));
 			}
 
 			$return = $this->_db
-				->selectCollection($Model->table)
+				->selectCollection($model->table)
 				->find($conditions, $fields)
 				->sort($order)
 				->limit($limit)
 				->skip($offset);
 			if ($this->fullDebug) {
 				$count = $return->count(true);
-				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
+				$this->logQuery("db.{$model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
 					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
 				);
 			}
 		} else {
 			$options = array_filter(array(
-				'findandmodify' => $Model->table,
+				'findandmodify' => $model->table,
 				'query' => $conditions,
 				'sort' => $order,
 				'remove' => !empty($remove),
-				'update' => $this->setMongoUpdateOperator($Model, $modify),
+				'update' => $this->setMongoUpdateOperator($model, $modify),
 				'new' => !empty($new),
 				'fields' => $fields,
 				'upsert' => !empty($upsert)
@@ -1031,7 +1039,7 @@ class MongodbSource extends DboSource {
 					if ($this->config['set_string_id'] && !empty($return['value']['_id']) && is_object($return['value']['_id'])) {
 						$return['value']['_id'] = $return['value']['_id']->__toString();
 					}
-					$return[][$Model->alias] = $return['value'];
+					$return[][$model->alias] = $return['value'];
 				} else {
 					$count = 0;
 				}
@@ -1041,8 +1049,8 @@ class MongodbSource extends DboSource {
 			}
 		}
 
-		if ($Model->findQueryType === 'count') {
-			return array(array($Model->alias => array('count' => $return->count())));
+		if ($model->findQueryType === 'count') {
+			return array(array($model->alias => array('count' => $return->count())));
 		}
 
 		if (is_object($return)) {
@@ -1052,7 +1060,7 @@ class MongodbSource extends DboSource {
 				if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 					$mongodata['_id'] = $mongodata['_id']->__toString();
 				}
-				$_return[][$Model->alias] = $mongodata;
+				$_return[][$model->alias] = $mongodata;
 			}
 			return $_return;
 		}
@@ -1095,7 +1103,15 @@ class MongodbSource extends DboSource {
  * @return void
  * @access public
  */
-	public function query($query, $params = array()) {
+	public function query() {
+
+		$args = func_get_args();
+		$query = $args[0];
+		$params = array();
+		if (count($args) > 1) {
+			$params = $args[1];
+		}
+		
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1175,11 +1191,12 @@ class MongodbSource extends DboSource {
  * db-agnostic process which does not have a mongo equivalent, don't do anything.
  *
  * @param mixed $query
+ * @param array $options array()
  * @param array $params array()
  * @return void
  * @access public
  */
-	public function execute($query, $params = array()) {
+	public function execute($query, $options = array(), $params = array()) {
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1187,6 +1204,9 @@ class MongodbSource extends DboSource {
 		if (!$query || $query === true) {
 			return;
 		}
+		
+		$params = array_merge($options, $params);
+		
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$return = $this->_db
 			->execute($query, $params);
