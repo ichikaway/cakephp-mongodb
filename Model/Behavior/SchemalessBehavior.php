@@ -63,13 +63,13 @@ class SchemalessBehavior extends ModelBehavior {
  *
  * Don't currently have any settings at all - disabled
  *
- * @param mixed $Model
+ * @param Model $model
  * @param array $config array()
  * @return void
  * @access public
  */
-	public function setup(&$Model, $config = array()) {
-		//$this->settings[$Model->alias] = array_merge($this->_defaultSettings, $config);
+	public function setup(Model $model, $config = array()) {
+		//$this->settings[$model->alias] = array_merge($this->_defaultSettings, $config);
 	}
 
 /**
@@ -77,13 +77,13 @@ class SchemalessBehavior extends ModelBehavior {
  *
  * Set the schema to allow saving whatever has been passed
  *
- * @param mixed $Model
+ * @param Model $model
  * @return void
  * @access public
  */
-	public function beforeSave(&$Model) {
-		$Model->cacheSources = false;
-		$Model->schema(true);
+	public function beforeSave(Model $model) {
+		$model->cacheSources = false;
+		$model->schema(true);
 		return true;
 	}
 }
