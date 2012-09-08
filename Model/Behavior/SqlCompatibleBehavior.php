@@ -73,26 +73,26 @@ class SqlCompatibleBehavior extends ModelBehavior {
  *
  * Allow overriding the operator map
  *
- * @param mixed $Model
+ * @param Model $model
  * @param array $config array()
  * @return void
  * @access public
  */
-	public function setup(&$Model, $config = array()) {
-		$this->settings[$Model->alias] = array_merge($this->_defaultSettings, $config);
+	public function setup(Model $model, $config = array()) {
+		$this->settings[$model->alias] = array_merge($this->_defaultSettings, $config);
 	}
 
 /**
  * If requested, convert dates from MongoDate objects to standard date strings
  *
- * @param mixed $Model
+ * @param Model $model
  * @param mixed $results
  * @param mixed $primary
  * @return void
  * @access public
  */
-	public function afterFind(&$Model, $results, $primary) {
-		if ($this->settings[$Model->alias]['convertDates']) {
+	public function afterFind(Model $model, $results, $primary) {
+		if ($this->settings[$model->alias]['convertDates']) {
 			$this->convertDates($results);
 		}
 		return $results;
@@ -103,16 +103,16 @@ class SqlCompatibleBehavior extends ModelBehavior {
  *
  * If conditions are an array ensure they are mongified
  *
- * @param mixed $Model
+ * @param Model $model
  * @param mixed $query
  * @return void
  * @access public
  */
-	public function beforeFind(&$Model, $query) {
+	public function beforeFind(Model $model, $query) {
 		if (is_array($query['order'])) {
-			$this->_translateOrders($Model, $query['order']);
+			$this->_translateOrders($model, $query['order']);
 		}
-		if (is_array($query['conditions']) && $this->_translateConditions($Model, $query['conditions'])) {
+		if (is_array($query['conditions']) && $this->_translateConditions($model, $query['conditions'])) {
 			return $query;
 		}
 		return $query;
