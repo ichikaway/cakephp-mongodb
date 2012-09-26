@@ -181,6 +181,8 @@ class MongodbSource extends DboSource {
 
 			if (isset($this->config['replicaset']) && count($this->config['replicaset']) === 2) {
 				$this->connection = new Mongo($this->config['replicaset']['host'], $this->config['replicaset']['options']);
+			} else if ($this->_driverVersion >= '1.3.0') {
+				$this->connection = new Mongo($host);
 			} else if ($this->_driverVersion >= '1.2.0') {
 				$this->connection = new Mongo($host, array("persist" => $this->config['persistent']));
 			} else {
@@ -368,7 +370,7 @@ class MongodbSource extends DboSource {
 		if (!$this->isConnected()) {
 			return false;
 		}
-		return true;	
+		return true;
 	}
 
 /**
@@ -459,9 +461,15 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
-			$return = $this->_db
-				->selectCollection($Model->table)
-				->insert($data, true);
+			if ($this->_driverVersion >= '1.3.0') {
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->insert($data, array('safe' => true));
+			} else {
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->insert($data, true);
+			}
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
@@ -674,7 +682,6 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function update(&$Model, $fields = null, $values = null, $conditions = null) {
-
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -710,7 +717,11 @@ class MongodbSource extends DboSource {
 			$data = $this->setMongoUpdateOperator($Model, $data);
 
 			try{
-				$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
+				if ($this->_driverVersion >= '1.3.0') {
+					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false, 'safe' => true));
+				} else {
+					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
+				}
 			} catch (MongoException $e) {
 				$this->error = $e->getMessage();
 				trigger_error($this->error);
@@ -722,7 +733,11 @@ class MongodbSource extends DboSource {
 			}
 		} else {
 			try{
-				$return = $mongoCollectionObj->save($data);
+				if ($this->_driverVersion >= '1.3.0') {
+					$return = $mongoCollectionObj->save($data, array('safe' => true));
+				} else {
+					$return = $mongoCollectionObj->save($data);
+				}
 			} catch (MongoException $e) {
 				$this->error = $e->getMessage();
 				trigger_error($this->error);
@@ -799,9 +814,19 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		try{
-			$return = $this->_db
-				->selectCollection($Model->table)
-				->update($conditions, $fields, array("multiple" => true));
+			if ($this->_driverVersion >= '1.3.0') {
+				// not use 'upsert'
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->update($conditions, $fields, array("multiple" => true, 'safe' => true));
+				if (isset($return['updatedExisting'])) {
+					$return = $return['updatedExisting'];
+				}
+			} else {
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->update($conditions, $fields, array("multiple" => true));
+			}
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
