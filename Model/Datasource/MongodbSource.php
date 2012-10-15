@@ -382,7 +382,7 @@ class MongodbSource extends DboSource {
  * @return array if model instance has mongoSchema, return it.
  * @access public
  */
-	public function describe(&$Model, $field = null) {
+	public function describe($Model) {
 		$Model->primaryKey = '_id';
 		$schema = array();
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
@@ -418,7 +418,7 @@ class MongodbSource extends DboSource {
  * @return array
  * @access public
  */
-	public function calculate(&$Model) {
+	public function calculate(Model $Model, $func, $params = array()) {
 		return array('count' => true);
 	}
 
@@ -443,7 +443,7 @@ class MongodbSource extends DboSource {
  * @return boolean Insert result
  * @access public
  */
-	public function create(&$Model, $fields = null, $values = null) {
+	public function create(Model $Model, $fields = null, $values = null) {
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -507,7 +507,7 @@ class MongodbSource extends DboSource {
  * @return void
  * @access public
  */
-	public function dropSchema($schema, $tableName = null) {
+	public function dropSchema(CakeSchema $schema, $tableName = null) {
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -592,7 +592,7 @@ class MongodbSource extends DboSource {
  * @return void
  * @access public
  */
-	public function group(&$Model, $params = array()) {
+	public function group($params, $Model = null) {
 
 		if (!$this->isConnected() || count($params) === 0 ) {
 			return false;
@@ -673,7 +673,7 @@ class MongodbSource extends DboSource {
  * @return boolean Update result
  * @access public
  */
-	public function update(&$Model, $fields = null, $values = null, $conditions = null) {
+	public function update(Model $Model, $fields = null, $values = null, $conditions = null) {
 
 		if (!$this->isConnected()) {
 			return false;
@@ -870,7 +870,7 @@ class MongodbSource extends DboSource {
  * @return boolean Update result
  * @access public
  */
-	public function delete(&$Model, $conditions = null) {
+	public function delete(Model $Model, $conditions = null) {
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -930,7 +930,7 @@ class MongodbSource extends DboSource {
  * @return array Results
  * @access public
  */
-	public function read(&$Model, $query = array()) {
+	public function read(Model $Model, $query = array(), $recurive = null) {
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1095,7 +1095,14 @@ class MongodbSource extends DboSource {
  * @return void
  * @access public
  */
-	public function query($query, $params = array()) {
+	public function query() {
+		$args = func_get_args();
+		$query = $args[0];
+		$params = array();
+		if(count($args) > 1) {
+			$params = $args[1];
+		}
+
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1175,11 +1182,12 @@ class MongodbSource extends DboSource {
  * db-agnostic process which does not have a mongo equivalent, don't do anything.
  *
  * @param mixed $query
+ * @param array $options array()
  * @param array $params array()
  * @return void
  * @access public
  */
-	public function execute($query, $params = array()) {
+	public function execute($query, $options = array(), $params = array()) {
 		if (!$this->isConnected()) {
 			return false;
 		}
