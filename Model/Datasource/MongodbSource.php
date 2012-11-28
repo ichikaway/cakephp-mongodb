@@ -461,7 +461,7 @@ class MongodbSource extends DboSource {
 		try{
 			$return = $this->_db
 				->selectCollection($Model->table)
-				->insert($data, true);
+				->insert($data, array('safe' => true));
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
