@@ -63,7 +63,7 @@ class SubCollectionValidatorBehavior extends ModelBehavior {
             }
 
             $obj = new CakeValidationSet($field, $ruleset[$field]);
-            $obj->setMethods($methods);
+            $obj->setMethods($this->_methods[$this->_Model->name]);
             $errors = $obj->validate($data);
 
             foreach($errors as $error) {
