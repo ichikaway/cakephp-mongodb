@@ -23,8 +23,6 @@ App::uses('Model', 'Model');
 App::uses('AppModel', 'Model');
 
 
-
-
 /**
  * SqlCompatiblePost class
  *
@@ -37,10 +35,10 @@ class SqlCompatiblePost extends AppModel {
 /**
  * useDbConfig property
  *
- * @var string 'mongo_test'
+ * @var string 'test_mongo'
  * @access public
  */
-	public $useDbConfig = 'mongo_test';
+	public $useDbConfig = 'test_mongo';
 
 /**
  * actsAs property
@@ -86,13 +84,7 @@ class SqlCompatibleTest extends CakeTestCase {
 		'persistent' => false,
 	);
 
-/**
- * Sets up the environment for each test method
- *
- * @return void
- * @access public
- */
-	public function startTest($method) {
+	public function setUp() {
 		$connections = ConnectionManager::enumConnectionObjects();
 
 		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'mongodbSource') {
@@ -100,11 +92,21 @@ class SqlCompatibleTest extends CakeTestCase {
 			$this->_config = $config->test;
 		}
 
-		ConnectionManager::create('mongo_test', $this->_config);
-		$this->Mongo = new MongodbSource($this->_config);
+		if(!isset($connections['test_mongo'])) {
+			ConnectionManager::create('test_mongo', $this->_config);
+			$this->Mongo = new MongodbSource($this->_config);
+		}
 
-		$this->Post = ClassRegistry::init(array('class' => 'SqlCompatiblePost', 'alias' => 'Post', 'ds' => 'mongo_test'));
+		$this->Post = ClassRegistry::init(array('class' => 'SqlCompatiblePost', 'alias' => 'Post', 'ds' => 'test_mongo'), true);
+	}
 
+/**
+ * Sets up the environment for each test method
+ *
+ * @return void
+ * @access public
+ */
+	public function startTest($method) {
 		$this->_setupData();
 	}
 
