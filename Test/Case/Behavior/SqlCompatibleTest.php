@@ -92,10 +92,10 @@ class SqlCompatibleTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	public function startTest() {
+	public function startTest($method) {
 		$connections = ConnectionManager::enumConnectionObjects();
 
-		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'mongodbSource') {		
+		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'mongodbSource') {
 			$config = new DATABASE_CONFIG();
 			$this->_config = $config->test;
 		}
@@ -114,7 +114,7 @@ class SqlCompatibleTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	public function endTest() {
+	public function endTest($method) {
 		$this->Post->deleteAll(true);
 		unset($this->Post);
 	}
