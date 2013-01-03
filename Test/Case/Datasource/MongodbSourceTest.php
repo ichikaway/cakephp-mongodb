@@ -19,9 +19,9 @@
 /**
  * Import relevant classes for testing
  */
-
 App::uses('Model', 'Model');
 App::uses('AppModel', 'Model');
+App::uses('MongodbSource', 'Mongodb.Model/Datasource');
 
 
 /**
@@ -32,7 +32,7 @@ App::uses('AppModel', 'Model');
  */
 class Post extends AppModel {
 
-	public $useDbConfig = 'mongo_test';
+	public $useDbConfig = 'test_mongo';
 
 /**
  * mongoSchema property
@@ -86,7 +86,7 @@ class Post extends AppModel {
  */
 class MongoArticle extends AppModel {
 
-	public $useDbConfig = 'mongo_test';
+	public $useDbConfig = 'test_mongo';
 }
 
 /**
@@ -135,20 +135,21 @@ class MongodbSourceTest extends CakeTestCase {
 		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'mongodbSource') {
 			$config = new DATABASE_CONFIG();
 			$this->_config = $config->test;
+		} elseif (isset($connections['test_mongo'])) {
+			$this->_config = $connections['test_mongo'];
 		}
 
-		ConnectionManager::create('mongo_test', $this->_config);
+		if(!isset($connections['test_mongo'])) {
+			ConnectionManager::create('test_mongo', $this->_config);
+		}
+
 		$this->Mongo = new MongodbSource($this->_config);
 
-		$this->Post = ClassRegistry::init('Post');
-		$this->Post->setDataSource('mongo_test');
-		$this->MongoArticle = ClassRegistry::init('MongoArticle');
-		$this->MongoArticle->setDataSource('mongo_test');
+		$this->Post = ClassRegistry::init(array('class' => 'Post', 'alias' => 'Post', 'ds' => 'test_mongo'), true);
+		$this->MongoArticle = ClassRegistry::init(array('class' => 'MongoArticle', 'alias' => 'MongoArticle', 'ds' => 'test_mongo'), true);
 
 		$this->mongodb = ConnectionManager::getDataSource($this->Post->useDbConfig);
 		$this->mongodb->connect();
-
-		$this->dropData();
 	}
 
 /**
@@ -248,7 +249,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$expect = 'mongodb://localhost:27017';
 		$host = $this->mongodb->createConnectionName($config, $version);
 		$this->assertIdentical($expect, $host);
-
 
 		 $config = array(
 			 'datasource' => 'mongodb',
@@ -608,13 +608,13 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertIdentical($this->Post->id, $postId);
 
 		$this->Post->create();
-		$this->Post->id = $postId;
 		$updatedata = array(
 			'title' => 'test4',
 			'body' => 'aaaa4',
 			'text' => 'bbbb4'
 		);
 		$saveData['Post'] = $updatedata;
+		$this->Post->id = $postId;
 		$saveResult = $this->Post->save($saveData);
 
 		$count4 = $this->Post->find('count');
@@ -634,7 +634,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($updatedata['body'], $resultData['body']);
 		$this->assertEqual($updatedata['text'], $resultData['text']);
 		$this->assertEqual(0, $resultData['count']);
-
 
 		// using $inc operator
 		$this->Post->mongoNoSetOperator = '$inc';
@@ -791,8 +790,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$expect = array('$inc' => array('count' => 1),'$set' => array('updated' => '2011/8/1'));
 		$result = $ds->setMongoUpdateOperator($this->Post, $data);
 		$this->assertEqual($expect, $result);
-
-
 	}
 
 
@@ -973,7 +970,6 @@ class MongodbSourceTest extends CakeTestCase {
 
 
 		unset($this->MongoArticle);
-
 	}
 
 
@@ -1020,7 +1016,7 @@ class MongodbSourceTest extends CakeTestCase {
 				);
 
 		$mongo = $this->Post->getDataSource();
-		$result =  $mongo->group($this->Post, $query);
+		$result =  $mongo->group($query, $this->Post);
 
 		$this->assertTrue($result['ok'] == 1 && count($result['retval']) > 0);
 		$this->assertEqual($cond_count, count($result['retval']));
@@ -1030,8 +1026,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual(1, $result['retval'][0]['csum']);
 		$this->assertEqual(2, $result['retval'][1]['csum']);
 		$this->assertEqual(2, $result['retval'][2]['csum']);
-
-}
+	}
 
 
 
@@ -1110,8 +1105,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual(1, $result['retval'][0]['csum']);
 		$this->assertEqual(2, $result['retval'][1]['csum']);
 		$this->assertEqual(2, $result['retval'][2]['csum']);
-
-}
+	}
 
 /**
  * Tests MapReduce
@@ -1119,90 +1113,48 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-public function testMapReduce() {
-	for($i = 0 ; $i < 30 ; $i++) {
-		$saveData[$i]['Post'] = array(
-				'title' => 'test'.$i,
-				'body' => 'aaaa'.$i,
-				'text' => 'bbbb'.$i,
-				'count' => $i,
+	public function mapReduce() {
+		for($i = 0 ; $i < 30 ; $i++) {
+			$saveData[$i]['Post'] = array(
+					'title' => 'test'.$i,
+					'body' => 'aaaa'.$i,
+					'text' => 'bbbb'.$i,
+					'count' => $i,
+					);
+		}
+
+		$saveData[30]['Post'] = array(
+				'title' => 'test1',
+				'body' => 'aaaa1',
+				'text' => 'bbbb1',
+				'count' => 1,
 				);
-	}
+		$saveData[31]['Post'] = array(
+				'title' => 'test2',
+				'body' => 'aaaa2',
+				'text' => 'bbbb2',
+				'count' => 2,
+				);
 
-	$saveData[30]['Post'] = array(
-			'title' => 'test1',
-			'body' => 'aaaa1',
-			'text' => 'bbbb1',
-			'count' => 1,
-			);
-	$saveData[31]['Post'] = array(
-			'title' => 'test2',
-			'body' => 'aaaa2',
-			'text' => 'bbbb2',
-			'count' => 2,
-			);
+		$saveData[32]['Post'] = array(
+				'title' => 'test2',
+				'body' => 'aaaa2',
+				'text' => 'bbbb2',
+				'count' => 32,
+				);
 
-	$saveData[32]['Post'] = array(
-			'title' => 'test2',
-			'body' => 'aaaa2',
-			'text' => 'bbbb2',
-			'count' => 32,
-			);
+		$this->Post->create();
+		$saveResult = $this->Post->saveAll($saveData);
 
-	$this->Post->create();
-	$saveResult = $this->Post->saveAll($saveData);
+		$map = new MongoCode("function() { emit(this.title,1); }");
+		$reduce = new MongoCode("function(k, vals) { ".
+				"var sum = 0;".
+				"for (var i in vals) {".
+				"sum += vals[i];".
+				"}".
+				"return sum; }"
+				);
 
-	$map = new MongoCode("function() { emit(this.title,1); }");
-	$reduce = new MongoCode("function(k, vals) { ".
-			"var sum = 0;".
-			"for (var i in vals) {".
-			"sum += vals[i];".
-			"}".
-			"return sum; }"
-			);
-
-	$params = array(
-			"mapreduce" => "posts",
-			"map" => $map,
-			"reduce" => $reduce,
-			"query" => array(
-				"count" => array('$gt' => -2),
-				),
-			'out' => 'test_mapreduce_posts',
-			);
-
-	$mongo = $this->Post->getDataSource();
-	$results = $mongo->mapReduce($params);
-
-	$posts = array();
-	foreach ($results as $post) {
-		$posts[$post['_id']] = $post['value'];
-	}
-
-	$this->assertEqual(30, count($posts));
-	$this->assertEqual(1, $posts['test0']);
-	$this->assertEqual(2, $posts['test1']);
-	$this->assertEqual(3, $posts['test2']);
-	$this->assertEqual(1, $posts['test3']);
-
-
-	//set timeout
-	$results = $mongo->mapReduce($params, 100); //set timeout 100msec
-	$posts = array();
-	foreach ($results as $post) {
-		$posts[$post['_id']] = $post['value'];
-	}
-
-	$this->assertEqual(30, count($posts));
-	$this->assertEqual(1, $posts['test0']);
-	$this->assertEqual(2, $posts['test1']);
-	$this->assertEqual(3, $posts['test2']);
-	$this->assertEqual(1, $posts['test3']);
-
-
-	//get results as inline data
-	$version = $this->getMongodVersion();
-	if( $version >= '1.7.4') {
 		$params = array(
 				"mapreduce" => "posts",
 				"map" => $map,
@@ -1210,9 +1162,10 @@ public function testMapReduce() {
 				"query" => array(
 					"count" => array('$gt' => -2),
 					),
-				'out' => array('inline' => 1),
+				'out' => 'test_mapreduce_posts',
 				);
 
+		$mongo = $this->Post->getDataSource();
 		$results = $mongo->mapReduce($params);
 
 		$posts = array();
@@ -1225,10 +1178,49 @@ public function testMapReduce() {
 		$this->assertEqual(2, $posts['test1']);
 		$this->assertEqual(3, $posts['test2']);
 		$this->assertEqual(1, $posts['test3']);
+
+
+		//set timeout
+		$results = $mongo->mapReduce($params, 100); //set timeout 100msec
+		$posts = array();
+		foreach ($results as $post) {
+			$posts[$post['_id']] = $post['value'];
+		}
+
+		$this->assertEqual(30, count($posts));
+		$this->assertEqual(1, $posts['test0']);
+		$this->assertEqual(2, $posts['test1']);
+		$this->assertEqual(3, $posts['test2']);
+		$this->assertEqual(1, $posts['test3']);
+
+
+		//get results as inline data
+		$version = $this->getMongodVersion();
+		if( $version >= '1.7.4') {
+			$params = array(
+					"mapreduce" => "posts",
+					"map" => $map,
+					"reduce" => $reduce,
+					"query" => array(
+						"count" => array('$gt' => -2),
+						),
+					'out' => array('inline' => 1),
+					);
+
+			$results = $mongo->mapReduce($params);
+
+			$posts = array();
+			foreach ($results as $post) {
+				$posts[$post['_id']] = $post['value'];
+			}
+
+			$this->assertEqual(30, count($posts));
+			$this->assertEqual(1, $posts['test0']);
+			$this->assertEqual(2, $posts['test1']);
+			$this->assertEqual(3, $posts['test2']);
+			$this->assertEqual(1, $posts['test3']);
+		}
 	}
-
-
-}
 
 
 
@@ -1531,13 +1523,13 @@ public function testMapReduce() {
 				'title'=>'Article 2'
 			)
 		));
-		$this->assertTrue(is_array($articles));
+		$this->assertTrue(is_array($articles) && empty($articles));
 		$articles=$this->MongoArticle->find('first',array(
 			'conditions'=>array(
 				'title'=>'Article 2'
 			)
 		));
-		$this->assertFalse(is_array($articles));
+		$this->assertTrue(is_array($articles) && empty($articles));
 	}
 
 /**
@@ -1664,7 +1656,7 @@ public function testMapReduce() {
 				'title' => 'Doesn\'t exist'
 			)
 		));
-		$this->assertFalse($return);
+		$this->assertTrue(is_array($return) && empty($return));
 
 		$return = $this->MongoArticle->find('count', array(
 			'conditions' => array(
@@ -1686,6 +1678,5 @@ public function testMapReduce() {
 			)
 		));
 		$this->assertTrue(is_array($return));
-
 	}
 }

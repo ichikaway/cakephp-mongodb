@@ -118,7 +118,11 @@ class SqlCompatibleTest extends CakeTestCase {
  */
 	public function endTest($method) {
 		$this->Post->deleteAll(true);
+	}
+
+	public function tearDown() {
 		unset($this->Post);
+		ClassRegistry::flush();
 	}
 
 /**

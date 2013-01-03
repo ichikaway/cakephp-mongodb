@@ -602,7 +602,7 @@ class MongodbSource extends DboSource {
  */
 	public function group($params, $Model = null) {
 
-		if (!$this->isConnected() || count($params) === 0 ) {
+		if (!$this->isConnected() || count($params) === 0 || $Model === null) {
 			return false;
 		}
 
