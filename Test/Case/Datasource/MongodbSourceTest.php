@@ -1113,7 +1113,7 @@ class MongodbSourceTest extends CakeTestCase {
  * @return void
  * @access public
  */
-	public function mapReduce() {
+	public function testMapReduce() {
 		for($i = 0 ; $i < 30 ; $i++) {
 			$saveData[$i]['Post'] = array(
 					'title' => 'test'.$i,
