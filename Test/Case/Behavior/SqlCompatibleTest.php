@@ -370,7 +370,9 @@ class SqlCompatibleTest extends CakeTestCase {
  * @access protected
  */
 	protected function _setupData() {
-		$this->Post->deleteAll(true);
+		$this->Post->deleteAll(true, false);
+		$this->Post->primaryKey = '_id';
+
 		for ($i = 1; $i <= 20; $i++) {
 			$data = array(
 				'title' => $i,
