@@ -817,7 +817,7 @@ class MongodbSourceTest extends CakeTestCase {
 		//using $set operator
 		$this->MongoArticle->create();
 		$updatedata = array(
-			'_id' => $postId,
+			'id' => $postId,
 			'title' => 'test3',
 			'body' => 'aaaa3',
 		);
@@ -832,7 +832,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->assertEqual(1, count($result));
 		$resultData = $result[0]['MongoArticle'];
-		$this->assertEqual($this->MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($this->MongoArticle->id, $resultData['id']);
 		$this->assertEqual($updatedata['title'], $resultData['title']); //update
 		$this->assertEqual($updatedata['body'], $resultData['body']); //update
 		$this->assertEqual($data['text'], $resultData['text']); //not update
@@ -843,7 +843,7 @@ class MongodbSourceTest extends CakeTestCase {
 		//using $inc operator insted of $set operator
 		$this->MongoArticle->create();
 		$updatedataInc = array(
-			'_id' => $postId,
+			'id' => $postId,
 			'$inc' => array('count' => 1),
 		);
 		$saveData['MongoArticle'] = $updatedataInc;
@@ -856,7 +856,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->assertEqual(1, count($result));
 		$resultData = $result[0]['MongoArticle'];
-		$this->assertEqual($this->MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($this->MongoArticle->id, $resultData['id']);
 		$this->assertEqual($updatedata['title'], $resultData['title']); //not update
 		$this->assertEqual($updatedata['body'], $resultData['body']); //not update
 		$this->assertEqual($data['text'], $resultData['text']); //not update
@@ -865,7 +865,7 @@ class MongodbSourceTest extends CakeTestCase {
 		//using $inc and $push
 		$this->MongoArticle->create();
 		$updatedataInc = array(
-				'_id' => $postId,
+				'id' => $postId,
 				'$push' => array(
 					'comments' => array(
 						'_id' => new MongoId(),
@@ -887,7 +887,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->assertEqual(1, count($result));
 		$resultData = $result[0]['MongoArticle'];
-		$this->assertEqual($this->MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($this->MongoArticle->id, $resultData['id']);
 		$this->assertEqual($updatedata['title'], $resultData['title']); //not update
 		$this->assertEqual($updatedata['body'], $resultData['body']); //not update
 		$this->assertEqual($data['text'], $resultData['text']); //not update
@@ -904,7 +904,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->MongoArticle->create();
 		$updatedata = array(
-			'_id' => $postId,
+			'id' => $postId,
 			'title' => 'test4',
 			'body' => 'aaaa4',
 			'count' => '1',
@@ -920,7 +920,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->assertEqual(1, count($result));
 		$resultData = $result[0]['MongoArticle'];
-		$this->assertEqual($this->MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($this->MongoArticle->id, $resultData['id']);
 		$this->assertEqual($updatedata['title'], $resultData['title']); //update
 		$this->assertEqual($updatedata['body'], $resultData['body']); //update
 		$this->assertTrue(empty($resultData['text']));
@@ -932,7 +932,7 @@ class MongodbSourceTest extends CakeTestCase {
 		//use $push
 		$this->MongoArticle->create();
 		$updatedata = array(
-			'_id' => $postId,
+			'id' => $postId,
 			'push_column' => array('push1'),
 		);
 		$saveData['MongoArticle'] = $updatedata;
@@ -947,7 +947,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->MongoArticle->mongoNoSetOperator = '$push';
 		$this->MongoArticle->create();
 		$updatedata = array(
-			'_id' => $postId,
+			'id' => $postId,
 			'push_column' => 'push2',
 		);
 		$saveData['MongoArticle'] = $updatedata;
@@ -962,7 +962,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->assertEqual(1, count($result));
 		$resultData = $result[0]['MongoArticle'];
-		$this->assertEqual($this->MongoArticle->id, $resultData['_id']);
+		$this->assertEqual($this->MongoArticle->id, $resultData['id']);
 		$this->assertEqual('test4', $resultData['title']); // no update
 		$this->assertEqual(array('push1','push2'), $resultData['push_column']); //update
 
@@ -1317,7 +1317,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$expected = array_intersect_key($toSave, array_flip(array('title', 'body', 'tags')));
 		$result = $this->MongoArticle->read(array('title', 'body', 'tags'));
-		unset ($result['MongoArticle']['_id']); // prevent auto added field from screwing things up
+		unset ($result['MongoArticle']['id']); // prevent auto added field from screwing things up
 		$this->assertEqual($expected, $result['MongoArticle']);
 
 		$toSave = array(

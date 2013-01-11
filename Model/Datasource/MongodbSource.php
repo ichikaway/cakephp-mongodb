@@ -252,6 +252,14 @@ class MongodbSource extends DboSource {
 		if (!is_array($fields) || !is_array($values)) {
 			return false;
 		}
+
+		$inUse = array_search('id', $fields);
+		$default = array_search('_id', $fields);
+
+		if($inUse !== false && $default === false) {
+			$fields[$inUse] = '_id';
+		}
+
 		$data = array();
 		foreach($values as $row) {
 			if (is_string($row)) {
@@ -385,11 +393,14 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function describe($Model) {
-		$Model->primaryKey = '_id';
+		if(empty($Model->primaryKey)) {
+			$Model->primaryKey = '_id';
+		}
+
 		$schema = array();
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
 			$schema = $Model->mongoSchema;
-			return $schema + array('_id' => $this->_defaultSchema['_id']);
+			return $schema + array($Model->primaryKey => $this->_defaultSchema['_id']);
 		} elseif ($this->isConnected() && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
 			$Model->Behaviors->attach('Mongodb.Schemaless');
 			if (!$Model->data) {
@@ -455,6 +466,12 @@ class MongodbSource extends DboSource {
 		} else {
 			$data = $Model->data;
 		}
+
+		if($Model->primaryKey !== '_id' && isset($data[$Model->primaryKey]) && !empty($data[$Model->primaryKey])) {
+			$data['_id'] = $data[$Model->primaryKey];
+			unset($data[$Model->primaryKey]);
+		}
+
 		if (!empty($data['_id'])) {
 			$this->_convertId($data['_id']);
 		}
@@ -625,7 +642,6 @@ class MongodbSource extends DboSource {
 			$this->logQuery("db.{$Model->useTable}.group( :key, :initial, :reduce, :options )", $params);
 		}
 
-
 		return $return;
 	}
 
@@ -694,9 +710,15 @@ class MongodbSource extends DboSource {
 			$data = $Model->data;
 		}
 
+		if($Model->primaryKey !== '_id' && isset($data[$Model->primaryKey]) && !empty($data[$Model->primaryKey])) {
+			$data['_id'] = $data[$Model->primaryKey];
+			unset($data[$Model->primaryKey]);
+		}
+
 		if (empty($data['_id'])) {
 			$data['_id'] = $Model->id;
 		}
+
 		$this->_convertId($data['_id']);
 
 		try{
@@ -971,7 +993,6 @@ class MongodbSource extends DboSource {
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
 		$this->_stripAlias($order, $Model->alias, false, 'both');
 
-		//for cakephp2.0. it doesn't call describe()
 		if(!empty($conditions['id']) && empty($conditions['_id'])) {
 			$conditions['_id'] = $conditions['id'];
 			unset($conditions['id']);
@@ -1077,6 +1098,11 @@ class MongodbSource extends DboSource {
 				$mongodata = $return->getNext();
 				if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 					$mongodata['_id'] = $mongodata['_id']->__toString();
+				}
+
+				if ($Model->primaryKey !== '_id') {
+					$mongodata[$Model->primaryKey] = $mongodata['_id'];
+					unset($mongodata['_id']);
 				}
 				$_return[][$Model->alias] = $mongodata;
 			}
@@ -1343,6 +1369,9 @@ class MongodbSource extends DboSource {
  * @access protected
  */
 	protected function _convertId(&$mixed, $conditions = false) {
+		if (is_numeric($mixed)) {
+			return;
+		}
 		if (is_string($mixed)) {
 			if (strlen($mixed) !== 24) {
 				return;
