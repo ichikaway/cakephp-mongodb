@@ -1163,7 +1163,22 @@ class MongodbSource extends DboSource {
 			return $this->getMongoDb();
 		}
 
-		$this->_prepareLogQuery($Model); // just sets a timer
+		if (count($args) > 1 && (strpos($args[0], 'findBy') === 0 || strpos($args[0], 'findAllBy') === 0)) {
+			$params = $args[1];
+
+			if (substr($args[0], 0, 6) === 'findBy') {
+				$field = Inflector::underscore(substr($args[0], 6));
+				return $args[2]->find('first', array('conditions' => array($field => $args[1])));
+			} else{
+				$field = Inflector::underscore(substr($args[0], 9));
+				return $args[2]->find('first', array('conditions' => array($field => $args[1])));
+			}
+		}
+
+		if(isset($args[2]) && is_a($args[2], 'Model')) {
+			$this->_prepareLogQuery($args[2]);
+		}
+
 		$return = $this->_db
 			->command($query);
 		if ($this->fullDebug) {
