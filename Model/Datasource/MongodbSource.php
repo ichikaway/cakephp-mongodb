@@ -1168,10 +1168,10 @@ class MongodbSource extends DboSource {
 
 			if (substr($args[0], 0, 6) === 'findBy') {
 				$field = Inflector::underscore(substr($args[0], 6));
-				return $args[2]->find('first', array('conditions' => array($field => $args[1])));
+				return $args[2]->find('first', array('conditions' => array($field => $args[1][0])));
 			} else{
 				$field = Inflector::underscore(substr($args[0], 9));
-				return $args[2]->find('first', array('conditions' => array($field => $args[1])));
+				return $args[2]->find('all', array('conditions' => array($field => $args[1][0])));
 			}
 		}
 

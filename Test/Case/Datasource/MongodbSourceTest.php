@@ -419,6 +419,80 @@ class MongodbSourceTest extends CakeTestCase {
 	}
 
 /**
+ * Tests findBy* method
+ *
+ * @return void
+ * @access public
+ */
+	public function testFindBy() {
+		$data = array(
+			array(
+				'title' => 'test',
+				'body' => 'aaaa',
+				'text' => 'bbbb'
+			),
+			array(
+				'title' => 'test2',
+				'body' => 'abab',
+				'text' => 'bcbc'
+			),
+		);
+
+		foreach($data as $set) {
+			$this->insertData($set);
+		}
+
+		$result = $this->Post->findByTitle('test');
+		$this->assertEqual(1, count($result));
+		$resultData = $result['Post'];
+		$this->assertEqual(4, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$this->assertEqual($resultData['title'], $data[0]['title']);
+		$this->assertEqual($resultData['body'], $data[0]['body']);
+		$this->assertEqual($resultData['text'], $data[0]['text']);
+
+		$result = $this->Post->findByBody('abab');
+		$this->assertEqual(1, count($result));
+		$resultData = $result['Post'];
+		$this->assertEqual(4, count($resultData));
+		$this->assertTrue(!empty($resultData['_id']));
+		$this->assertEqual($data[1]['title'], $resultData['title']);
+		$this->assertEqual($data[1]['body'], $resultData['body']);
+		$this->assertEqual($data[1]['text'], $resultData['text']);
+	}
+
+/**
+ * Tests findAllBy* method
+ *
+ * @return void
+ * @access public
+ */
+	public function testFindAllBy() {
+		$data = array(
+			array(
+				'title' => 'test',
+				'body' => 'abab',
+				'text' => 'bbbb'
+			),
+			array(
+				'title' => 'test2',
+				'body' => 'abab',
+				'text' => 'bcbc'
+			),
+		);
+
+		foreach($data as $set) {
+			$this->insertData($set);
+		}
+
+		$result = $this->Post->findAllByBody('abab');
+		$this->assertEqual(2, count($result));
+
+		$result = $this->Post->findAllByTitle('test2');
+		$this->assertEqual(1, count($result));
+	}
+
+/**
  * Tests save method.
  *
  * @return void
