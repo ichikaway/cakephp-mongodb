@@ -7,7 +7,7 @@ services:
   - mongodb
 
 before_script:
-  - mongo cakephp_test --eval 'db.addUser("travis", "test");'
+  - mongo mongo_test --eval 'db.addUser("travis", "test");'
   - wget http://pecl.php.net/get/mongo-1.2.9.tgz
   - tar xfz mongo-1.2.9.tgz
   - sh -c "cd mongo-1.2.9 && phpize && ./configure && make && sudo make install"
@@ -26,7 +26,7 @@ before_script:
     class DATABASE_CONFIG {
     public \$default = array(
       'datasource' => 'Mongodb.MongodbSource',
-      'database' => 'cakephp_test',
+      'database' => 'mongo_test',
       'host' => '127.0.0.1',
       'login' => 'travis',
       'password' => 'test',
@@ -36,7 +36,7 @@ before_script:
     );
     public \$test = array(
       'datasource' => 'Mongodb.MongodbSource',
-      'database' => 'cakephp_test',
+      'database' => 'mongo_test',
       'host' => '127.0.0.1',
       'login' => 'travis',
       'password' => 'test',
