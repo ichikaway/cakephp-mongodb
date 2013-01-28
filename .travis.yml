@@ -2,16 +2,11 @@ language: php
 
 php:
   - 5.3
-  - 5.4
 
 services:
   - mongodb
 
 before_script:
-  - mkdir -p Plugin/Mongodb
-  - mv Model Plugin/Mongodb
-  - mv Test Plugin/Mongodb
-  - ls Plugin/Mongodb
   - mongo cakephp_test --eval 'db.addUser("travis", "test");'
   - wget http://pecl.php.net/get/mongo-1.2.9.tgz
   - tar xfz mongo-1.2.9.tgz
@@ -20,11 +15,11 @@ before_script:
   - wget https://github.com/cakephp/cakephp/tarball/2.2.5 -O cake.tar.gz
   - tar xf cake.tar.gz
   - mv cakephp-cakephp-* ./cakephp
+  - mkdir -p ./cakephp/app/Plugin/Mongodb
+  - mv Model ./cakephp/app/Plugin/Mongodb
+  - mv Test ./cakephp/app/Plugin/Mongodb
   - chmod -R 777 ./cakephp/app/tmp
   - echo "<?php
-    App::build(array(
-    'Plugin' => array('/home/travis/build/k1LoW/cakephp-mongodb/Plugin'),
-    ));
     CakePlugin::loadAll();
     " > cakephp/app/Config/bootstrap.php
   - echo "<?php
@@ -54,3 +49,4 @@ before_script:
 
 script:
   - ./lib/Cake/Console/cake test Mongodb Behavior/SqlCompatible --stderr
+  - ./lib/Cake/Console/cake test Mongodb Datasource/MongodbSource --stderr
