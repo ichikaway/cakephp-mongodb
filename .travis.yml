@@ -1,0 +1,56 @@
+language: php
+
+php:
+  - 5.3
+  - 5.4
+
+services:
+  - mongodb
+
+before_script:
+  - mkdir -p Plugin/Mongodb
+  - mv Model Plugin/Mongodb
+  - mv Test Plugin/Mongodb
+  - ls Plugin/Mongodb
+  - mongo cakephp_test --eval 'db.addUser("travis", "test");'
+  - wget http://pecl.php.net/get/mongo-1.2.9.tgz
+  - tar xfz mongo-1.2.9.tgz
+  - sh -c "cd mongo-1.2.9 && phpize && ./configure && make && sudo make install"
+  - echo "extension=mongo.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+  - wget https://github.com/cakephp/cakephp/tarball/2.2.5 -O cake.tar.gz
+  - tar xf cake.tar.gz
+  - mv cakephp-cakephp-* ./cakephp
+  - chmod -R 777 ./cakephp/app/tmp
+  - echo "<?php
+    App::build(array(
+    'Plugin' => array('/home/travis/build/k1LoW/cakephp-mongodb/Plugin'),
+    ));
+    CakePlugin::loadAll();
+    " > cakephp/app/Config/bootstrap.php
+  - echo "<?php
+    class DATABASE_CONFIG {
+    public \$default = array(
+      'datasource' => 'Mongodb.MongodbSource',
+      'database' => 'cakephp_test',
+      'host' => '127.0.0.1',
+      'login' => 'travis',
+      'password' => 'test',
+      'port' => '27017',
+      'prefix' => '',
+      'encoding' => 'utf8',
+    );
+    public \$test = array(
+      'datasource' => 'Mongodb.MongodbSource',
+      'database' => 'cakephp_test',
+      'host' => '127.0.0.1',
+      'login' => 'travis',
+      'password' => 'test',
+      'port' => '27017',
+      'prefix' => '',
+      'encoding' => 'utf8',
+    );
+    }" > cakephp/app/Config/database.php
+  - cd ./cakephp
+
+script:
+  - ./lib/Cake/Console/cake test Mongodb Behavior/SqlCompatible --stderr
