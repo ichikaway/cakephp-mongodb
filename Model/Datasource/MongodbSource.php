@@ -1426,7 +1426,7 @@ class MongodbSource extends DboSource {
  * @access protected
  */
 	protected function _convertId(&$mixed, $conditions = false) {
-		if (is_numeric($mixed)) {
+		if (is_int($mixed) || ctype_digit($mixed)) {
 			return;
 		}
 		if (is_string($mixed)) {
