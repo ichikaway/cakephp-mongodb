@@ -1,5 +1,7 @@
 # mongoDB datasource for CakePHP
 
+[![Build Status](https://travis-ci.org/ichikaway/cakephp-mongodb.png?branch=cake2.2)](https://travis-ci.org/ichikaway/cakephp-mongodb)
+
 ## Requirements
 PHP5, 
 pecl mongo (http://php.net/mongo)

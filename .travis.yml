@@ -7,15 +7,18 @@ services:
   - mongodb
 
 env:
-  - CAKEPHP=2.2.5
-  - CAKEPHP=2.2.7
-  - CAKEPHP=2.3.0
+  - CAKEPHP=2.2.5 PECLMONGO=mongo-1.2.9
+  - CAKEPHP=2.2.7 PECLMONGO=mongo-1.2.9
+  - CAKEPHP=2.3.0 PECLMONGO=mongo-1.2.9
+  - CAKEPHP=2.2.5 PECLMONGO=mongo-1.3.4
+  - CAKEPHP=2.2.7 PECLMONGO=mongo-1.3.4
+  - CAKEPHP=2.3.0 PECLMONGO=mongo-1.3.4
 
 before_script:
   - mongo mongo_test --eval 'db.addUser("travis", "test");'
-  - wget http://pecl.php.net/get/mongo-1.2.9.tgz
-  - tar xfz mongo-1.2.9.tgz
-  - sh -c "cd mongo-1.2.9 && phpize && ./configure && make && sudo make install"
+  - sh -c "wget http://pecl.php.net/get/$PECLMONGO.tgz"
+  - sh -c "tar xfz $PECLMONGO.tgz"
+  - sh -c "cd $PECLMONGO && phpize && ./configure && make && sudo make install"
   - echo "extension=mongo.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
   - wget https://github.com/cakephp/cakephp/tarball/$CAKEPHP -O cake.tar.gz
   - tar xf cake.tar.gz
