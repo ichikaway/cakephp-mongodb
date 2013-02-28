@@ -117,7 +117,7 @@ class MongodbSourceTest extends CakeTestCase {
 		'host' => 'localhost',
 		'login' => '',
 		'password' => '',
-		'database' => 'mongodatabase',
+		'database' => 'test_mongo',
 		'port' => 27017,
 		'prefix' => '',
 		'persistent' => true,
@@ -150,6 +150,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->mongodb = ConnectionManager::getDataSource($this->Post->useDbConfig);
 		$this->mongodb->connect();
+
 	}
 
 /**
@@ -888,12 +889,8 @@ class MongodbSourceTest extends CakeTestCase {
 		$saveResult = $this->MongoArticle->save($saveData);
 		$postId = $this->MongoArticle->id;
 
-<<<<<<< HEAD
-		$MongoArticle->create();
-=======
 		//using $set operator
 		$this->MongoArticle->create();
->>>>>>> radig/cake2.2
 		$updatedata = array(
 			'id' => $postId,
 			'title' => 'test3',

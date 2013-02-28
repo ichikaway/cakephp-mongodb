@@ -6,13 +6,18 @@ php:
 services:
   - mongodb
 
+env:
+  - CAKEPHP=2.2.5
+  - CAKEPHP=2.2.7
+  - CAKEPHP=2.3.0
+
 before_script:
   - mongo mongo_test --eval 'db.addUser("travis", "test");'
   - wget http://pecl.php.net/get/mongo-1.2.9.tgz
   - tar xfz mongo-1.2.9.tgz
   - sh -c "cd mongo-1.2.9 && phpize && ./configure && make && sudo make install"
   - echo "extension=mongo.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
-  - wget https://github.com/cakephp/cakephp/tarball/2.2.2 -O cake.tar.gz
+  - wget https://github.com/cakephp/cakephp/tarball/$CAKEPHP -O cake.tar.gz
   - tar xf cake.tar.gz
   - mv cakephp-cakephp-* ./cakephp
   - mkdir -p ./cakephp/app/Plugin/Mongodb
