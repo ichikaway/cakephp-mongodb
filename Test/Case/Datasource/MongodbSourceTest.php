@@ -117,7 +117,7 @@ class MongodbSourceTest extends CakeTestCase {
 		'host' => 'localhost',
 		'login' => '',
 		'password' => '',
-		'database' => 'test_mongo',
+		'database' => 'mongodatabase',
 		'port' => 27017,
 		'prefix' => '',
 		'persistent' => true,
@@ -145,7 +145,13 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$this->mongodb =& ConnectionManager::getDataSource($this->Post->useDbConfig);
 		$this->mongodb->connect();
+		$this->dropData();
 
+		$this->MongoArticle = ClassRegistry::init('MongoArticle');
+		$this->MongoArticle->setDataSource('mongo_test');
+
+		$this->mongodb =& ConnectionManager::getDataSource($this->Post->useDbConfig);
+		$this->mongodb->connect();
 		$this->dropData();
 	}
 
@@ -207,7 +213,7 @@ class MongodbSourceTest extends CakeTestCase {
 				->selectDB($this->_config['database']);
 
 			foreach($db->listCollections() as $collection) {
-				$collection->drop();
+				$response = $collection->drop();
 			}
 		} catch (MongoException $e) {
 			trigger_error($e->getMessage());
@@ -808,7 +814,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$saveResult = $MongoArticle->save($saveData);
 		$postId = $MongoArticle->id;
 
-		//using $set operator
 		$MongoArticle->create();
 		$updatedata = array(
 			'_id' => $postId,
@@ -823,7 +828,6 @@ class MongodbSourceTest extends CakeTestCase {
 
 		$result = null;
 		$result = $MongoArticle->find('all');
-
 		$this->assertEqual(1, count($result));
 		$resultData = $result[0]['MongoArticle'];
 		$this->assertEqual($MongoArticle->id, $resultData['_id']);

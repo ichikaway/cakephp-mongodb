@@ -12,7 +12,7 @@ before_script:
   - tar xfz mongo-1.2.9.tgz
   - sh -c "cd mongo-1.2.9 && phpize && ./configure && make && sudo make install"
   - echo "extension=mongo.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
-  - wget https://github.com/cakephp/cakephp/tarball/2.2.5 -O cake.tar.gz
+  - wget https://github.com/cakephp/cakephp/tarball/2.2.2 -O cake.tar.gz
   - tar xf cake.tar.gz
   - mv cakephp-cakephp-* ./cakephp
   - mkdir -p ./cakephp/app/Plugin/Mongodb
