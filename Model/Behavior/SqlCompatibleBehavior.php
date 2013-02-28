@@ -78,7 +78,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access public
  */
-	public function setup(&$Model, $config = array()) {
+	public function setup(Model $Model, $config = array()) {
 		$this->settings[$Model->alias] = array_merge($this->_defaultSettings, $config);
 	}
 
@@ -91,7 +91,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access public
  */
-	public function afterFind(&$Model, $results, $primary) {
+	public function afterFind(Model $Model, $results, $primary) {
 		if ($this->settings[$Model->alias]['convertDates']) {
 			$this->convertDates($results);
 		}
@@ -108,7 +108,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access public
  */
-	public function beforeFind(&$Model, $query) {
+	public function beforeFind(Model $Model, $query) {
 		if (is_array($query['order'])) {
 			$this->_translateOrders($Model, $query['order']);
 		}
@@ -123,9 +123,9 @@ class SqlCompatibleBehavior extends ModelBehavior {
  *
  * @param mixed $results
  * @return void
- * @access public
+ * @access protected
  */
-	public function convertDates(&$results) {
+	protected function convertDates(&$results) {
 		if (is_array($results)) {
 			foreach($results as &$row) {
 				$this->convertDates($row);
@@ -145,7 +145,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access protected
  */
-	protected function _translateOrders(&$Model, &$orders) {
+	protected function _translateOrders(Model &$Model, &$orders) {
 		if(!empty($orders[0])) {
 			foreach($orders[0] as $key => $val) {
 				if(preg_match('/^(.+) (ASC|DESC)$/i', $val, $match)) {
@@ -167,7 +167,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access protected
  */
-	protected function _translateConditions(&$Model, &$conditions) {
+	protected function _translateConditions(Model &$Model, &$conditions) {
 		$return = false;
 		foreach($conditions as $key => &$value) {
 			$uKey = strtoupper($key);
@@ -286,7 +286,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return string
  * @access protected
  */
-	protected function _translateOperator($Model, $operator) {
+	protected function _translateOperator(Model $Model, $operator) {
 		if (!empty($this->settings[$Model->alias]['operators'][$operator])) {
 			return $this->settings[$Model->alias]['operators'][$operator];
 		}
