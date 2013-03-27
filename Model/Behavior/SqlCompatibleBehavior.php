@@ -205,6 +205,12 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				$return = true;
 				continue;
 			}
+			if (is_numeric($key) && is_array($value)) {
+				if ($this->_translateConditions($Model, $value)) {
+					$return = true;
+					continue;
+				}
+			}
 			if (substr($uKey, -3) === 'NOT') {
 				// 'Special' case because it's awkward
 				$childKey = key($value);
@@ -247,16 +253,9 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				$return = true;
 				continue;
 			}
-
 			if (!in_array(substr($key, -1), array('>', '<', '='))) {
 				$return = true;
 				continue;
-			}
-			if (is_numeric($key && is_array($value))) {
-				if ($this->_translateConditions($Model, $value)) {
-					$return = true;
-					continue;
-				}
 			}
 			$parts = explode(' ', $key);
 			$operator = array_pop($parts);
