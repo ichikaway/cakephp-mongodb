@@ -171,9 +171,12 @@ class SqlCompatibleBehavior extends ModelBehavior {
 		$return = false;
 		foreach($conditions as $key => &$value) {
 			$uKey = strtoupper($key);
-			if (substr($uKey, -5) === 'NOT IN') {
+			if (substr($uKey, -6) === 'NOT IN') 
+			{
 				// 'Special' case because it has a space in it, and it's the whole key
-				$conditions[substr($key, 0, -5)]['$nin'] = $value;
+				$field = trim(substr($key, 0, -6));
+				
+				$conditions[$field]['$nin'] = $value;
 				unset($conditions[$key]);
 				$return = true;
 				continue;
