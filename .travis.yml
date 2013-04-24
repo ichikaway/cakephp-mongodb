@@ -9,10 +9,11 @@ services:
 env:
   - CAKEPHP=2.2.5 PECLMONGO=mongo-1.2.9
   - CAKEPHP=2.2.7 PECLMONGO=mongo-1.2.9
-  - CAKEPHP=2.3.0 PECLMONGO=mongo-1.2.9
-  - CAKEPHP=2.2.5 PECLMONGO=mongo-1.3.4
-  - CAKEPHP=2.2.7 PECLMONGO=mongo-1.3.4
-  - CAKEPHP=2.3.0 PECLMONGO=mongo-1.3.4
+  - CAKEPHP=2.3.2 PECLMONGO=mongo-1.2.9
+  - CAKEPHP=2.2.2 PECLMONGO=mongo-1.3.7
+  - CAKEPHP=2.2.5 PECLMONGO=mongo-1.3.7
+  - CAKEPHP=2.2.7 PECLMONGO=mongo-1.3.7
+  - CAKEPHP=2.3.2 PECLMONGO=mongo-1.3.7
 
 before_script:
   - mongo mongo_test --eval 'db.addUser("travis", "test");'
@@ -57,4 +58,5 @@ before_script:
 
 script:
   - ./lib/Cake/Console/cake test Mongodb Behavior/SqlCompatible --stderr
+  - ./lib/Cake/Console/cake test Mongodb Behavior/SubCollectionValidatorBehavior --stderr
   - ./lib/Cake/Console/cake test Mongodb Datasource/MongodbSource --stderr
