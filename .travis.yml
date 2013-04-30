@@ -56,6 +56,4 @@ before_script:
   - cd ./cakephp
 
 script:
-  - ./lib/Cake/Console/cake test Mongodb Behavior/SqlCompatible --stderr
-  - ./lib/Cake/Console/cake test Mongodb Behavior/SubCollectionValidatorBehavior --stderr
-  - ./lib/Cake/Console/cake test Mongodb Datasource/MongodbSource --stderr
+  - ./lib/Cake/Console/cake test Mongodb All --stderr
