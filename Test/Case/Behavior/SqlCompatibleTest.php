@@ -168,6 +168,30 @@ class SqlCompatibleTest extends CakeTestCase {
 	}
 
 /**
+ * testNOTIN method
+ *
+ * @return void
+ * @access public
+ */
+	public function testNOTIN() {
+		$expected = array(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
+		$result = $this->Post->find('all', array(
+			'conditions' => array(
+				'title NOT IN' => array(10),
+			),
+			'fields' => array('_id', 'title', 'number'),
+			'order' => array('number' => 'ASC')
+		));
+		$result = Hash::extract($result, '{n}.Post.title');
+		$this->assertEqual($expected, $result);
+
+		$conditions = array(
+			'title' => array('$nin' => array(10))
+		);
+		$this->assertEqual($conditions, $this->Post->lastQuery['conditions']);
+	}
+
+/**
  * testGTLT method
  *
  * @return void
