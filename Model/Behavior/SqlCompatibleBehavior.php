@@ -89,7 +89,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @param mixed $Model
  * @param mixed $results
  * @param mixed $primary
- * @return void
+ * @return mixed
  * @access public
  */
 	public function afterFind(&$Model, $results, $primary) {
@@ -106,7 +106,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  *
  * @param mixed $Model
  * @param mixed $query
- * @return void
+ * @return mixed
  * @access public
  */
 	public function beforeFind(&$Model, $query) {
@@ -166,7 +166,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  *
  * @param mixed $Model
  * @param mixed $conditions
- * @return void
+ * @return boolean
  * @access protected
  */
 	protected function _translateConditions(&$Model, &$conditions) {

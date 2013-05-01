@@ -75,7 +75,7 @@ class MongodbSource extends DboSource {
 
 /**
  * Base Config
- * 
+ *
  * set_string_id:
  *    true: In read() method, convert MongoId object to string and set it to array 'id'.
  *    false: not convert and set.
@@ -106,10 +106,10 @@ class MongodbSource extends DboSource {
 		'text' => array('name' => 'text'),
 		'integer' => array('name' => 'integer', 'format' => null, 'formatter' => 'intval'),
 		'float' => array('name' => 'float', 'format' => null, 'formatter' => 'floatval'),
-		'datetime' => array('name' => 'datetime', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
-		'timestamp' => array('name' => 'timestamp', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
-		'time' => array('name' => 'time', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
-		'date' => array('name' => 'date', 'format' => null, 'formatter' => 'MongodbDateFormatter'),
+		'datetime' => array('name' => 'datetime', 'format' => 'Y-m-d H:i:s', 'formatter' => 'MongodbDateFormatter'),
+		'timestamp' => array('name' => 'timestamp', 'format' => 'Y-m-d H:i:s', 'formatter' => 'MongodbDateFormatter'),
+		'time' => array('name' => 'time', 'format' => 'H:i:s', 'formatter' => 'MongodbDateFormatter'),
+		'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'MongodbDateFormatter'),
 	);
 
 /**
@@ -131,10 +131,9 @@ class MongodbSource extends DboSource {
  *
  * @param array $config Configuration array
  * @param bool $autoConnect false
- * @return void
  * @access public
  */
-	function __construct($config = array(), $autoConnect = false) {
+	public function __construct($config = array(), $autoConnect = false) {
 		return parent::__construct($config, $autoConnect);
 	}
 
@@ -215,25 +214,26 @@ class MongodbSource extends DboSource {
  *
  * @param array $config
  * @param string $version  version of MongoDriver
+ * @return string
  */
-		public function createConnectionName($config, $version) {
-			$host = null;
+	public function createConnectionName($config, $version) {
+		$host = null;
 
-			if ($version >= '1.0.2') {
-				$host = "mongodb://";
-			} else {
-				$host = '';
-			}
-			$hostname = $config['host'] . ':' . $config['port'];
-
-			if(!empty($config['login'])){
-				$host .= $config['login'] .':'. $config['password'] . '@' . $hostname . '/'. $config['database'];
-			} else {
-				$host .= $hostname;
-			}
-
-			return $host;
+		if ($version >= '1.0.2') {
+			$host = "mongodb://";
+		} else {
+			$host = '';
 		}
+		$hostname = $config['host'] . ':' . $config['port'];
+
+		if(!empty($config['login'])){
+			$host .= $config['login'] .':'. $config['password'] . '@' . $hostname . '/'. $config['database'];
+		} else {
+			$host .= $hostname;
+		}
+
+		return $host;
+	}
 
 
 /**
@@ -243,6 +243,7 @@ class MongodbSource extends DboSource {
  * @param string $fields
  * @param array $values
  * @access public
+ * @return mixed
  */
 	public function insertMulti($table, $fields, $values) {
 		$table = $this->fullTableName($table);
@@ -300,6 +301,7 @@ class MongodbSource extends DboSource {
 /**
  * get MongoDB Collection Object
  *
+ * @param Model $Model
  * @return mixed MongoDB Collection Object
  * @access public
  */
@@ -368,7 +370,7 @@ class MongodbSource extends DboSource {
 		if (!$this->isConnected()) {
 			return false;
 		}
-		return true;	
+		return true;
 	}
 
 /**
@@ -379,6 +381,7 @@ class MongodbSource extends DboSource {
  * out of the db and the data obtained used to derive the schema.
  *
  * @param Model $Model
+ * @param mixed $field
  * @return array if model instance has mongoSchema, return it.
  * @access public
  */
@@ -490,7 +493,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $schema
  * @param mixed $tableName null
- * @return void
+ * @return boolean
  * @access public
  */
 	public function createSchema($schema, $tableName = null) {
@@ -504,7 +507,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $schema
  * @param mixed $tableName null
- * @return void
+ * @return mixed
  * @access public
  */
 	public function dropSchema($schema, $tableName = null) {
@@ -543,7 +546,7 @@ class MongodbSource extends DboSource {
  * @param mixed $Model
  * @param array $keys array()
  * @param array $params array()
- * @return void
+ * @return mixed
  * @access public
  */
 	public function distinct(&$Model, $keys = array(), $params = array()) {
@@ -589,7 +592,7 @@ class MongodbSource extends DboSource {
  *                'finalize' => array(),
  *           ),
  *       );
- * @return void
+ * @return mixed
  * @access public
  */
 	public function group(&$Model, $params = array()) {
@@ -670,6 +673,7 @@ class MongodbSource extends DboSource {
  * @param Model $Model Model Instance
  * @param array $fields Field data
  * @param array $values Save data
+ * @param mixed $conditions
  * @return boolean Update result
  * @access public
  */
@@ -742,7 +746,7 @@ class MongodbSource extends DboSource {
  * This method is for update() and updateAll.
  *
  * @param Model $Model Model Instance
- * @param array $values Save data
+ * @param array $data Save data
  * @return array $data
  * @access public
  */
@@ -750,7 +754,7 @@ class MongodbSource extends DboSource {
 		if(isset($data['updated'])) {
 			$updateField = 'updated';
 		} else {
-			$updateField = 'modified';			
+			$updateField = 'modified';
 		}
 
 		//setting Mongo operator
@@ -820,7 +824,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $Model
  * @param array $data array()
- * @return void
+ * @return mixed
  * @access public
  */
 	public function deriveSchemaFromData($Model, $data = array()) {
@@ -980,7 +984,7 @@ class MongodbSource extends DboSource {
 			}
 		}
 
-		if (empty($offset) && $page && $limit) {
+		if (empty($offset) && isset($page) && isset($limit)) {
 			$offset = ($page - 1) * $limit;
 		}
 
@@ -1092,7 +1096,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $query
  * @param array $params array()
- * @return void
+ * @return mixed
  * @access public
  */
 	public function query($query, $params = array()) {
@@ -1119,7 +1123,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $query
  * @param integer $timeout (milli second)
- * @return mixed false or array 
+ * @return mixed false or array
  * @access public
  */
 	public function mapReduce($query, $timeout = null) {
@@ -1176,7 +1180,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $query
  * @param array $params array()
- * @return void
+ * @return mixed
  * @access public
  */
 	public function execute($query, $params = array()) {
@@ -1234,7 +1238,7 @@ class MongodbSource extends DboSource {
  * Any prep work to log a query
  *
  * @param mixed $Model
- * @return void
+ * @return boolean
  * @access protected
  */
 	protected function _prepareLogQuery(&$Model) {
@@ -1248,20 +1252,20 @@ class MongodbSource extends DboSource {
 		$this->numRows = null;
 		return true;
 	}
-	
+
 /**
  * setTimeout Method
- * 
+ *
  * Sets the MongoCursor timeout so long queries (like map / reduce) can run at will.
  * Expressed in milliseconds, for an infinite timeout, set to -1
  *
- * @param int $ms 
+ * @param int $ms
  * @return boolean
  * @access public
  */
 	public function setTimeout($ms){
 		MongoCursor::$timeout = $ms;
-		
+
 		return true;
 	}
 
@@ -1275,7 +1279,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $query
  * @param array $args array()
- * @return void
+ * @return mixed
  * @access public
  */
 	public function logQuery($query, $args = array()) {
@@ -1408,13 +1412,19 @@ class MongodbSource extends DboSource {
  *
  * This function cannot be in the class because of the way model save is written
  *
+ * @param string $format
  * @param mixed $date null
- * @return void
+ * @return MongoDate
  * @access public
  */
-function MongoDbDateFormatter($date = null) {
+function MongoDbDateFormatter($format, $date = null) {
 	if ($date) {
+		if (is_string($date)) {
+			$date = strtotime($date);
+		}
+
 		return new MongoDate($date);
 	}
+
 	return new MongoDate();
 }
