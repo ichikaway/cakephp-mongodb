@@ -75,3 +75,6 @@ before_script:
 
 script:
   - ./lib/Cake/Console/cake test Mongodb All --stderr --coverage-clover build/logs/clover.xml --configuration phpunit.xml.dist
+
+after_script:
+  - php vendor/bin/coveralls -v
