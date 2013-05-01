@@ -1076,8 +1076,13 @@ class MongodbSource extends DboSource {
                 if(!empty($order)) {
                     $conditions['aggregate'][] = array('$sort' => $order);
                 }
-                $conditions['aggregate'][] = array('$skip' => $offset);
-                $conditions['aggregate'][] = array('$limit' => $limit);
+                if (!empty($offset)) {
+                    $conditions['aggregate'][] = array('$skip' => $offset);
+                }
+                if(!empty($limit))
+                {
+                    $conditions['aggregate'][] = array('$limit' => $limit);
+                }
 
                 $return = $this->_db
                     ->selectCollection($Model->table)
