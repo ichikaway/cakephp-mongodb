@@ -4,9 +4,10 @@
 [![Coverage Status](https://coveralls.io/repos/ichikaway/cakephp-mongodb/badge.png?branch=cake2.2)](https://coveralls.io/r/ichikaway/cakephp-mongodb)
 
 ## Requirements
-PHP5, 
-CakePHP >= 2.2.5
-pecl mongo (http://php.net/mongo)
+
+- PHP5
+- CakePHP >= 2.2.5
+- pecl mongo (http://php.net/mongo)
 
 ## Installation
 
