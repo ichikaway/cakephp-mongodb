@@ -279,13 +279,13 @@ class MongodbSource extends DboSource {
 		try{
 			$return = $this->_db
 				->selectCollection($table)
-				->batchInsert($data, array('safe' => true));
+				->batchInsert($data, array('w' => 1));
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$table}.insertMulti( :data , array('safe' => true))", compact('data'));
+			$this->logQuery("db.{$table}.insertMulti( :data , array('w' => 1))", compact('data'));
 		}
 	}
 
