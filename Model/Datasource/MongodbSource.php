@@ -1069,8 +1069,6 @@ class MongodbSource extends DboSource {
 				}
 				return array(array($Model->alias => array('count' => $count)));
 			}
-            
-            $table = $this->fullTableName($Model);
 
 			$return = $this->_db
 				->selectCollection($table)
