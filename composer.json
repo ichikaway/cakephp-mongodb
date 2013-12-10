@@ -1,0 +1,33 @@
+{
+        "name": "ichikaway/cakephp-mongodb",
+        "description" : "MongoDB database driver for CakePHP",
+        "keywords": ["mongodb", "cakephp"],
+        "homepage": "https://github.com/ichikaway/cakephp-mongodb",
+        "type": "cakephp-plugin",
+        "extra": {
+                "installer-name": "Mongodb"
+        },
+        "authors": [
+                {
+                        "name": "Yasushi Ichikawa",
+                        "role": "Developer"
+                },
+                {
+                        "name": "Andy Dawson",
+                        "role": "Developer"
+                }
+        ],
+        "license": "MIT",
+        "require": {
+                "php": ">=5.3.0",
+                "composer/installers": "*",
+                "ext-mongo": "*"
+        },
+        "require-dev": {
+                "satooshi/php-coveralls": "dev-master"
+        },
+        "support": {
+                "issues": "https://github.com/ichikaway/cakephp-mongodb/issues",
+                "source": "https://github.com/ichikaway/cakephp-mongodb"
+        }
+}
