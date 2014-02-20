@@ -23,6 +23,11 @@ To install the driver for use in any/multiple application(s)
 	# where ROOT is the name of the directory parent to the base index.php of CakePHP.
 	cd ROOT/Plugin
 	git clone git://github.com/ichikaway/cakephp-mongodb.git Mongodb
+
+### composer
+This plugin on the Packagist.
+
+https://packagist.org/packages/ichikaway/cakephp-mongodb
 	
 ## Sample Code
 
