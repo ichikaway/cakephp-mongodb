@@ -53,9 +53,9 @@ class Post extends AppModel {
  		),
 	);
 
-	public $mongoSchema = array(
-		'title' => array('type' => 'string'),
-		'body' => array('type' => 'string'),
+    public $mongoSchema = array(
+        'title' => array('type' => 'string'),
+        'body' => array('type' => 'string'),
 		'text' => array('type' => 'text'),
 		'uniquefield1' => array('type' => 'text'),
 		'uniquefield2' => array('type' => 'text'),
@@ -228,6 +228,153 @@ class MongodbSourceTest extends CakeTestCase {
 		}
 	}
 
+/**
+ * Tests aggregation case
+ *
+ * @return void
+ * @access public
+ */
+    public function testAggregation()
+    {
+        for ($i = 0; $i < 30; $i++) {
+            $saveData[$i]['Post'] = array(
+                'title' => 'test' . $i,
+                'body' => 'aaaa' . $i,
+                'text' => 'bbbb',
+                'count' => $i,
+            );
+        }
+
+        $saveData[30]['Post'] = array(
+            'title' => 'test1',
+            'body' => 'aaaa1',
+            'text' => 'bbbb1',
+            'count' => 1,
+        );
+        $saveData[31]['Post'] = array(
+            'title' => 'test2',
+            'body' => 'aaaa2',
+            'text' => 'bbbb2',
+            'count' => 2,
+        );
+
+        $this->Post->create();
+        $saveResult = $this->Post->saveAll($saveData);
+
+        $conditions = array(
+            'aggregate' => array(
+                array(
+                    '$match' => array(
+                        'text' => 'bbbb'
+                    )
+                ),
+                array(
+                    '$group' => array(
+                        '_id' => '$text',
+                        'count' => array(
+                            '$sum' => '$count'
+                        )
+                    )
+                ),
+                array(
+                    '$project' => array(
+                        'text' => '$_id',
+                        'count' => 1
+                    )
+                )
+            )
+        );
+
+        $result = $this->Post->find('all', array('conditions' => $conditions));
+
+        $expected = array(
+            'Post' => array(
+                '_id' => 'bbbb',
+                'count' => (29 * 30) / 2,
+                'text' => 'bbbb'
+            )
+        );
+
+        $this->assertEquals($expected, $result[0]);
+    }
+
+/**
+ * Tests another aggregation case
+ *
+ * @return void
+ * @access public
+ */
+    public function testAggregationCase1()
+    {
+        for ($i = 0; $i < 30; $i++) {
+            $saveData[$i]['Post'] = array(
+                'title' => 'test' . $i,
+                'body' => 'aaaa' . $i,
+                'text' => 'bbbb' . $i,
+                'count' => $i,
+            );
+        }
+
+        $saveData[30]['Post'] = array(
+            'title' => 'test1',
+            'body' => 'aaaa1',
+            'text' => 'bbbb1',
+            'count' => 1,
+        );
+        $saveData[31]['Post'] = array(
+            'title' => 'test2',
+            'body' => 'aaaa2',
+            'text' => 'bbbb2',
+            'count' => 2,
+        );
+
+        $this->Post->create();
+        $saveResult = $this->Post->saveAll($saveData);
+
+        $conditions = array(
+            'aggregate' => array(
+                array(
+                    '$group' => array(
+                        '_id' => '$title',
+                        'count' => array(
+                            '$sum' => 1
+                        )
+                    )
+                ),
+                array(
+                    '$project' => array(
+                        'title' => '$_id',
+                        'count' => 1,
+                        '_id' => 0
+                    )
+                ),
+                array(
+                    '$match' => array(
+                        'title' => array('$in' => array('test1', 'test2'))
+                    )
+                )
+            )
+        );
+
+        $result = $this->Post->find('all', array('conditions' => $conditions));
+
+        $expected = array(
+            array(
+                'Post' => array(
+                    'count' => 2,
+                    'title' => 'test1'
+                )
+            ),
+            array(
+                'Post' => array(
+                    'count' => 2,
+                    'title' => 'test2'
+                )
+            )
+        );
+
+        $this->assertEquals($expected, $result);
+    }
 
 /**
  * testCreateConnectionName

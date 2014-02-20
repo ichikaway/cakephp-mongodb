@@ -991,6 +991,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(Model $Model, $query = array(), $recursive = null) {
+        $isAggregateQuery = false;
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1043,14 +1044,28 @@ class MongodbSource extends DboSource {
 			$offset = ($page - 1) * $limit;
 		}
 
+        // Set flag if the query is an aggregate query.
+        if( count($conditions) == 1 && array_key_exists('aggregate', $conditions))
+        {
+            $isAggregateQuery = true;
+        }
+
 		$return = array();
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
-				$count = $this->_db
-					->selectCollection($Model->table)
-					->count($conditions);
+                if($isAggregateQuery) {
+                    $count = $this->getResultCountForAggregateQuery($Model, $conditions);
+                }
+                else
+                {
+                    $count = $this->_db
+                        ->selectCollection($Model->table)
+                        ->count($conditions);
+                }
+
+
 				if ($this->fullDebug) {
 					$this->logQuery("db.{$Model->useTable}.count( :conditions )",
 						compact('conditions', 'count')
@@ -1059,18 +1074,56 @@ class MongodbSource extends DboSource {
 				return array(array($Model->alias => array('count' => $count)));
 			}
 
-			$return = $this->_db
-				->selectCollection($Model->table)
-				->find($conditions, $fields)
-				->sort($order)
-				->limit($limit)
-				->skip($offset);
-			if ($this->fullDebug) {
-				$count = $return->count(true);
-				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
-					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
-				);
-			}
+            if($isAggregateQuery)
+            {
+                //We are dealing with aggregate query here.
+                if(!empty($order)) {
+                    $conditions['aggregate'][] = array('$sort' => $order);
+                }
+                if (!empty($offset)) {
+                    $conditions['aggregate'][] = array('$skip' => $offset);
+                }
+                if(!empty($limit))
+                {
+                    $conditions['aggregate'][] = array('$limit' => $limit);
+                }
+
+                $return = $this->_db
+                    ->selectCollection($Model->table)
+                    ->aggregate($conditions['aggregate']);
+
+                //Format $return in a format that cake expects
+                $_return = array();
+                foreach($return['result'] as $result)
+                {
+                    $_return[][$Model->alias] = $result;
+                }
+                $return = $_return;
+            }
+            else
+            {
+                $return = $this->_db
+                    ->selectCollection($Model->table)
+                    ->find($conditions, $fields)
+                    ->sort($order)
+                    ->limit($limit)
+                    ->skip($offset);
+            }
+
+
+            if ($this->fullDebug) {
+                if($isAggregateQuery)
+                {
+                    $count = $this->getResultCountForAggregateQuery($Model,$conditions);
+                }
+                else
+                {
+                    $count = $return->count(true);
+                }
+                $this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
+                    compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
+                );
+            }
 		} else {
 			$options = array_filter(array(
 				'findandmodify' => $Model->table,
@@ -1100,9 +1153,16 @@ class MongodbSource extends DboSource {
 			}
 		}
 
-		if ($Model->findQueryType === 'count') {
-			return array(array($Model->alias => array('count' => $return->count())));
-		}
+        if ($Model->findQueryType === 'count') {
+            if($isAggregateQuery) {
+                $count = $this->getResultCountForAggregateQuery($Model,$conditions);
+            }
+            else
+            {
+                $count = $return->count();
+            }
+            return array(array($Model->alias => array('count' => $count)));
+        }
 
 		if (is_object($return)) {
 			$_return = array();
@@ -1122,6 +1182,32 @@ class MongodbSource extends DboSource {
 		}
 		return $return;
 	}
+
+    /**
+     * @param $Model
+     * @param $conditions
+     * @return int
+     */
+    protected function getResultCountForAggregateQuery(&$Model, $conditions)
+    {
+        $countConditions = $conditions['aggregate'];
+        $countConditions[] = array(
+            '$group' => array(
+                '_id' => null,
+                'count' => array('$sum' => 1)
+            ));
+        $countOfAggregatedResults = $this->_db
+            ->selectCollection($Model->table)
+            ->aggregate($countConditions);
+
+        if (!empty($countOfAggregatedResults['result'])) {
+            $countOfAggregatedResults = $countOfAggregatedResults['result'][0]['count'];
+        } else {
+            $countOfAggregatedResults = 0;
+        }
+        $count = $countOfAggregatedResults;
+        return $count;
+    }
 
 /**
  * rollback method
