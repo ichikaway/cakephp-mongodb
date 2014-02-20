@@ -81,7 +81,7 @@ class SchemalessBehavior extends ModelBehavior {
  * @return void
  * @access public
  */
-	public function beforeSave(Model $Model) {
+	public function beforeSave(Model $Model, $options = array()) {
 		$Model->cacheSources = false;
 		$Model->schema(true);
 		return true;
