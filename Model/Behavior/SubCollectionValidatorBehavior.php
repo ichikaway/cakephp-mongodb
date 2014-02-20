@@ -31,7 +31,7 @@ class SubCollectionValidatorBehavior extends ModelBehavior {
         }
     }
 
-    public function beforeValidate(Model $model) {
+    public function beforeValidate(Model $model, $config = array()) {
         $this->_Model = $model;
 
         if(is_a($model->getDataSource(), 'Mongodbsource') && isset($model->collectionValidate)) {
@@ -47,7 +47,7 @@ class SubCollectionValidatorBehavior extends ModelBehavior {
         return true;
     }
 
-    public function beforeSave(Model $model) {
+    public function beforeSave(Model $model, $config = array()) {
         return empty($model->validationErrors);
     }
 

@@ -92,7 +92,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access public
  */
-	public function afterFind(Model $Model, $results, $primary) {
+	public function afterFind(Model $Model, $results, $primary = false) {
 		if ($this->settings[$Model->alias]['convertDates']) {
 			$this->convertDates($this->settings[$Model->alias]['dateFormat'], $results);
 		}
