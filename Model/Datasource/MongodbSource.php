@@ -111,7 +111,7 @@ class MongodbSource extends DboSource {
  */
 	public $columns = array(
 		'boolean' => array('name' => 'boolean'),
-		'string' => array('name'  => 'varchar'),
+		'string' => array('name' => 'varchar'),
 		'text' => array('name' => 'text'),
 		'integer' => array('name' => 'integer', 'format' => null, 'formatter' => 'intval'),
 		'float' => array('name' => 'float', 'format' => null, 'formatter' => 'floatval'),
@@ -268,17 +268,20 @@ class MongodbSource extends DboSource {
 		$inUse = array_search('id', $fields);
 		$default = array_search('_id', $fields);
 
-		if($inUse !== false && $default === false) {
+		if ($inUse !== false && $default === false) {
 			$fields[$inUse] = '_id';
 		}
 
+		$values = $this->normalizeValues($table, $fields, $values);
+
 		$data = array();
-		foreach($values as $row) {
+		foreach ($values as $row) {
 			if (is_string($row)) {
 				$row = explode(', ', substr($row, 1, -1));
 			}
 			$data[] = array_combine($fields, $row);
 		}
+
 		$this->_prepareLogQuery($table); // just sets a timer
 		try{
 			$return = $this->_db
@@ -291,6 +294,29 @@ class MongodbSource extends DboSource {
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$table}.insertMulti( :data , array('w' => 1))", compact('data'));
 		}
+	}
+
+	public function normalizeValues($table, $fields, $values) {
+		$Model = ClassRegistry::init(Inflector::classify($table));
+
+		foreach ($values as $key => $value) {
+			foreach ($value as $k => $v) {
+				switch($Model->mongoSchema[$fields[$k]]['type']) {
+					case 'datetime':
+					case 'timestamp':
+					case 'date':
+					case 'time':
+						if (is_string($values[$key][$k])) {
+							$values[$key][$k] = new MongoDate(strtotime($v));
+						}
+						break;
+					default:
+						break;
+				}
+			}
+		}
+
+		return $values;
 	}
 
 /**
