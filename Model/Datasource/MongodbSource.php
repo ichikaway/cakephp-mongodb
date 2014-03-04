@@ -360,9 +360,11 @@ class MongodbSource extends DboSource {
 		if ($this->connected === false) {
 			return false;
 		}
-
+        
+        $table = $this->fullTableName($Model);
+        
 		$collection = $this->_db
-			->selectCollection($Model->table);
+			->selectCollection($table);
 		return $collection;
 	}
 
@@ -441,14 +443,16 @@ class MongodbSource extends DboSource {
 		}
 
 		$schema = array();
+        $table = $this->fullTableName($Model);
+        
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
 			$schema = $Model->mongoSchema;
 			return $schema + array($Model->primaryKey => $this->_defaultSchema['_id']);
 		} elseif ($this->isConnected() && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
 			$Model->Behaviors->attach('Mongodb.Schemaless');
 			if (!$Model->data) {
-				if ($this->_db->selectCollection($Model->table)->count()) {
-					return $this->deriveSchemaFromData($Model, $this->_db->selectCollection($Model->table)->findOne());
+				if ($this->_db->selectCollection($table)->count()) {
+					return $this->deriveSchemaFromData($Model, $this->_db->selectCollection($table)->findOne());
 				}
 			}
 		}
@@ -520,14 +524,15 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
+        $table = $this->fullTableName($Model);
 		try{
 			if ($this->_driverVersion >= '1.3.0') {
 				$return = $this->_db
-					->selectCollection($Model->table)
+					->selectCollection($table)
 					->insert($data, array('safe' => true));
 			} else {
 				$return = $this->_db
-					->selectCollection($Model->table)
+					->selectCollection($table)
 					->insert($data, true);
 			}
 		} catch (MongoException $e) {
@@ -535,7 +540,7 @@ class MongodbSource extends DboSource {
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.insert( :data , true)", compact('data'));
+			$this->logQuery("db.{$table}.insert( :data , true)", compact('data'));
 		}
 
 		if (!empty($return) && $return['ok']) {
@@ -624,16 +629,19 @@ class MongodbSource extends DboSource {
 		if (array_key_exists('conditions', $params)) {
 			$params = $params['conditions'];
 		}
+        
+        $table = $this->fullTableName($Model);
+        
 		try{
 			$return = $this->_db
-				->selectCollection($Model->table)
+				->selectCollection($table)
 				->distinct($keys, $params);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.distinct( :keys, :params )", compact('keys', 'params'));
+			$this->logQuery("db.{$table}.distinct( :keys, :params )", compact('keys', 'params'));
 		}
 
 		return $return;
@@ -672,17 +680,18 @@ class MongodbSource extends DboSource {
 		$initial = (empty($params['initial'])) ? array() : $params['initial'];
 		$reduce = (empty($params['reduce'])) ? array() : $params['reduce'];
 		$options = (empty($params['options'])) ? array() : $params['options'];
-
+        $table = $this->fullTableName($Model);
+        
 		try{
 			$return = $this->_db
-				->selectCollection($Model->table)
+				->selectCollection($table)
 				->group($key, $initial, $reduce, $options);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.group( :key, :initial, :reduce, :options )", $params);
+			$this->logQuery("db.{$table}.group( :key, :initial, :reduce, :options )", $params);
 		}
 
 		return $return;
@@ -704,17 +713,18 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_prepareLogQuery($Model); // just sets a timer
-
+        $table = $this->fullTableName($Model);
+        
 		try{
 			$return = $this->_db
-				->selectCollection($Model->table)
+				->selectCollection($table)
 				->ensureIndex($keys, $params);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.ensureIndex( :keys, :params )", compact('keys', 'params'));
+			$this->logQuery("db.{$table}.ensureIndex( :keys, :params )", compact('keys', 'params'));
 		}
 
 		return $return;
@@ -763,10 +773,11 @@ class MongodbSource extends DboSource {
 		}
 
 		$this->_convertId($data['_id']);
-
+        $table = $this->fullTableName($Model);
+        
 		try{
 			$mongoCollectionObj = $this->_db
-				->selectCollection($Model->table);
+				->selectCollection($table);
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
@@ -792,7 +803,7 @@ class MongodbSource extends DboSource {
 				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$Model->useTable}.update( :conditions, :data, :params )",
+				$this->logQuery("db.{$table}.update( :conditions, :data, :params )",
 					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false))
 				);
 			}
@@ -808,7 +819,7 @@ class MongodbSource extends DboSource {
 				trigger_error($this->error);
 			}
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$Model->useTable}.save( :data )", compact('data'));
+				$this->logQuery("db.{$table}.save( :data )", compact('data'));
 			}
 		}
 		return $return;
@@ -878,18 +889,19 @@ class MongodbSource extends DboSource {
 		$fields = $this->setMongoUpdateOperator($Model, $fields);
 
 		$this->_prepareLogQuery($Model); // just sets a timer
+        $table = $this->fullTableName($Model);
 		try{
 			if ($this->_driverVersion >= '1.3.0') {
 				// not use 'upsert'
 				$return = $this->_db
-					->selectCollection($Model->table)
+					->selectCollection($table)
 					->update($conditions, $fields, array("multiple" => true, 'safe' => true));
 				if (isset($return['updatedExisting'])) {
 					$return = $return['updatedExisting'];
 				}
 			} else {
 				$return = $this->_db
-					->selectCollection($Model->table)
+					->selectCollection($table)
 					->update($conditions, $fields, array("multiple" => true));
 			}
 		} catch (MongoException $e) {
@@ -898,7 +910,7 @@ class MongodbSource extends DboSource {
 		}
 
 		if ($this->fullDebug) {
-			$this->logQuery("db.{$Model->useTable}.update( :conditions, :fields, :params )",
+			$this->logQuery("db.{$table}.update( :conditions, :fields, :params )",
 				array('conditions' => $conditions, 'fields' => $fields, 'params' => array("multiple" => true))
 			);
 		}
@@ -980,9 +992,11 @@ class MongodbSource extends DboSource {
 			$id = $conditions['id'];
 			unset($conditions['id']);
 		}
-
+        
+        $table = $this->fullTableName($Model);
+        
 		$mongoCollectionObj = $this->_db
-			->selectCollection($Model->table);
+			->selectCollection($table);
 
 		$this->_stripAlias($conditions, $Model->alias);
 		if (!empty($id)) {
@@ -998,7 +1012,7 @@ class MongodbSource extends DboSource {
 			$this->_prepareLogQuery($Model); // just sets a timer
 			$return = $mongoCollectionObj->remove($conditions);
 			if ($this->fullDebug) {
-				$this->logQuery("db.{$Model->useTable}.remove( :conditions )",
+				$this->logQuery("db.{$table}.remove( :conditions )",
 					compact('conditions')
 				);
 			}
@@ -1077,13 +1091,14 @@ class MongodbSource extends DboSource {
 		$return = array();
 
 		$this->_prepareLogQuery($Model); // just sets a timer
+        $table = $this->fullTableName($Model);
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
 				$count = $this->_db
-					->selectCollection($Model->table)
+					->selectCollection($table)
 					->count($conditions);
 				if ($this->fullDebug) {
-					$this->logQuery("db.{$Model->useTable}.count( :conditions )",
+					$this->logQuery("db.{$table}.count( :conditions )",
 						compact('conditions', 'count')
 					);
 				}
@@ -1091,20 +1106,20 @@ class MongodbSource extends DboSource {
 			}
 
 			$return = $this->_db
-				->selectCollection($Model->table)
+				->selectCollection($table)
 				->find($conditions, $fields)
 				->sort($order)
 				->limit($limit)
 				->skip($offset);
 			if ($this->fullDebug) {
 				$count = $return->count(true);
-				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
+				$this->logQuery("db.{$table}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
 					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
 				);
 			}
 		} else {
 			$options = array_filter(array(
-				'findandmodify' => $Model->table,
+				'findandmodify' => $table,
 				'query' => $conditions,
 				'sort' => $order,
 				'remove' => !empty($remove),
