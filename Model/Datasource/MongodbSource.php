@@ -203,7 +203,12 @@ class MongodbSource extends DboSource {
 			}
 
 			if (isset($this->config['slaveok'])) {
-				$this->connection->setSlaveOkay($this->config['slaveok']);
+				if (method_exists($this->connection, 'setSlaveOkay')) {
+					$this->connection->setSlaveOkay($this->config['slaveok']);
+				} else {
+					$this->connection->setReadPreference($this->config['slaveok']
+						? $class::RP_SECONDARY_PREFERRED : $class::RP_PRIMARY);
+				}
 			}
 
 			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
