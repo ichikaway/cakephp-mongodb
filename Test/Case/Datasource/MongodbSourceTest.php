@@ -1839,4 +1839,45 @@ class MongodbSourceTest extends CakeTestCase {
 		);
 		$this->assertEquals($result, $expected);
 	}
+
+	public function testReadUsingHint() {
+		$index = array('count' => 1, 'created' => -1);
+		$this->Post->getDataSource()->ensureIndex($this->Post, $index);
+
+		$data = array(
+			array(
+				'title' => 'test1',
+				'body' => 'aaaa',
+				'text' => 'bbbb',
+				'count' => 3
+			),
+			array(
+				'title' => 'test2',
+				'body' => 'cccc',
+				'text' => 'dddd',
+				'count' => 4
+			),
+			array(
+				'title' => 'test1',
+				'body' => 'eeee',
+				'text' => 'ffff',
+				'count' => 5
+			),
+		);
+		foreach ($data as $set) {
+			$this->insertData($set);
+		}
+
+		$result = $this->Post->find('all', array(
+			'conditions' => array('count' => array('$gt' => 2)),
+			'hint' => $index,
+		));
+		$this->assertCount(3, $result);
+
+		$result = $this->Post->find('count', array(
+			'conditions' => array('count' => array('$gt' => 3)),
+			'hint' => $index,
+		));
+		$this->assertSame(2, $result);
+	}
 }
