@@ -1869,15 +1869,39 @@ class MongodbSourceTest extends CakeTestCase {
 		}
 
 		$result = $this->Post->find('all', array(
-			'conditions' => array('count' => array('$gt' => 2)),
+			'conditions' => array('count' => array('$gt' => 3)),
 			'hint' => $index,
 		));
-		$this->assertCount(3, $result);
+		$this->assertCount(2, $result);
 
 		$result = $this->Post->find('count', array(
 			'conditions' => array('count' => array('$gt' => 3)),
 			'hint' => $index,
 		));
 		$this->assertSame(2, $result);
+	}
+
+	public function testReadUsingHintThrowExceptionWhenNonExistsIndex() {
+		$index = array('count' => 1, 'created' => -1);
+		$this->Post->getDataSource()->ensureIndex($this->Post, $index);
+
+		$invalidIndex = array('count' => 1, 'created' => 1);
+		try {
+			$result = $this->Post->find('all', array(
+				'conditions' => array('count' => array('$gt' => 3)),
+				'hint' => $invalidIndex,
+			));
+		} catch (MongoCursorException $e) {
+			$this->assertTextContains('bad hint', $e->getMessage());
+		}
+
+		try {
+			$result = $this->Post->find('count', array(
+				'conditions' => array('count' => array('$gt' => 3)),
+				'hint' => $invalidIndex,
+			));
+		} catch (MongoCursorException $e) {
+			$this->assertTextContains('bad hint', $e->getMessage());
+		}
 	}
 }
