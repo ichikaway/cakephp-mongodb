@@ -1094,12 +1094,19 @@ class MongodbSource extends DboSource {
         $table = $this->fullTableName($Model);
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
-				$count = $this->_db
+				$cursor = $this->_db
 					->selectCollection($table)
-					->count($conditions);
+					->find($conditions, array('_id' => true));
+				if (!empty($hint)) {
+					$cursor->hint($hint);
+				}
+				$count = $cursor->count();
 				if ($this->fullDebug) {
-					$this->logQuery("db.{$table}.count( :conditions )",
-						compact('conditions', 'count')
+					if (empty($hint)) {
+						$hint = array();
+					}
+					$this->logQuery("db.{$table}.find( :conditions ).hint( :hint ).count()",
+						compact('conditions', 'count', 'hint')
 					);
 				}
 				return array(array($Model->alias => array('count' => $count)));
@@ -1111,10 +1118,16 @@ class MongodbSource extends DboSource {
 				->sort($order)
 				->limit($limit)
 				->skip($offset);
+			if (!empty($hint)) {
+				$return->hint($hint);
+			}
 			if ($this->fullDebug) {
 				$count = $return->count(true);
-				$this->logQuery("db.{$table}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset )",
-					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count')
+				if (empty($hint)) {
+					$hint = array();
+				}
+				$this->logQuery("db.{$table}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
+					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count', 'hint')
 				);
 			}
 		} else {
