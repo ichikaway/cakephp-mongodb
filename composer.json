@@ -4,6 +4,7 @@
     "type": "cakephp-plugin",
     "keywords": ["cakephp", "mongo", "datasource"],
     "homepage": "https://github.com/ichikaway/cakephp-mongodb",
+    "license": "MIT",
     "authors": [
         {
             "name": "Yasushi Ichikawa",
