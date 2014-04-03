@@ -417,6 +417,55 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertEqual($expect, $result);
 	}
 
+/**
+ * Test truncate method
+ */
+	public function testTruncate() {
+		$this->insertData(array(
+			'title' => 'test',
+			'body' => 'aaaa',
+			'text' => 'bbbb',
+		));
+		$this->assertSame(1, $this->Post->find('count'));
+
+		$this->mongodb->truncate($this->Post);
+		$this->assertSame(0, $this->Post->find('count'));
+	}
+
+/**
+ * Test truncate method using mock
+ */
+	public function testTruncateStatement() {
+		$connection = $this->mongodb->connection;
+		$dbname = $this->mongodb->config['database'];
+		$tableName = $this->mongodb->fullTableName($this->Post);
+
+		$this->mongodb = $this->getMock(
+			'MongodbSource',
+			array('getMongoDb'),
+			array($this->_config)
+		);
+		$mongo = $this->getMock(
+			'MongoDB',
+			array('selectCollection'),
+			array($connection, $dbname)
+		);
+		$mongoCollection = $this->getMock(
+			'MongoCollection',
+			array('remove'),
+			array($mongo, $tableName)
+		);
+
+		// truncate method call MongoCollection::remove()
+		$mongoCollection->expects($this->once())->method('remove')
+			->with(null);
+		$mongo->expects($this->once())->method('selectCollection')
+			->with($tableName)->will($this->returnValue($mongoCollection));
+		$this->mongodb->expects($this->once())->method('getMongoDb')
+			->will($this->returnValue($mongo));
+
+		$this->mongodb->truncate($this->Post);
+	}
 
 /**
  * Tests find method.
