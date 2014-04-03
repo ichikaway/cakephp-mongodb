@@ -1209,7 +1209,7 @@ class MongodbSource extends DboSource {
 		$fullTableName = $this->fullTableName($table);
 		$return = false;
 		try{
-			$return = $this->getMongoDb()->selectCollection($fullTableName)->remove();
+			$return = $this->getMongoDb()->selectCollection($fullTableName)->remove(array());
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$fullTableName}.remove({})");
 			}
