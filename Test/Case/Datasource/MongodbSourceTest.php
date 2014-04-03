@@ -458,7 +458,7 @@ class MongodbSourceTest extends CakeTestCase {
 
 		// truncate method call MongoCollection::remove()
 		$mongoCollection->expects($this->once())->method('remove')
-			->with(null);
+			->with(array())->will($this->returnValue(true));
 		$mongo->expects($this->once())->method('selectCollection')
 			->with($tableName)->will($this->returnValue($mongoCollection));
 		$this->mongodb->expects($this->once())->method('getMongoDb')
