@@ -668,7 +668,7 @@ class MongodbSource extends DboSource {
  * @return void
  * @access public
  */
-	public function group($params, Model $Model = null) {
+	public function group($params, $Model = null) {
 
 		if (!$this->isConnected() || count($params) === 0 || $Model === null) {
 			return false;
