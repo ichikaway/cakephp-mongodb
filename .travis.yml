@@ -2,16 +2,18 @@ language: php
 
 php:
   - 5.3
+  - 5.4
 
 services:
   - mongodb
 
 env:
-  - CAKEPHP=2.2.8 PECLMONGO=mongo-1.2.9
-  - CAKEPHP=2.3.4 PECLMONGO=mongo-1.2.9
-  - CAKEPHP=2.2.8 PECLMONGO=mongo-1.3.7
-  - CAKEPHP=2.3.4 PECLMONGO=mongo-1.3.7
-  - CAKEPHP=2.4.5 PECLMONGO=mongo-1.4.5
+  - CAKEPHP=2.2.9 PECLMONGO=mongo-1.2.9
+  - CAKEPHP=2.3.10 PECLMONGO=mongo-1.2.9
+  - CAKEPHP=2.2.9 PECLMONGO=mongo-1.3.7
+  - CAKEPHP=2.3.10 PECLMONGO=mongo-1.3.7
+  - CAKEPHP=2.4.10 PECLMONGO=mongo-1.4.5
+  - CAKEPHP=2.5.2 PECLMONGO=mongo-1.4.5
 
 before_script:
   - sh -c "wget http://pecl.php.net/get/$PECLMONGO.tgz"
@@ -27,6 +29,7 @@ before_script:
   - chmod -R 777 ./cakephp/app/tmp
   - echo "<?php
     CakePlugin::loadAll();
+    ini_set('include_path',  '/home/travis/build/ichikaway/cakephp-mongodb/cakephp/vendor/phpunit/phpunit' . PATH_SEPARATOR . ini_get('include_path'));
     " > cakephp/app/Config/bootstrap.php
   - echo "<?php
     class DATABASE_CONFIG {
@@ -70,12 +73,11 @@ before_script:
   - mv coveralls.json cakephp/composer.json
   - mv .coveralls.yml cakephp/.coveralls.yml
   - cd ./cakephp
-  - curl -s http://getcomposer.org/installer | php
-  - php composer.phar install --dev --no-interaction --prefer-source
+  - composer install --dev --no-interaction --prefer-source
   - mkdir -p build/logs
 
 script:
-  - ./lib/Cake/Console/cake test Mongodb All --stderr --coverage-clover build/logs/clover.xml --configuration phpunit.xml.dist
+  - ./app/Console/cake test Mongodb All --stderr --coverage-clover build/logs/clover.xml --configuration phpunit.xml.dist
 
 after_script:
   - php vendor/bin/coveralls -v
