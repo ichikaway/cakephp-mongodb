@@ -1036,6 +1036,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(Model $Model, $query = array(), $recursive = null) {
+		$isAggregateQuery = false;
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1088,12 +1089,24 @@ class MongodbSource extends DboSource {
 			$offset = ($page - 1) * $limit;
 		}
 
+		// Set flag if the query is an aggregate query.
+		if(count($conditions) == 1 && array_key_exists('aggregate', $conditions)) {
+			$isAggregateQuery = true;
+		}
+
 		$return = array();
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
+				if($isAggregateQuery) {
+					$count = $this->getResultCountForAggregateQuery($Model, $conditions);
+				} else {
+					$count = $this->_db
+						->selectCollection($Model->table)
+						->count($conditions);
+				}
 				$cursor = $this->_db
 					->selectCollection($table)
 					->find($conditions, array('_id' => true));
@@ -1112,21 +1125,49 @@ class MongodbSource extends DboSource {
 				return array(array($Model->alias => array('count' => $count)));
 			}
 
-			$return = $this->_db
-				->selectCollection($table)
-				->find($conditions, $fields)
-				->sort($order)
-				->limit($limit)
-				->skip($offset);
+			if($isAggregateQuery) {
+				//We are dealing with aggregate query here.
+				if(!empty($order)) {
+					$conditions['aggregate'][] = array('$sort' => $order);
+				}
+				if (!empty($offset)) {
+					$conditions['aggregate'][] = array('$skip' => $offset);
+				}
+				if(!empty($limit)) {
+					$conditions['aggregate'][] = array('$limit' => $limit);
+				}
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->aggregate($conditions['aggregate']);
+				//Format $return in a format that cake expects
+				$_return = array();
+				foreach($return['result'] as $result)
+				{
+					$_return[][$Model->alias] = $result;
+				}
+				$return = $_return;
+			} else {
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->find($conditions, $fields)
+					->sort($order)
+					->limit($limit)
+					->skip($offset);
+			}
+
 			if (!empty($hint)) {
 				$return->hint($hint);
 			}
 			if ($this->fullDebug) {
-				$count = $return->count(true);
-				if (empty($hint)) {
-					$hint = array();
+				if($isAggregateQuery)
+				{
+					$count = $this->getResultCountForAggregateQuery($Model,$conditions);
 				}
-				$this->logQuery("db.{$table}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
+				else
+				{
+					$count = $return->count(true);
+				}
+				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
 					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count', 'hint')
 				);
 			}
@@ -1160,7 +1201,14 @@ class MongodbSource extends DboSource {
 		}
 
 		if ($Model->findQueryType === 'count') {
-			return array(array($Model->alias => array('count' => $return->count())));
+			if($isAggregateQuery) {
+				$count = $this->getResultCountForAggregateQuery($Model,$conditions);
+			}
+			else
+			{
+				$count = $return->count();
+			}
+			return array(array($Model->alias => array('count' => $count)));
 		}
 
 		if (is_object($return)) {
@@ -1180,6 +1228,31 @@ class MongodbSource extends DboSource {
 			return $_return;
 		}
 		return $return;
+	}
+
+	/**
+	 * @param $Model
+	 * @param $conditions
+	 * @return int
+	 */
+	protected function getResultCountForAggregateQuery(&$Model, $conditions)
+	{
+		$countConditions = $conditions['aggregate'];
+		$countConditions[] = array(
+			'$group' => array(
+				'_id' => null,
+				'count' => array('$sum' => 1)
+			));
+		$countOfAggregatedResults = $this->_db
+			->selectCollection($Model->table)
+			->aggregate($countConditions);
+		if (!empty($countOfAggregatedResults['result'])) {
+			$countOfAggregatedResults = $countOfAggregatedResults['result'][0]['count'];
+		} else {
+			$countOfAggregatedResults = 0;
+		}
+		$count = $countOfAggregatedResults;
+		return $count;
 	}
 
 /**
