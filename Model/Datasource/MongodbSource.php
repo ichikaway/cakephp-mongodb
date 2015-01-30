@@ -1215,6 +1215,9 @@ class MongodbSource extends DboSource {
 			$_return = array();
 			while ($return->hasNext()) {
 				$mongodata = $return->getNext();
+				if (is_null($mongodata)) {
+					continue;
+				}
 				if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 					$mongodata['_id'] = $mongodata['_id']->__toString();
 				}
