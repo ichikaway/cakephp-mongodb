@@ -890,19 +890,33 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
+		if (!is_null($conditions)) {
+			foreach ($conditions as $key => &$condition) {
+				if ($key == $Model->primaryKey) {
+					if (is_array($condition)) {
+						foreach($condition as &$c) {
+							$c = "ObjectId(".$c.")";
+						}
+						$condition = array( '$in' => $condition );
+					} else {
+						$condition = "ObjectId(".$condition.")";
+					}
+				}
+			}
+		}
 		try{
 			if ($this->_driverVersion >= '1.3.0') {
 				// not use 'upsert'
 				$return = $this->_db
 					->selectCollection($table)
-					->update($conditions, $fields, array("multiple" => true, 'safe' => true));
+					->update($conditions, $fields, array("multi" => true, 'safe' => true));
 				if (isset($return['updatedExisting'])) {
 					$return = $return['updatedExisting'];
 				}
 			} else {
 				$return = $this->_db
 					->selectCollection($table)
-					->update($conditions, $fields, array("multiple" => true));
+					->update($conditions, $fields, array("multi" => true));
 			}
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
@@ -911,7 +925,7 @@ class MongodbSource extends DboSource {
 
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$table}.update( :conditions, :fields, :params )",
-				array('conditions' => $conditions, 'fields' => $fields, 'params' => array("multiple" => true))
+				array('conditions' => $conditions, 'fields' => $fields, 'params' => array("multi" => true))
 			);
 		}
 		return $return;
