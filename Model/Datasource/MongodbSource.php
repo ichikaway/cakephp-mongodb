@@ -889,18 +889,11 @@ class MongodbSource extends DboSource {
 		$fields = $this->setMongoUpdateOperator($Model, $fields);
 
 		$this->_prepareLogQuery($Model); // just sets a timer
-        $table = $this->fullTableName($Model);
+        	$table = $this->fullTableName($Model);
 		if (!is_null($conditions)) {
-			foreach ($conditions as $key => &$condition) {
-				if ($key == $Model->primaryKey) {
-					if (is_array($condition)) {
-						foreach($condition as &$c) {
-							$c = "ObjectId(".$c.")";
-						}
-						$condition = array( '$in' => $condition );
-					} else {
-						$condition = "ObjectId(".$condition.")";
-					}
+			foreach ($conditions as $key => &$cond ) {
+				if ($key === $Model->primaryKey) {
+					$this->_convertId($cond, true);
 				}
 			}
 		}
