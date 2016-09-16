@@ -1138,7 +1138,7 @@ class MongodbSource extends DboSource {
 				}
 				$return = $this->_db
 					->selectCollection($Model->table)
-					->aggregate($conditions['aggregate']);
+					->aggregate($conditions['aggregate'], ['allowDiskUse' => true]);
 				//Format $return in a format that cake expects
 				$_return = array();
 				foreach($return['result'] as $result)
