@@ -19,7 +19,7 @@ See http://book.cakephp.org/2.0/en/plugins/how-to-install-plugins.html
 
 Use composer
 
-	composer require "HandsetDetection/MongoDBLib=^1.0.0"
+	composer require "handsetdetection/mongodblib=^1.0.0"
 	
 To install the driver for use in a single application:
 
