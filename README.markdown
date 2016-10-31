@@ -1,24 +1,29 @@
 # MongoDB datasource for CakePHP 2.8+
 
+Note : This datasource is Beta, feedback and pull requests (with tests) welcome. :-)
+
 ## Requirements
-PHP 5.6, PHP 7+
-CakePHP 2.x (> 2.8, < 3.0)
-php-mongodb extension (not the php-mongo extension).
+
+	PHP 5.6, PHP 7+
+	CakePHP 2.x (> 2.8, < 3.0)
+
+## Dependency
+
+	php-mongodb extension (not the php-mongo extension).
+	mongodb-php-library (https://docs.mongodb.com/php-library/master/, dependency is listed in composer)
 
 ## Installation
 
 This repository should be installed in the same way as any other plugin.
 See http://book.cakephp.org/2.0/en/plugins/how-to-install-plugins.html
 
+Use composer
+
+	composer require "HandsetDetection/MongoDBLib=^1.0.0"
+	
 To install the driver for use in a single application:
 
 	cd my/app/plugins
-	git clone git://github.com/HandsetDetection/MongoDBLib.git MongoDBLib
-
-To install the driver for use in any/multiple application(s)
-
-	# where ROOT is the name of the directory parent to the base index.php of CakePHP.
-	cd ROOT/plugins
 	git clone git://github.com/HandsetDetection/MongoDBLib.git MongoDBLib
 	
 ## Sample Code
