@@ -306,7 +306,6 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function getMongoDb() {
-		syslog(LOG_NOTICE, 'getMongoDb :'.print_r($this->_db, true));
 		if ($this->connected === false) {
 			return false;
 		}
@@ -509,15 +508,11 @@ class MongodbSource extends DboSource {
 			$this->logQuery("db.{$Model->table}.insert( :data , :params )", compact('data','params'));
 		}
 
-		syslog(LOG_NOTICE, 'Create ');
-
 		if (! empty($return)) {
-			syslog(LOG_NOTICE, 'Return '.json_encode($return));
 			$id = $this->lastResult->getInsertedId();
 			if ($this->config['set_string_id'] && is_object($id)) {
 				$id = $this->lastResult->getInsertedId()->__toString();
 			}
-			syslog(LOG_NOTICE, 'Create _id '.json_encode($id));
 			$Model->setInsertID($id);
 			$Model->id = $id;
 			return true;
@@ -755,8 +750,6 @@ class MongodbSource extends DboSource {
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$return = false;
 		if (! empty($data['_id'])) {
-			syslog(LOG_NOTICE, 'Update A');
-
 			$this->_convertId($data['_id']);
 			$cond = array('_id' => $data['_id']);
 			unset($data['_id']);
@@ -764,8 +757,6 @@ class MongodbSource extends DboSource {
 			$data = $this->setMongoUpdateOperator($Model, $data);
 			$params = $this->collectionOptions['update'];
 			try {
-				syslog(LOG_NOTICE, 'Cond '.json_encode($cond));
-				syslog(LOG_NOTICE, 'Data '.json_encode($data));
 				if ($Model->mongoNoSetOperator === true) {
 					$this->lastResult = $mongoCollectionObj->replaceOne($cond, $data, $params);
 				} else {
@@ -784,7 +775,6 @@ class MongodbSource extends DboSource {
 		} else {
 			// Not sure this block ever executes.
 			// If $data['_id'] is empty does the Model call $this->create() instead ??
-			syslog(LOG_NOTICE, 'Update B');
 			$params = $this->collectionOptions['save'];
 			try{
 				$this->lastResult = $mongoCollectionObj->insertOne($data, $params);
@@ -797,8 +787,6 @@ class MongodbSource extends DboSource {
 				$this->logQuery("db.{$Model->useTable}.save( :data, :params )", compact('data', 'params'));
 			}
 		}
-		syslog(LOG_NOTICE, 'Update '.json_encode($this->lastResult));
-		
 		return $return;
 	}
 
@@ -820,34 +808,26 @@ class MongodbSource extends DboSource {
 			$updateField = 'modified';
 		}
 
-		syslog(LOG_NOTICE, 'setMongoUpdateOperator '.$updateField);
-		syslog(LOG_NOTICE, "mongoNoSetOperator ".$Model->mongoNoSetOperator);
 		//setting Mongo operator
 		if (empty($Model->mongoNoSetOperator)) {
 			if(!preg_grep('/^\$/', array_keys($data))) {
 				$data = array('$set' => $data);
-				syslog(LOG_NOTICE, 'SMUO A');
 			} else {
 				if(!empty($data[$updateField])) {
 					$modified = $data[$updateField];
 					unset($data[$updateField]);
 					$data['$set'] = array($updateField => $modified);
 				}
-				syslog(LOG_NOTICE, 'SMUO B');
 			}
 		} elseif (substr($Model->mongoNoSetOperator,0,1) === '$') {
 			if(!empty($data[$updateField])) {
 				$modified = $data[$updateField];
 				unset($data[$updateField]);
 				$data = array($Model->mongoNoSetOperator => $data, '$set' => array($updateField => $modified));
-				syslog(LOG_NOTICE, 'SMUO C');
 			} else {
 				$data = array($Model->mongoNoSetOperator => $data);
-				syslog(LOG_NOTICE, 'SMUO D');
 			}
 		}
-		syslog(LOG_NOTICE, 'SMUO E');
-
 		return $data;
 	}
 
@@ -879,9 +859,6 @@ class MongodbSource extends DboSource {
 			trigger_error($this->error);
 		}
 
-		var_dump($this->lastResult);
-		syslog(LOG_NOTICE, 'updateAll ' . (! empty($this->lastResult)));
-		
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$Model->table}.update( :conditions, :fields, :params )",
 				array('conditions' => $conditions, 'fields' => $fields, 'params' => $this->collectionOptions['update'])
@@ -1229,7 +1206,6 @@ class MongodbSource extends DboSource {
 		$count = 0;
 		// Its a cursor - but is it always only a one document cursor ?
 		foreach($cursor as $doc) {
-			syslog(LOG_NOTICE, 'Query : '.json_encode($doc));
 			$return = $doc;
 			$count++;
 		}
