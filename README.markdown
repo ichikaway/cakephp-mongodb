@@ -1,8 +1,8 @@
-# mongoDB datasource for CakePHP
+# MongoDB datasource for CakePHP 2.8+
 
 ## Requirements
-PHP5, 
-pecl mongo (http://php.net/mongo)
+PHP5.6, PHP7+
+pecl mongodb (http://php.net/mongo)
 
 ## Installation
 
