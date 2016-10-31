@@ -1,5 +1,5 @@
 {
-	"name": "HandsetDetection/MongoDBLib",
+	"name": "handsetdetection/mongodblib",
 	"description": "A CakePHP Driver from MongoDB using the new mongodb extension. For CakePHP 2.8+ (Not CakePHP 3.x)",
 	"homepage": "https://github.com/HandsetDetection/MongoDBLib",
 	"keywords": ["cakephp", "mongodb", "php", "mongo"],
