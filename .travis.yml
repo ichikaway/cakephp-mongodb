@@ -34,6 +34,7 @@ before_script:
   - git clone -b master https://github.com/FriendsOfCake/travis.git --depth 1 ../travis
   - travis_wait ../travis/before_script.sh
   - travis_retry composer install
+  - echo "require APP . 'vendor' . DS . 'autoload.php';" >> ../cakephp/app/Config/bootstrap.php
 
 script:
   - if [ -d ../cakephp/app ]; then cd ../cakephp/app; fi; ./Console/cake test $PLUGIN_NAME Datasource/$DATASOURCE_NAME
