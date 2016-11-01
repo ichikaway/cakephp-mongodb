@@ -226,7 +226,7 @@ class MongodbSource extends DboSource {
 			if ($this->_db = $this->connection->selectDatabase($this->config['database'])) {
 				$this->connected = true;
 			}
-		} catch(MongoException $e) {
+		} catch(MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
@@ -272,11 +272,11 @@ class MongodbSource extends DboSource {
 		}
 		$this->_prepareLogQuery($Model->table); // just sets a timer
 		$params = array_merge($this->collectionOptions['batchInsert']);
-		try{
+		try {
 			$collection = $this->_db
 				->selectCollection($Model->table)
 				->insertMany($data, $params);
-		} catch (MongoException $e) {
+		} catch (MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
@@ -421,7 +421,7 @@ class MongodbSource extends DboSource {
 	public function describe($Model) {
 		$Model->primaryKey = '_id';
 		$schema = array();
-		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
+		if (! empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
 			$schema = $Model->mongoSchema;
 			return $schema + $this->_defaultSchema;
 		} elseif ($this->isConnected() && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
@@ -500,7 +500,7 @@ class MongodbSource extends DboSource {
 				->selectCollection($Model->table)
 				->insertOne($data, $params);
 			$return = true;
-		} catch (MongoException $e) {
+		} catch (MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
@@ -593,11 +593,11 @@ class MongodbSource extends DboSource {
 		if (array_key_exists('conditions', $params)) {
 			$params = $params['conditions'];
 		}
-		try{
+		try {
 			$return = $this->_db
 				->selectCollection($Model->table)
 				->distinct($keys, $params);
-		} catch (MongoException $e) {
+		} catch (MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
@@ -658,7 +658,7 @@ class MongodbSource extends DboSource {
 					$options
 				);
 			$return = $tmp->toArray()[0];
-		} catch (MongoException $e) {
+		} catch (MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
@@ -689,7 +689,7 @@ class MongodbSource extends DboSource {
 			$return = $this->_db
 				->selectCollection($Model->table)
 				->createIndex($keys, $params);
-		} catch (MongoException $e) {
+		} catch (MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
@@ -741,7 +741,7 @@ class MongodbSource extends DboSource {
 		try {
 			$mongoCollectionObj = $this->_db
 				->selectCollection($Model->table);
-		} catch (MongoException $e) {
+		} catch (MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 			return false;
@@ -763,7 +763,7 @@ class MongodbSource extends DboSource {
 					$this->lastResult = $mongoCollectionObj->updateOne($cond, $data, $params);
 				}
 				$return = true;
-			} catch (MongoException $e) {
+			} catch (MongoDB\Driver\Exception\Exception $e) {
 				$this->error = $e->getMessage();
 				trigger_error($this->error);
 			}
@@ -776,10 +776,10 @@ class MongodbSource extends DboSource {
 			// Not sure this block ever executes.
 			// If $data['_id'] is empty does the Model call $this->create() instead ??
 			$params = $this->collectionOptions['save'];
-			try{
+			try {
 				$this->lastResult = $mongoCollectionObj->insertOne($data, $params);
 				$return = true;
-			} catch (MongoException $e) {
+			} catch (MongoDB\Driver\Exception\Exception $e) {
 				$this->error = $e->getMessage();
 				trigger_error($this->error);
 			}
@@ -810,7 +810,7 @@ class MongodbSource extends DboSource {
 
 		//setting Mongo operator
 		if (empty($Model->mongoNoSetOperator)) {
-			if(!preg_grep('/^\$/', array_keys($data))) {
+			if (! preg_grep('/^\$/', array_keys($data))) {
 				$data = array('$set' => $data);
 			} else {
 				if(!empty($data[$updateField])) {
@@ -820,7 +820,7 @@ class MongodbSource extends DboSource {
 				}
 			}
 		} elseif (substr($Model->mongoNoSetOperator,0,1) === '$') {
-			if(!empty($data[$updateField])) {
+			if (! empty($data[$updateField])) {
 				$modified = $data[$updateField];
 				unset($data[$updateField]);
 				$data = array($Model->mongoNoSetOperator => $data, '$set' => array($updateField => $modified));
@@ -854,7 +854,7 @@ class MongodbSource extends DboSource {
 			$this->lastResult = $this->_db
 				->selectCollection($Model->table)
 				->updateMany($conditions, $fields);
-		} catch (MongoException $e) {
+		} catch (MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
@@ -876,7 +876,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function deriveSchemaFromData($Model, $data = array()) {
-		if (!$data) {
+		if (! $data) {
 			$data = $Model->data;
 			if ($data && array_key_exists($Model->alias, $data)) {
 				$data = $data[$Model->alias];
@@ -948,19 +948,20 @@ class MongodbSource extends DboSource {
 		}
 
 		$return = false;
+		$count = 0;
 		try {
 			$this->_prepareLogQuery($Model);
 			$this->lastResult = $this->_db
 				->selectCollection($Model->table)
 				->deleteMany($conditions);
 			$count = $this->lastResult->getDeletedCount();
-			if ($this->fullDebug) {
-				$this->logQuery("db.{$Model->table}.remove( :conditions )", compact('conditions', 'count'));
-			}
 			$return = true;
-		} catch (MongoException $e) {
+		} catch (MongoDB\Driver\Exception\Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
+		}
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$Model->table}.remove( :conditions )", compact('conditions', 'count'));
 		}
 		return $return;
 	}
@@ -1042,9 +1043,14 @@ class MongodbSource extends DboSource {
 		$queryType = isset($Model->findQueryType) ? $Model->findQueryType : 'all';
 		
 		if ($queryType === 'count') {
-			$count = $this->_db
-				->selectCollection($Model->table)
-				->count($conditions);
+			try {
+				$count = $this->_db
+					->selectCollection($Model->table)
+					->count($conditions);
+			} catch (MongoDB\Driver\Exception\Exception $e) {
+				$this->error = $e->getMessage();
+				trigger_error($this->error);
+			}
 				
 			if ($this->fullDebug)
 				$this->logQuery("db.{$Model->useTable}.count( :conditions )", compact('conditions', 'count'));
@@ -1059,25 +1065,32 @@ class MongodbSource extends DboSource {
 				'limit' => $limit,
 				'skip' => $offset
 			);
-			if (! empty($this->_findOptions))
+			if (! empty($this->_findOptions)) {
 				$options = array_merge($options, $this->_findOptions);
-				
-			$cursor = $this->_db
-				->selectCollection($Model->table)
-				->find($conditions, $options);
-
-			$count = 0;
-			// Iterate over cursor
-			foreach($cursor as $mongodata) {
-				if ($this->config['set_string_id'] && ! empty($mongodata['_id']) && is_object($mongodata['_id'])) {
-					$mongodata['_id'] = $mongodata['_id']->__toString();
-				}
-				$return[][$Model->alias] = $mongodata;
-				$count++;
 			}
 
-			if ($this->fullDebug)
+			$count = 0;
+			try {
+				$cursor = $this->_db
+					->selectCollection($Model->table)
+					->find($conditions, $options);
+
+				// Iterate over cursor
+				foreach($cursor as $mongodata) {
+					if ($this->config['set_string_id'] && ! empty($mongodata['_id']) && is_object($mongodata['_id'])) {
+						$mongodata['_id'] = $mongodata['_id']->__toString();
+					}
+					$return[][$Model->alias] = $mongodata;
+					$count++;
+				}
+			} catch (MongoDB\Driver\Exception\Exception $e) {
+				$this->error = $e->getMessage();
+				trigger_error($this->error);
+			}
+
+			if ($this->fullDebug) {
 				$this->logQuery("db.{$Model->table}.find( :conditions, :options )", compact('conditions', 'options', 'count'));
+			}
 
 			return $return;
 		}
@@ -1100,22 +1113,36 @@ class MongodbSource extends DboSource {
 
 			// If remove is set then replace the document otherwise update.
 			if (! empty($remove)) {
-				$this->lastResult = $this->_db
-					->selectCollection($Model->table)
-					->findOneAndReplace($conditions, array('$set' => $modify), $options);
+				try {
+					$this->lastResult = $this->_db
+						->selectCollection($Model->table)
+						->findOneAndReplace($conditions, array('$set' => $modify), $options);
+				} catch (MongoDB\Driver\Exception\Exception $e) {
+					$this->error = $e->getMessage();
+					trigger_error($this->error);
+				}
 
-				if ($this->fullDebug)
+				if ($this->fullDebug) {
 					$logQuery = "db.{$Model->table}.findOneAndReplace( :conditions, :options )";
+				}
 			} else {
-				$this->lastResult = $this->_db
-					->selectCollection($Model->table)
-					->findOneAndUpdate($conditions, array('$set' => $modify), $options);
+				
+				try {
+					$this->lastResult = $this->_db
+						->selectCollection($Model->table)
+						->findOneAndUpdate($conditions, array('$set' => $modify), $options);
+				} catch (MongoDB\Driver\Exception\Exception $e) {
+					$this->error = $e->getMessage();
+					trigger_error($this->error);
+				}
 
-				if ($this->fullDebug)
+				if ($this->fullDebug) {
 					$logQuery = "db.{$Model->table}.findOneAndUpdate( :conditions, :options )";
+				}
 			}
 
-			$result = MongoDB\BSON\toPHP($this->lastResult);
+			//$result = MongoDB\BSON\toPHP($this->lastResult);
+			$result = $this->lastResult;
 
 			$count = 0;
 			if (! empty($result)) {
@@ -1126,10 +1153,9 @@ class MongodbSource extends DboSource {
 				$return[][$Model->alias] = $result;
 			}
 			
-			if ($this->fullDebug)
+			if ($this->fullDebug) {
 				$this->logQuery($logQuery, compact($conditions, $options, $count));
-
-			return $return;
+			}
 		}
 		return $return;
 	}
@@ -1157,9 +1183,15 @@ class MongodbSource extends DboSource {
 		if (! $this->isConnected()) {
 			return false;
 		}
-		return $this->_db
-			->selectCollection($table)
-			->deleteMany();
+		try {
+			return $this->_db
+				->selectCollection($table)
+				->deleteMany();
+		} catch (MongoDB\Driver\Exception\Exception $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+		return false;
 	}
 
 /**
@@ -1193,24 +1225,30 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model);
 		$return = array();
-		$cursor = $this->_db
-			->command($query);
+		try {
+			$cursor = $this->_db
+				->command($query);
 
-		if (! is_object($cursor)) {
-			if ($this->fullDebug) {
-				$this->logQuery("Failed : db.command( :query )", compact('query'));
+			if (! is_object($cursor)) {
+				if ($this->fullDebug) {
+					$this->logQuery("Failed : db.command( :query )", compact('query'));
+				}
+				return false;
 			}
-			return false;
-		}
 
-		$count = 0;
-		// Its a cursor - but is it always only a one document cursor ?
-		foreach($cursor as $doc) {
-			$return = $doc;
-			$count++;
-		}
-		if ($this->fullDebug) {
-			$this->logQuery("db.command( :query )", compact('query', 'count'));
+			$count = 0;
+			// Its a cursor - but is it always only a one document cursor ?
+			foreach($cursor as $doc) {
+				$return = $doc;
+				$count++;
+			}
+
+			if ($this->fullDebug) {
+				$this->logQuery("db.command( :query )", compact('query', 'count'));
+			}
+		} catch (MongoDB\Driver\Exception\Exception $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
 		}
 		return $return;
 	}
@@ -1382,9 +1420,9 @@ class MongodbSource extends DboSource {
 				$this->_stringify($arg, $level + 1);
 			} elseif (is_object($arg) && is_callable(array($arg, '__toString'))) {
 				$class = get_class($arg);
-				if ($class === 'MongoId') {
+				if ($class === 'MongoDB\BSON\ObjectID') {
 					$arg = 'ObjectId(' . $arg->__toString() . ')';
-				} elseif ($class === 'MongoRegex') {
+				} elseif ($class === 'MongoDB\BSON\Regex ') {
 					$arg = '_regexstart_' . $arg->__toString() . '_regexend_';
 				} else {
 					$arg = $class . '(' . $arg->__toString() . ')';
