@@ -62,7 +62,7 @@ class MongodbSource extends DboSource {
  * @var string
  * @access protected
  */
-	protected $_driverVersion = Mongo::VERSION;
+	protected $_driverVersion = MONGODB_VERSION;
 
 /**
  * startTime property
@@ -237,7 +237,7 @@ class MongodbSource extends DboSource {
  * Create connection string
  *
  * @param array $config
- * @param string $version  version of MongoDriver
+ * @string connection string
  */
 	public function createConnectionString($config) {
 		$host = "mongodb://";
