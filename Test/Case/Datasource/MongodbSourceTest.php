@@ -160,11 +160,11 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function tearDown() {
-		//$this->dropData();
-		//unset($this->Post);
-		//unset($this->Mongo);
-		//unset($this->mongodb);
-		//ClassRegistry::flush();
+		$this->dropData();
+		unset($this->Post);
+		unset($this->Mongo);
+		unset($this->mongodb);
+		ClassRegistry::flush();
 	}
 
 
