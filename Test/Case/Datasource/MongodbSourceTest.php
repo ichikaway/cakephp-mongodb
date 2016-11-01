@@ -130,11 +130,9 @@ class MongodbSourceTest extends CakeTestCase {
  * @access public
  */
 	public function setUp() {
-		$connections = ConnectionManager::enumConnectionObjects();
-		if (! empty($connections['test']['classname']) && $connections['test']['classname'] === 'MongodbSource') {
-			$config = new DATABASE_CONFIG();
-			$this->_config = $config->test;
-		}
+		// Recreate the $test database definition as our Datasource.
+		ConnectionManager::drop('test');
+		ConnectionManager::create('test', $this->_config);
 
 		ConnectionManager::create('mongo_test', $this->_config);
 		$this->Mongo = new MongodbSource($this->_config);
