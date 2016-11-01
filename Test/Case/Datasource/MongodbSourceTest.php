@@ -231,7 +231,7 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	public function testCreateConnectionName() {
 		$config = array(
-			'datasource' => 'mongodb',
+			'datasource' => 'MongoDBLib.MongodbSource',
 			'host' => 'localhost',
 			'login' => '',
 			'password' => '',
@@ -245,7 +245,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->assertIdentical($expect, $host);
 
 		$config = array(
-			'datasource' => 'mongodb',
+			'datasource' => 'MongoDBLib.MongodbSource',
 			'host' => 'localhost',
 			'login' => 'user',
 			'password' => 'pass',
