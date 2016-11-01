@@ -131,7 +131,7 @@ class MongodbSourceTest extends CakeTestCase {
 	public function setUp() {
 		$connections = ConnectionManager::enumConnectionObjects();
 
-		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'mongodbSource') {
+		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'MongodbSource') {
 			$config = new DATABASE_CONFIG();
 			$this->_config = $config->test;
 		}
@@ -150,7 +150,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->MongoArticle = ClassRegistry::init('MongoArticle');
 		$this->MongoArticle->setDataSource('mongo_test');
 
-		syslog(LOG_NOTICE, 'setUp '.$this->getName());
+		//syslog(LOG_NOTICE, 'setUp '.$this->getName());
 	}
 
 /**
@@ -315,7 +315,6 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	public function testGetMongoDbFromModel() {
 		$obj = $this->Post->getMongoDb();
-		syslog(LOG_NOTICE, 'testGetMongoDbFromModel :'.print_r($obj, true));
 		$this->assertTrue(is_object($obj));
 		$objName = get_class($obj);
 		$this->assertEqual('MongoDB\Database', $objName);
@@ -806,8 +805,6 @@ class MongodbSourceTest extends CakeTestCase {
 		$result = null;
 		$result = $this->MongoArticle->find('all');
 
-		print_r($result);
-		
 		$this->assertEqual(1, count($result));
 		$resultData = $result[0]['MongoArticle'];
 		$this->assertEqual($this->MongoArticle->id, $resultData['_id']);
