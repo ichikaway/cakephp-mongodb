@@ -130,8 +130,7 @@ class MongodbSourceTest extends CakeTestCase {
  */
 	public function setUp() {
 		$connections = ConnectionManager::enumConnectionObjects();
-
-		if (!empty($connections['test']['classname']) && $connections['test']['classname'] === 'MongodbSource') {
+		if (! empty($connections['test']['classname']) && $connections['test']['classname'] === 'MongodbSource') {
 			$config = new DATABASE_CONFIG();
 			$this->_config = $config->test;
 		}
@@ -780,8 +779,8 @@ class MongodbSourceTest extends CakeTestCase {
 			'body' => 'aaaa',
 			'text' => 'bbbb',
 			'count' => 0,
-			'created' => new mongoDate(),
-			'modified' => new mongoDate(),
+			'created' => new MongoDB\BSON\UTCDateTime(time()),
+			'modified' => new MongoDB\BSON\UTCDateTime(time()),
 		);
 		$saveData['MongoArticle'] = $data;
 
