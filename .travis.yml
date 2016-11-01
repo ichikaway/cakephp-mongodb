@@ -10,18 +10,19 @@ services:
 env:
   global:
     - PLUGIN_NAME=MongoDBLib
+    - DATASOURCE_NAME=MongodbSource
     - REQUIRE=""
 
   matrix:
-    - DB=mysql CAKE_VERSION=2.8
-    - DB=mysql CAKE_VERSION=2.9
+    - CAKE_VERSION=2.8
+    - CAKE_VERSION=2.9
 
 matrix:
   include:
     - php: 5.6
       env:
         - DB=mysql
-        - CAKE_VERSION=2.7
+        - CAKE_VERSION=2.8
         - CODECOVERAGE=1
     - php: 5.6
       env:
@@ -34,10 +35,7 @@ before_script:
   - travis_wait ../travis/before_script.sh
 
 script:
-  - ../travis/script.sh
-
-after_success:
-  - ../travis/after_success.sh
+  - if [ -d ../cakephp/app ]; then cd ../cakephp/app; fi; ./Console/cake test $PLUGIN_NAME Datasource/$DATASOURCE_NAME
 
 notifications:
   email: false
