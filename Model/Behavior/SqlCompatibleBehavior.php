@@ -130,8 +130,8 @@ class SqlCompatibleBehavior extends ModelBehavior {
 			foreach($results as &$row) {
 				$this->convertDates($row);
 			}
-		} elseif (is_a($results, 'MongoDate')) {
-			$results = date('Y-M-d h:i:s', $results->sec);
+		} elseif (is_a($results, 'MongoDB\BSON\UTCDateTime')) {
+			$results = date('Y-M-d h:i:s', $results->toDateTime()->getTimestamp());
 		}
 	}
 
