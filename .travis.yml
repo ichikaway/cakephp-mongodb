@@ -1,0 +1,37 @@
+language: php
+
+php:
+  - 5.6
+
+env:
+  global:
+    - PLUGIN_NAME=MongoDBLib
+    - REQUIRE=""
+
+  matrix:
+    - DB=mysql CAKE_VERSION=2.8
+    - DB=mysql CAKE_VERSION=2.9
+
+matrix:
+  include:
+    - php: 5.4
+      env:
+        - DB=mysql
+        - CAKE_VERSION=2.7
+        - CODECOVERAGE=1
+    - php: 5.4
+      env:
+        - PHPCS=1
+
+before_script:
+  - git clone -b master https://github.com/FriendsOfCake/travis.git --depth 1 ../travis
+  - travis_wait ../travis/before_script.sh
+
+script:
+  - ../travis/script.sh
+
+after_success:
+  - ../travis/after_success.sh
+
+notifications:
+  email: false
