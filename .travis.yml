@@ -33,6 +33,7 @@ before_script:
   - echo "extension=mongodb.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - git clone -b master https://github.com/FriendsOfCake/travis.git --depth 1 ../travis
   - travis_wait ../travis/before_script.sh
+  - travis_retry composer install
 
 script:
   - if [ -d ../cakephp/app ]; then cd ../cakephp/app; fi; ./Console/cake test $PLUGIN_NAME Datasource/$DATASOURCE_NAME
