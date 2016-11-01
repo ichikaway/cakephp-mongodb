@@ -25,8 +25,6 @@
  * @license       http://www.opensource.org/licenses/mit-license.php The MIT License
  */
 
-require_once APP . 'Vendor/autoload.php';
-
 App::import('Datasource', 'DboSource');
 App::import('Utility', 'CakeText');
 

@@ -19,6 +19,7 @@
 /**
  * Import relevant classes for testing
  */
+
 App::uses('Model', 'Model');
 App::uses('AppModel', 'Model');
 
