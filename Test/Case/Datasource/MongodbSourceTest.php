@@ -143,6 +143,7 @@ class MongodbSourceTest extends CakeTestCase {
 		$this->mongodb = ConnectionManager::getDataSource('mongo_test');
 		$this->mongodb->connect();
 
+		echo $this->getMongodVersion()."\n";
 		$this->dropData();
 
 		$this->MongoArticle = ClassRegistry::init('MongoArticle');
@@ -209,6 +210,7 @@ class MongodbSourceTest extends CakeTestCase {
 				->selectDatabase($this->_config['database']);
 
 			foreach($db->listCollections() as $collection) {
+				echo "About to drop ".$collection->getName()." in ".$this->_config['database']."\n";
 				$result = $this->mongodb
 					->connection
 					->selectDatabase($this->_config['database'])
