@@ -4,9 +4,6 @@ php:
   - 5.6
   - 7.0
 
-services:
-  - mongodb
-  
 env:
   global:
     - PLUGIN_NAME=MongoDBLib
@@ -17,6 +14,15 @@ env:
     - CAKE_VERSION=2.8
     - CAKE_VERSION=2.9
 
+addons:
+  apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.2-precise
+    packages:
+      - mongodb-org-server
+      - mongodb-org-shell
+      
 matrix:
   include:
     - php: 5.6
