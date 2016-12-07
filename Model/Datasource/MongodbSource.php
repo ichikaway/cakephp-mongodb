@@ -607,7 +607,7 @@ class MongodbSource extends DboSource {
 		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
 		$tables = '["' . implode($toDrop, '", "') . '"]';
 
-		return String::insert($return, compact('tables'));
+		return CakeText::insert($return, compact('tables'));
 	}
 
 /**
@@ -1392,7 +1392,7 @@ class MongodbSource extends DboSource {
  * @return mixed Prepared value or array of values.
  * @access public
  */
-	public function value($data, $column = null) {
+	public function value($data, $column = NULL, $null = true) {
 		if (is_array($data) && !empty($data)) {
 			return array_map(
 				array(&$this, 'value'),
@@ -1549,7 +1549,7 @@ class MongodbSource extends DboSource {
 	public function logQuery($query, $args = array()) {
 		if ($args) {
 			$this->_stringify($args);
-			$query = String::insert($query, $args);
+			$query = CakeText::insert($query, $args);
 		}
 		$this->took = round((microtime(true) - $this->_startTime) * 1000, 0);
 		$this->affected = null;
