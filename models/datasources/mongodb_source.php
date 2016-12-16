@@ -240,7 +240,7 @@ class MongodbSource extends DboSource {
 			$hostname = $config['host'] . ':' . $config['port'];
 
 			if(!empty($config['login'])){
-				$host .= $config['login'] .':'. $config['password'] . '@' . $hostname . '/'. $config['database'];
+				$host .= $config['login'] .':'. $config['password'] . '@' . $hostname;
 			} else {
 				$host .= $hostname;
 			}
