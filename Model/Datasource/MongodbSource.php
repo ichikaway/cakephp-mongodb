@@ -1149,7 +1149,7 @@ class MongodbSource extends DboSource {
 			} else {
 				$return = $this->_db
 					->selectCollection($Model->table)
-					->find($conditions, $fields)
+					->find($conditions, array_combine($fields, array_fill(0, count($fields), 1)))
 					->sort($order)
 					->limit($limit)
 					->skip($offset);
@@ -1179,7 +1179,7 @@ class MongodbSource extends DboSource {
 				'remove' => !empty($remove),
 				'update' => $this->setMongoUpdateOperator($Model, $modify),
 				'new' => !empty($new),
-				'fields' => $fields,
+				'fields' => array_combine($fields, array_fill(0, count($fields), 1)),
 				'upsert' => !empty($upsert)
 			));
 			$return = $this->_db
