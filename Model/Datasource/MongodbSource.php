@@ -1046,6 +1046,12 @@ class MongodbSource extends DboSource {
 		if (!empty($order[0])) {
 			$order = array_shift($order);
 		}
+		
+		// if sort option is given.
+	        if(!empty($sort) && !empty($direction)) {
+			$order = array($sort => $direction);
+		}
+		
 		$this->_stripAlias($conditions, $Model->alias);
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
 		$this->_stripAlias($order, $Model->alias, false, 'both');
