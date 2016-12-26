@@ -1039,8 +1039,10 @@ class MongodbSource extends DboSource {
 		if (!$this->isConnected()) {
 			return false;
 		}
-
 		$this->_setEmptyValues($query);
+		
+		// Attempt to repair indexes for conditionals
+        $query['conditions'] = $this->_fix_conditions( $query['conditions'] );
 		extract($query);
 
 		if (!empty($order[0])) {
@@ -1595,6 +1597,68 @@ class MongodbSource extends DboSource {
 				$this->_stripAlias($val, $alias, true, $check);
 			}
 		}
+	}
+	
+/**
+ * Ensures query conditions have properly indexed arrays
+ *
+ * During a query, if data comes in from the model formatted badly, we'll get an exception.
+ * The goal of this function is to prevent that rather than leaving it up to the programmer
+ * to always ensure this happens with data headed towards mongo.
+ *
+ * Example of bad indexed array:
+ * {{
+ *     '_id' => array( 
+ *         '$in' => array(
+ *             0 => '536d18376a999d343edf99dd',
+ *             1 => '536c040e6a999d0f6e7046ce',
+ *             6 => '536c03dc6a999d343e97462b',
+ *         )
+ *     )
+ * }}
+ *
+ * @param array $conditions array()
+ * @return array
+ * @access private
+ */
+    private function _fix_conditions( $conditions = array() ) {
+	    /* http://docs.mongodb.org/manual/reference/operator/query/
+	     * Ordered, grouped, and sourced according to mongo docs */
+        $do = array(
+            /*'$gt', '$gte',*/ '$in', /*'$lt', '$lte', '$ne',*/ '$nin',
+            '$or', '$and', '$not', '$nor',
+            /*'$exists',*/ '$type',
+            '$mod', '$regex', '$text', '$where',
+            '$geoWithin', '$geoIntersects', '$near', '$nearsphere',
+            '$all', '$elemMatch', '$size',
+            '$', '$meta', '$slice',
+        );
+        // For every item in conditions
+        foreach( $conditions as $key => $condition ) {
+            // If is an array
+            if( is_array( $condition ) === true ) {
+                // If is a mongo query command and is an associative key.
+                // There is risk of false positive on integer key, so hopefully that takes care of that
+                if( in_array( $key, $do ) === true && gettype( $key ) === 'string' ) {
+                    // Re-index the array
+                    $conditions[$key] = array_multisort( $condition );
+                    // Recurse
+                    $conditions[$key] = $this->_fix_conditions( $condition );
+                }
+                else {
+                    // Is an array but isn't a condition, look deeper
+                    $conditions[$key] = $this->_fix_conditions( $condition );
+                }
+            }
+            else {
+                // Item value isn't an array, but its key is one that should have an array value. bad
+                if( in_array( $key, $do ) === true && gettype( $key ) === 'string' ) {
+                    error_log( "Condition: $key must be array array, it is currently a: " . gettype( $condition ) );
+                }
+            }
+        }
+
+        return $conditions;
 	}
 }
 
