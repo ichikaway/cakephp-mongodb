@@ -1050,6 +1050,11 @@ class MongodbSource extends DboSource {
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
 		$this->_stripAlias($order, $Model->alias, false, 'both');
 
+		foreach ($conditions as $key => $values) {
+			if (isset($values['$in']))
+				$conditions[$key]['$in'] = array_values($values['$in']);
+		}
+
 		if(!empty($conditions['id']) && empty($conditions['_id'])) {
 			$conditions['_id'] = $conditions['id'];
 			unset($conditions['id']);
