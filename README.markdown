@@ -1,7 +1,10 @@
-# mongoDB datasource for CakePHP
+# mongoDB datasource for CakePHP (Abandon Project)
 
 [![Build Status](https://travis-ci.org/ichikaway/cakephp-mongodb.png?branch=cake2.2)](https://travis-ci.org/ichikaway/cakephp-mongodb)
 [![Coverage Status](https://coveralls.io/repos/ichikaway/cakephp-mongodb/badge.png?branch=cake2.2)](https://coveralls.io/r/ichikaway/cakephp-mongodb)
+
+## IMPORTANT
+Sorry. This project is no longer maintained!
 
 ## Requirements
 
@@ -78,22 +81,3 @@ There are also some sample [controller actions: find,save,delete,deleteAll,updat
 
 ## Author
 Yasushi Ichikawa ([ichikaway](http://twitter.com/ichikaway))
-
-Andy Dawson ([AD7six](http://twitter.com/AD7six))
-
-
-## Contributors
-[Predominant](http://github.com/predominant/) : Cleanup code, add documentation
-
-[Jrbasso](http://github.com/jrbasso/) : Cleanup code
-
-[tkyk](http://github.com/tkyk/) : Fix bug, Add some function.
-
-
-## Reference
-Reference code, Thank you!
-
-[Nate Abele's lithium mongoDB datasource](http://li3.rad-dev.org/)
-
-[Joél Perras' divan](http://github.com/jperras/divan/)
-
