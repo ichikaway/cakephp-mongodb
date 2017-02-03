@@ -24,11 +24,11 @@ To install the driver for use in any/multiple application(s)
 To use this DB driver, install (obviously) and define a db source such as follows:
 
 	<?php
-	//app/config/bootstrap.php
+	//app/Config/bootstrap.php
 	CakePlugin::loadAll();
 
 
-	// app/config/database.php
+	// app/Config/database.php
 	class DATABASE_CONFIG {
 		public $default = array(
 			'datasource' => 'Mongodb.MongodbSource',
@@ -46,6 +46,14 @@ To use this DB driver, install (obviously) and define a db source such as follow
 			*/
 		);
 	}
+	
+	// To make sure all tests are passing create the following entry in app/Config/database.php
+	public $test = array(
+		'datasource' => 'Mongodb.MongodbSource',
+    'database' => 'test_mongo',
+		'host' => 'localhost',
+		'port' => 27017,
+  ); 
 
 
 More detail of replicaset in wiki:
