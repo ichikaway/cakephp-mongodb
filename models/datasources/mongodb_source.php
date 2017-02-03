@@ -381,16 +381,16 @@ class MongodbSource extends DboSource {
 		if (!$this->isConnected()) {
 			return false;
 		}
-		
+
 		$collections = $this->_db->listCollections();
 		$sources = array();
-		
+
 		if(!empty($collections)){
 			foreach($collections as $collection){
 				$sources[] = $collection->getName();
 			}
 		}
-		
+
 		return $sources;
 	}
 
@@ -989,6 +989,8 @@ class MongodbSource extends DboSource {
 
 		if (!empty($conditions['_id'])) {
 			$this->_convertId($conditions['_id']);
+			// multiple _ids means we are looking for an $in condition
+			if(is_array($conditions['_id'])) $conditions['_id'] = array('$in' => $conditions['_id']);
 		}
 
 		$fields = (is_array($fields)) ? $fields : array($fields => 1);
@@ -1155,7 +1157,7 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $query
  * @param integer $timeout (milli second)
- * @return mixed false or array 
+ * @return mixed false or array
  * @access public
  */
 	public function mapReduce($query, $timeout = null) {
