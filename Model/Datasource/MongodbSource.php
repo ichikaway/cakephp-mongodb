@@ -529,7 +529,7 @@ class MongodbSource extends DboSource {
 			if ($this->_driverVersion >= '1.3.0') {
 				$return = $this->_db
 					->selectCollection($table)
-					->insert($data, array('safe' => true));
+					->insert($data, array('w' => 1));
 			} else {
 				$return = $this->_db
 					->selectCollection($table)
@@ -607,7 +607,7 @@ class MongodbSource extends DboSource {
 		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
 		$tables = '["' . implode($toDrop, '", "') . '"]';
 
-		return String::insert($return, compact('tables'));
+		return CakeText::insert($return, compact('tables'));
 	}
 
 /**
@@ -794,7 +794,7 @@ class MongodbSource extends DboSource {
 
 			try{
 				if ($this->_driverVersion >= '1.3.0') {
-					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false, 'safe' => true));
+					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false, 'w' => 1));
 				} else {
 					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
 				}
@@ -810,7 +810,7 @@ class MongodbSource extends DboSource {
 		} else {
 			try{
 				if ($this->_driverVersion >= '1.3.0') {
-					$return = $mongoCollectionObj->save($data, array('safe' => true));
+					$return = $mongoCollectionObj->save($data, array('w' => 1));
 				} else {
 					$return = $mongoCollectionObj->save($data);
 				}
@@ -895,7 +895,7 @@ class MongodbSource extends DboSource {
 				// not use 'upsert'
 				$return = $this->_db
 					->selectCollection($table)
-					->update($conditions, $fields, array("multiple" => true, 'safe' => true));
+					->update($conditions, $fields, array("multiple" => true, 'w' => 1));
 				if (isset($return['updatedExisting'])) {
 					$return = $return['updatedExisting'];
 				}
@@ -1036,6 +1036,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(Model $Model, $query = array(), $recursive = null) {
+		$isAggregateQuery = false;
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1088,12 +1089,24 @@ class MongodbSource extends DboSource {
 			$offset = ($page - 1) * $limit;
 		}
 
+		// Set flag if the query is an aggregate query.
+		if(count($conditions) == 1 && array_key_exists('aggregate', $conditions)) {
+			$isAggregateQuery = true;
+		}
+
 		$return = array();
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
+				if($isAggregateQuery) {
+					$count = $this->getResultCountForAggregateQuery($Model, $conditions);
+				} else {
+					$count = $this->_db
+						->selectCollection($Model->table)
+						->count($conditions);
+				}
 				$cursor = $this->_db
 					->selectCollection($table)
 					->find($conditions, array('_id' => true));
@@ -1112,21 +1125,49 @@ class MongodbSource extends DboSource {
 				return array(array($Model->alias => array('count' => $count)));
 			}
 
-			$return = $this->_db
-				->selectCollection($table)
-				->find($conditions, $fields)
-				->sort($order)
-				->limit($limit)
-				->skip($offset);
+			if($isAggregateQuery) {
+				//We are dealing with aggregate query here.
+				if(!empty($order)) {
+					$conditions['aggregate'][] = array('$sort' => $order);
+				}
+				if (!empty($offset)) {
+					$conditions['aggregate'][] = array('$skip' => $offset);
+				}
+				if(!empty($limit)) {
+					$conditions['aggregate'][] = array('$limit' => $limit);
+				}
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->aggregate($conditions['aggregate'], ['allowDiskUse' => true]);
+				//Format $return in a format that cake expects
+				$_return = array();
+				foreach($return['result'] as $result)
+				{
+					$_return[][$Model->alias] = $result;
+				}
+				$return = $_return;
+			} else {
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->find($conditions, array_combine($fields, array_fill(0, count($fields), 1)))
+					->sort($order)
+					->limit($limit)
+					->skip($offset);
+			}
+
 			if (!empty($hint)) {
 				$return->hint($hint);
 			}
 			if ($this->fullDebug) {
-				$count = $return->count(true);
-				if (empty($hint)) {
-					$hint = array();
+				if($isAggregateQuery)
+				{
+					$count = $this->getResultCountForAggregateQuery($Model,$conditions);
 				}
-				$this->logQuery("db.{$table}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
+				else
+				{
+					$count = $return->count(true);
+				}
+				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
 					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count', 'hint')
 				);
 			}
@@ -1138,7 +1179,7 @@ class MongodbSource extends DboSource {
 				'remove' => !empty($remove),
 				'update' => $this->setMongoUpdateOperator($Model, $modify),
 				'new' => !empty($new),
-				'fields' => $fields,
+				'fields' => array_combine($fields, array_fill(0, count($fields), 1)),
 				'upsert' => !empty($upsert)
 			));
 			$return = $this->_db
@@ -1160,13 +1201,23 @@ class MongodbSource extends DboSource {
 		}
 
 		if ($Model->findQueryType === 'count') {
-			return array(array($Model->alias => array('count' => $return->count())));
+			if($isAggregateQuery) {
+				$count = $this->getResultCountForAggregateQuery($Model,$conditions);
+			}
+			else
+			{
+				$count = $return->count();
+			}
+			return array(array($Model->alias => array('count' => $count)));
 		}
 
 		if (is_object($return)) {
 			$_return = array();
 			while ($return->hasNext()) {
 				$mongodata = $return->getNext();
+				if (is_null($mongodata)) {
+					continue;
+				}
 				if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 					$mongodata['_id'] = $mongodata['_id']->__toString();
 				}
@@ -1180,6 +1231,31 @@ class MongodbSource extends DboSource {
 			return $_return;
 		}
 		return $return;
+	}
+
+	/**
+	 * @param $Model
+	 * @param $conditions
+	 * @return int
+	 */
+	protected function getResultCountForAggregateQuery(&$Model, $conditions)
+	{
+		$countConditions = $conditions['aggregate'];
+		$countConditions[] = array(
+			'$group' => array(
+				'_id' => null,
+				'count' => array('$sum' => 1)
+			));
+		$countOfAggregatedResults = $this->_db
+			->selectCollection($Model->table)
+			->aggregate($countConditions);
+		if (!empty($countOfAggregatedResults['result'])) {
+			$countOfAggregatedResults = $countOfAggregatedResults['result'][0]['count'];
+		} else {
+			$countOfAggregatedResults = 0;
+		}
+		$count = $countOfAggregatedResults;
+		return $count;
 	}
 
 /**
@@ -1316,7 +1392,7 @@ class MongodbSource extends DboSource {
  * @return mixed Prepared value or array of values.
  * @access public
  */
-	public function value($data, $column = null) {
+	public function value($data, $column = NULL, $null = true) {
 		if (is_array($data) && !empty($data)) {
 			return array_map(
 				array(&$this, 'value'),
@@ -1473,7 +1549,7 @@ class MongodbSource extends DboSource {
 	public function logQuery($query, $args = array()) {
 		if ($args) {
 			$this->_stringify($args);
-			$query = String::insert($query, $args);
+			$query = CakeText::insert($query, $args);
 		}
 		$this->took = round((microtime(true) - $this->_startTime) * 1000, 0);
 		$this->affected = null;
