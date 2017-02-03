@@ -50,18 +50,10 @@ class MongodbSource extends DboSource {
 /**
  * Database Instance
  *
- * @var resource
+ * @var MongoDB\Database
  * @access protected
  */
 	protected $_db = null;
-
-/**
- * Mongo Driver Version
- *
- * @var string
- * @access protected
- */
-	protected $_driverVersion = Mongo::VERSION;
 
 /**
  * startTime property
@@ -77,7 +69,7 @@ class MongodbSource extends DboSource {
  * Direct connection with database, isn't the
  * same of DboSource::_connection
  *
- * @var mixed null | Mongo
+ * @var null|MongoDB\Client
  * @access private
  */
 	public $connection = null;
@@ -184,48 +176,16 @@ class MongodbSource extends DboSource {
 	public function connect() {
 		$this->connected = false;
 
-		try{
-
-			$host = $this->createConnectionName($this->config, $this->_driverVersion);
-			$class = 'MongoClient';
-			if(!class_exists($class)){
-				$class = 'Mongo';
-			}
-
-			if (isset($this->config['replicaset']) && count($this->config['replicaset']) === 2) {
-				$this->connection = new $class($this->config['replicaset']['host'], $this->config['replicaset']['options']);
-			} else if ($this->_driverVersion >= '1.3.0') {
-				$this->connection = new $class($host);
-			} else if ($this->_driverVersion >= '1.2.0') {
-				$this->connection = new $class($host, array("persist" => $this->config['persistent']));
-			} else {
-				$this->connection = new $class($host, true, $this->config['persistent']);
-			}
-
-			if (isset($this->config['slaveok'])) {
-				if (method_exists($this->connection, 'setSlaveOkay')) {
-					$this->connection->setSlaveOkay($this->config['slaveok']);
-				} else {
-					$this->connection->setReadPreference($this->config['slaveok']
-						? $class::RP_SECONDARY_PREFERRED : $class::RP_PRIMARY);
-				}
-			}
-
-			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
-				if (!empty($this->config['login']) && $this->_driverVersion < '1.2.0') {
-					$return = $this->_db->authenticate($this->config['login'], $this->config['password']);
-					if (!$return || !$return['ok']) {
-						trigger_error('MongodbSource::connect ' . $return['errmsg']);
-						return false;
-					}
-				}
-				$this->connected = true;
-			}
-
-		} catch(MongoException $e) {
+		try {
+			$this->connection = new MongoDB\Client($this->createConnectionName($this->config));
+			$this->_db = $this->connection->selectDatabase($this->config['database']);
+			$this->connected = true;
+		} catch(Exception $e) {
+			// TODO: Is this necessary? Can't we just throw the exception?
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
+
 		return $this->connected;
 	}
 
@@ -235,23 +195,20 @@ class MongodbSource extends DboSource {
  * @param array $config
  * @param string $version  version of MongoDriver
  */
-		public function createConnectionName($config, $version) {
-			$host = null;
+		public function createConnectionName($config) {
+			return sprintf(
+				"mongodb://%s%s/%s",
+				$this->getLoginString($config),
+				$config['host'],
+				$config['database']
+			);
+		}
 
-			if ($version >= '1.0.2') {
-				$host = "mongodb://";
-			} else {
-				$host = '';
+		protected function getLoginString($config) {
+			if (array_key_exists('login', $config) && array_key_exists('password', $config)) {
+				return $config['login'] .':'. $config['password'] . '@';
 			}
-			$hostname = $config['host'] . ':' . $config['port'];
-
-			if(!empty($config['login'])){
-				$host .= $config['login'] .':'. $config['password'] . '@' . $hostname . '/'. $config['database'];
-			} else {
-				$host .= $hostname;
-			}
-
-			return $host;
+			return '';
 		}
 
 
@@ -289,16 +246,18 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($table); // just sets a timer
 		try{
-			$return = $this->_db
+			if ($this->fullDebug) {
+				$this->logQuery("db.{$table}.insertMulti( :data , array('w' => 1))", compact('data'));
+			}
+			return $this->_db
 				->selectCollection($table)
-				->batchInsert($data, array('w' => 1));
-		} catch (MongoException $e) {
+				->insertMany($data, array('w' => 1));
+		} catch (Exception $e) {
+			// TODO: Is this necessary? Can't we just throw the exception?
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
-		if ($this->fullDebug) {
-			$this->logQuery("db.{$table}.insertMulti( :data , array('w' => 1))", compact('data'));
-		}
+		return false;
 	}
 
 	public function normalizeValues($table, $fields, $values) {
@@ -312,7 +271,7 @@ class MongodbSource extends DboSource {
 					case 'date':
 					case 'time':
 						if (is_string($values[$key][$k])) {
-							$values[$key][$k] = new MongoDate(strtotime($v));
+							$values[$key][$k] = new MongoDB\BSON\UTCDateTime(strtotime($v));
 						}
 						break;
 					default:
@@ -340,7 +299,7 @@ class MongodbSource extends DboSource {
 /**
  * get MongoDB Object
  *
- * @return mixed MongoDB Object
+ * @return MongoDB\Database MongoDB Object
  * @access public
  */
 	public function getMongoDb() {
@@ -353,7 +312,7 @@ class MongodbSource extends DboSource {
 /**
  * get MongoDB Collection Object
  *
- * @return mixed MongoDB Collection Object
+ * @return false|MongoDB\Collection MongoDB Collection Object
  * @access public
  */
 	public function getMongoCollection(&$Model) {
@@ -363,9 +322,7 @@ class MongodbSource extends DboSource {
         
         $table = $this->fullTableName($Model);
         
-		$collection = $this->_db
-			->selectCollection($table);
-		return $collection;
+		return $this->_db->selectCollection($table);
 	}
 
 /**
@@ -381,6 +338,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function isInterfaceSupported($interface) {
+		// TODO: Method 'isInterfaceSupported' not found in parent class
 		if ($interface === 'listSources') {
 			return false;
 		}
@@ -404,11 +362,8 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function disconnect() {
-		if ($this->connected) {
-			$this->connected = !$this->connection->close();
-			unset($this->_db, $this->connection);
-			return !$this->connected;
-		}
+		$this->connected = false;
+		unset($this->_db, $this->connection);
 		return true;
 	}
 
@@ -420,10 +375,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function listSources($data = null) {
-		if (!$this->isConnected()) {
-			return false;
-		}
-		return true;
+		return $this->isConnected();
 	}
 
 /**
@@ -441,19 +393,19 @@ class MongodbSource extends DboSource {
 		if(empty($Model->primaryKey)) {
 			$Model->primaryKey = '_id';
 		}
-
-		$schema = array();
-        $table = $this->fullTableName($Model);
         
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
 			$schema = $Model->mongoSchema;
+
 			return $schema + array($Model->primaryKey => $this->_defaultSchema['_id']);
-		} elseif ($this->isConnected() && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
+		}
+
+		if ($this->isConnected() && is_a($Model, 'Model') && !empty($Model->Behaviors)) {
+			$table = $this->fullTableName($Model);
 			$Model->Behaviors->attach('Mongodb.Schemaless');
-			if (!$Model->data) {
-				if ($this->_db->selectCollection($table)->count()) {
-					return $this->deriveSchemaFromData($Model, $this->_db->selectCollection($table)->findOne());
-				}
+			if (!$Model->data && $this->_db->selectCollection($table)->count()) {
+
+				return $this->deriveSchemaFromData($Model, $this->_db->selectCollection($table)->findOne());
 			}
 		}
 		return $this->deriveSchemaFromData($Model);
@@ -525,34 +477,29 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
-		try{
-			if ($this->_driverVersion >= '1.3.0') {
-				$return = $this->_db
-					->selectCollection($table)
-					->insert($data, array('safe' => true));
-			} else {
-				$return = $this->_db
-					->selectCollection($table)
-					->insert($data, true);
-			}
-		} catch (MongoException $e) {
-			$this->error = $e->getMessage();
-			trigger_error($this->error);
-		}
+
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$table}.insert( :data , true)", compact('data'));
 		}
+        try{
+			$return = $this->_db
+				->selectCollection($table)
+				->insertOne($data, array('writeConcern' => 1));
 
-		if (!empty($return) && $return['ok']) {
-
-			$id = $data['_id'];
-			if($this->config['set_string_id'] && is_object($data['_id'])) {
-				$id = $data['_id']->__toString();
+			if ($return->getInsertedId() && $return->isAcknowledged()) {
+				$id = $data['_id'];
+				if($this->config['set_string_id'] && is_object($data['_id'])) {
+					$id = $data['_id']->__toString();
+				}
+				$Model->setInsertID($id);
+				$Model->id = $id;
+				return true;
 			}
-			$Model->setInsertID($id);
-			$Model->id = $id;
-			return true;
+		} catch (Exception $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
 		}
+
 		return false;
 	}
 
@@ -607,7 +554,7 @@ class MongodbSource extends DboSource {
 		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
 		$tables = '["' . implode($toDrop, '", "') . '"]';
 
-		return String::insert($return, compact('tables'));
+		return CakeText::insert($return, compact('tables'));
 	}
 
 /**
@@ -631,17 +578,18 @@ class MongodbSource extends DboSource {
 		}
         
         $table = $this->fullTableName($Model);
-        
+
+		if ($this->fullDebug) {
+			$this->logQuery("db.{$table}.distinct( :keys, :params )", compact('keys', 'params'));
+		}
+
 		try{
 			$return = $this->_db
 				->selectCollection($table)
 				->distinct($keys, $params);
-		} catch (MongoException $e) {
+		} catch (Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
-		}
-		if ($this->fullDebug) {
-			$this->logQuery("db.{$table}.distinct( :keys, :params )", compact('keys', 'params'));
 		}
 
 		return $return;
@@ -676,25 +624,27 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
 
-		$key = (empty($params['key'])) ? array() : $params['key'];
-		$initial = (empty($params['initial'])) ? array() : $params['initial'];
-		$reduce = (empty($params['reduce'])) ? array() : $params['reduce'];
-		$options = (empty($params['options'])) ? array() : $params['options'];
         $table = $this->fullTableName($Model);
-        
-		try{
-			$return = $this->_db
-				->selectCollection($table)
-				->group($key, $initial, $reduce, $options);
-		} catch (MongoException $e) {
-			$this->error = $e->getMessage();
-			trigger_error($this->error);
-		}
+
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$table}.group( :key, :initial, :reduce, :options )", $params);
 		}
+		try{
 
-		return $return;
+			$command = [
+				'group' => [
+					'ns' => $table,
+					'key' => (empty($params['key'])) ? [] : $params['key'],
+					'initial' => (empty($params['initial'])) ? [] : $params['initial'],
+					'$reduce' => new MongoDB\BSON\Javascript($params['reduce']),
+				]
+			];
+			return $this->_db->command($command)->toArray();
+		} catch (Exception $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+		return false;
 	}
 
 
@@ -714,20 +664,19 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
-        
-		try{
-			$return = $this->_db
-				->selectCollection($table)
-				->ensureIndex($keys, $params);
-		} catch (MongoException $e) {
-			$this->error = $e->getMessage();
-			trigger_error($this->error);
-		}
+
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$table}.ensureIndex( :keys, :params )", compact('keys', 'params'));
 		}
-
-		return $return;
+		try{
+			return $this->_db
+				->selectCollection($table)
+				->createIndex($keys, $params);
+		} catch (Exception $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+		return false;
 	}
 
 /**
@@ -778,7 +727,7 @@ class MongodbSource extends DboSource {
 		try{
 			$mongoCollectionObj = $this->_db
 				->selectCollection($table);
-		} catch (MongoException $e) {
+		} catch (Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 			return false;
@@ -791,35 +740,26 @@ class MongodbSource extends DboSource {
 			unset($data['_id']);
 
 			$data = $this->setMongoUpdateOperator($Model, $data);
-
-			try{
-				if ($this->_driverVersion >= '1.3.0') {
-					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false, 'safe' => true));
-				} else {
-					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
-				}
-			} catch (MongoException $e) {
-				$this->error = $e->getMessage();
-				trigger_error($this->error);
-			}
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$table}.update( :conditions, :data, :params )",
 					array('conditions' => $cond, 'data' => $data, 'params' => array("multiple" => false))
 				);
 			}
-		} else {
 			try{
-				if ($this->_driverVersion >= '1.3.0') {
-					$return = $mongoCollectionObj->save($data, array('safe' => true));
-				} else {
-					$return = $mongoCollectionObj->save($data);
-				}
-			} catch (MongoException $e) {
+				$return = $mongoCollectionObj->updateOne($cond, $data, array('writeConcern' => 1));
+			} catch (Exception $e) {
 				$this->error = $e->getMessage();
 				trigger_error($this->error);
 			}
+		} else {
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$table}.save( :data )", compact('data'));
+			}
+			try{
+				$return = $mongoCollectionObj->insertOne($data, array('writeConcern' => 1));
+			} catch (Exception $e) {
+				$this->error = $e->getMessage();
+				trigger_error($this->error);
 			}
 		}
 		return $return;
@@ -890,31 +830,26 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
-		try{
-			if ($this->_driverVersion >= '1.3.0') {
-				// not use 'upsert'
-				$return = $this->_db
-					->selectCollection($table)
-					->update($conditions, $fields, array("multiple" => true, 'safe' => true));
-				if (isset($return['updatedExisting'])) {
-					$return = $return['updatedExisting'];
-				}
-			} else {
-				$return = $this->_db
-					->selectCollection($table)
-					->update($conditions, $fields, array("multiple" => true));
-			}
-		} catch (MongoException $e) {
-			$this->error = $e->getMessage();
-			trigger_error($this->error);
-		}
-
 		if ($this->fullDebug) {
 			$this->logQuery("db.{$table}.update( :conditions, :fields, :params )",
 				array('conditions' => $conditions, 'fields' => $fields, 'params' => array("multiple" => true))
 			);
 		}
-		return $return;
+		try{
+			// not use 'upsert'
+			$return = $this->_db
+				->selectCollection($table)
+				->updateMany($conditions, $fields, array('writeConcern' => 1));
+			if ($return->getModifiedCount() > 0) {
+				$return = $return->getModifiedCount();
+			}
+			return $return;
+		} catch (Exception $e) {
+			$this->error = $e->getMessage();
+			trigger_error($this->error);
+		}
+
+		return false;
 	}
 
 /**
@@ -1007,17 +942,16 @@ class MongodbSource extends DboSource {
 		}
 
 		$return = false;
-		$r = false;
 		try{
 			$this->_prepareLogQuery($Model); // just sets a timer
-			$return = $mongoCollectionObj->remove($conditions);
+			$return = $mongoCollectionObj->deleteMany($conditions);
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$table}.remove( :conditions )",
 					compact('conditions')
 				);
 			}
 			$return = true;
-		} catch (MongoException $e) {
+		} catch (Exception $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
@@ -1036,6 +970,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(Model $Model, $query = array(), $recursive = null) {
+		$isAggregateQuery = false;
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1088,7 +1023,11 @@ class MongodbSource extends DboSource {
 			$offset = ($page - 1) * $limit;
 		}
 
-		$return = array();
+		// Set flag if the query is an aggregate query.
+		if(count($conditions) == 1 && array_key_exists('aggregate', $conditions)) {
+			$isAggregateQuery = true;
+		}
+
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
@@ -1098,9 +1037,10 @@ class MongodbSource extends DboSource {
 					->selectCollection($table)
 					->find($conditions, array('_id' => true));
 				if (!empty($hint)) {
-					$cursor->hint($hint);
+					// TODO: This does not work
+					// $cursor->hint($hint);
 				}
-				$count = $cursor->count();
+				$count = count($cursor->toArray());
 				if ($this->fullDebug) {
 					if (empty($hint)) {
 						$hint = array();
@@ -1112,21 +1052,51 @@ class MongodbSource extends DboSource {
 				return array(array($Model->alias => array('count' => $count)));
 			}
 
-			$return = $this->_db
-				->selectCollection($table)
-				->find($conditions, $fields)
-				->sort($order)
-				->limit($limit)
-				->skip($offset);
+			if($isAggregateQuery) {
+				//We are dealing with aggregate query here.
+				if(!empty($order)) {
+					$conditions['aggregate'][] = array('$sort' => $order);
+				}
+				if (!empty($offset)) {
+					$conditions['aggregate'][] = array('$skip' => $offset);
+				}
+				if(!empty($limit)) {
+					$conditions['aggregate'][] = array('$limit' => $limit);
+				}
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->aggregate($conditions['aggregate'], ['allowDiskUse' => true]);
+				//Format $return in a format that cake expects
+				$_return = array();
+				foreach($return['result'] as $result)
+				{
+					$_return[][$Model->alias] = $result;
+				}
+				$return = $_return;
+			} else {
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->find($conditions, array_merge($fields, [
+						'sort' => $order,
+						'limit' => $limit,
+						'skip' => $offset
+					]));
+			}
+
 			if (!empty($hint)) {
-				$return->hint($hint);
+				// TODO: This does not work
+				// $return->hint($hint);
 			}
 			if ($this->fullDebug) {
-				$count = $return->count(true);
-				if (empty($hint)) {
-					$hint = array();
+				if($isAggregateQuery)
+				{
+					$count = $this->getResultCountForAggregateQuery($Model,$conditions);
 				}
-				$this->logQuery("db.{$table}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
+				else
+				{
+					$count = count($return->toArray());
+				}
+				$this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
 					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count', 'hint')
 				);
 			}
@@ -1143,30 +1113,42 @@ class MongodbSource extends DboSource {
 			));
 			$return = $this->_db
 				->command($options);
-			if ($this->fullDebug) {
-				if ($return['ok']) {
-					$count = 1;
-					if ($this->config['set_string_id'] && !empty($return['value']['_id']) && is_object($return['value']['_id'])) {
-						$return['value']['_id'] = $return['value']['_id']->__toString();
-					}
-					$return[][$Model->alias] = $return['value'];
-				} else {
-					$count = 0;
-				}
-				$this->logQuery("db.runCommand( :options )",
-					array('options' => array_filter($options), 'count' => $count)
-				);
-			}
+//			if ($this->fullDebug) {
+//				if ($return['ok']) {
+//					$count = 1;
+//					if ($this->config['set_string_id'] && !empty($return['value']['_id']) && is_object($return['value']['_id'])) {
+//						$return['value']['_id'] = $return['value']['_id']->__toString();
+//					}
+//					$return[][$Model->alias] = $return['value'];
+//				} else {
+//					$count = 0;
+//				}
+//				$this->logQuery("db.runCommand( :options )",
+//					array('options' => array_filter($options), 'count' => $count)
+//				);
+//			}
+			$this->logQuery("db.runCommand( :options )",
+				array('options' => array_filter($options), 'count' => 'I dont know')
+			);
 		}
 
 		if ($Model->findQueryType === 'count') {
-			return array(array($Model->alias => array('count' => $return->count())));
+			if($isAggregateQuery) {
+				$count = $this->getResultCountForAggregateQuery($Model,$conditions);
+			}
+			else
+			{
+				$count = count($return->toArray());
+			}
+			return array(array($Model->alias => array('count' => $count)));
 		}
 
 		if (is_object($return)) {
 			$_return = array();
-			while ($return->hasNext()) {
-				$mongodata = $return->getNext();
+			foreach($return->toArray() as $mongodata) {
+				if (is_null($mongodata)) {
+					continue;
+				}
 				if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 					$mongodata['_id'] = $mongodata['_id']->__toString();
 				}
@@ -1180,6 +1162,30 @@ class MongodbSource extends DboSource {
 			return $_return;
 		}
 		return $return;
+	}
+
+	/**
+	 * @param $Model
+	 * @param $conditions
+	 * @return int
+	 */
+	protected function getResultCountForAggregateQuery(&$Model, $conditions)
+	{
+		$countConditions = $conditions['aggregate'];
+		$countConditions[] = array(
+			'$group' => array(
+				'_id' => null,
+				'count' => array('$sum' => 1)
+			));
+		$countOfAggregatedResults = $this->_db
+			->selectCollection($Model->table)
+			->aggregate($countConditions);
+		if (!empty($countOfAggregatedResults['result'])) {
+			$countOfAggregatedResults = $countOfAggregatedResults['result'][0]['count'];
+		} else {
+			$countOfAggregatedResults = 0;
+		}
+		return $countOfAggregatedResults;
 	}
 
 /**
@@ -1207,18 +1213,17 @@ class MongodbSource extends DboSource {
 		}
 
 		$fullTableName = $this->fullTableName($table);
-		$return = false;
 		try{
-			$return = $this->getMongoDb()->selectCollection($fullTableName)->remove(array());
+			$deleteResult = $this->getMongoDb()->selectCollection($fullTableName)->deleteOne(array());
 			if ($this->fullDebug) {
 				$this->logQuery("db.{$fullTableName}.remove({})");
 			}
-			$return = true;
+			return $deleteResult->isAcknowledged();
 		} catch (MongoException $e) {
 			$this->error = $e->getMessage();
 			trigger_error($this->error);
 		}
-		return $return;
+		return false;
 	}
 
 /**
@@ -1227,16 +1232,12 @@ class MongodbSource extends DboSource {
  *
  * @param mixed $query
  * @param array $params array()
- * @return void
+ * @return array
  * @access public
  */
 	public function query() {
 		$args = func_get_args();
 		$query = $args[0];
-		$params = array();
-		if(count($args) > 1) {
-			$params = $args[1];
-		}
 
 		if (!$this->isConnected()) {
 			return false;
@@ -1247,14 +1248,16 @@ class MongodbSource extends DboSource {
 		}
 
 		if (count($args) > 1 && (strpos($args[0], 'findBy') === 0 || strpos($args[0], 'findAllBy') === 0)) {
-			$params = $args[1];
+
+			/** @var MongoDB\Collection $collection */
+			$collection = $args[2];
 
 			if (substr($args[0], 0, 6) === 'findBy') {
 				$field = Inflector::underscore(substr($args[0], 6));
-				return $args[2]->find('first', array('conditions' => array($field => $args[1][0])));
+				return $collection->find('first', array('conditions' => array($field => $args[1][0])))->toArray();
 			} else{
 				$field = Inflector::underscore(substr($args[0], 9));
-				return $args[2]->find('all', array('conditions' => array($field => $args[1][0])));
+				return $collection->find('all', array('conditions' => array($field => $args[1][0])))->toArray();
 			}
 		}
 
@@ -1268,7 +1271,7 @@ class MongodbSource extends DboSource {
 			$this->logQuery("db.runCommand( :query )", 	compact('query'));
 		}
 
-		return $return;
+		return $return->toArray();
 	}
 
 /**
@@ -1298,7 +1301,8 @@ class MongodbSource extends DboSource {
 			}else {
 				$data = $this->_db->selectCollection($result['result'])->find();
 				if(!empty($timeout)) {
-					$data->timeout($timeout);
+					// TODO: This does not work
+					// $data->timeout($timeout);
 				}
 			}
 			return $data;
@@ -1316,7 +1320,7 @@ class MongodbSource extends DboSource {
  * @return mixed Prepared value or array of values.
  * @access public
  */
-	public function value($data, $column = null) {
+	public function value($data, $column = NULL, $null = true) {
 		if (is_array($data) && !empty($data)) {
 			return array_map(
 				array(&$this, 'value'),
@@ -1372,29 +1376,30 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function execute($query, $options = array(), $params = array()) {
-		if (!$this->isConnected()) {
-			return false;
-		}
-
-		if (!$query || $query === true) {
-			return;
-		}
-		$this->_prepareLogQuery($Model); // just sets a timer
-		$return = $this->_db
-			->execute($query, $params);
-		if ($this->fullDebug) {
-			if ($params) {
-				$this->logQuery(":query, :params",
-					compact('query', 'params')
-				);
-			} else {
-				$this->logQuery($query);
-			}
-		}
-		if ($return['ok']) {
-			return $return['retval'];
-		}
-		return $return;
+		// TODO: Implement
+//		if (!$this->isConnected()) {
+//			return false;
+//		}
+//
+//		if (!$query || $query === true) {
+//			return;
+//		}
+//		$this->_prepareLogQuery($Model); // just sets a timer
+//		$return = $this->_db
+//			->execute($query, $params);
+//		if ($this->fullDebug) {
+//			if ($params) {
+//				$this->logQuery(":query, :params",
+//					compact('query', 'params')
+//				);
+//			} else {
+//				$this->logQuery($query);
+//			}
+//		}
+//		if ($return['ok']) {
+//			return $return['retval'];
+//		}
+//		return $return;
 	}
 
 /**
@@ -1452,7 +1457,8 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function setTimeout($ms){
-		MongoCursor::$timeout = $ms;
+		// TODO: Implement
+		//MongoCursor::$timeout = $ms;
 
 		return true;
 	}
@@ -1473,15 +1479,16 @@ class MongodbSource extends DboSource {
 	public function logQuery($query, $args = array()) {
 		if ($args) {
 			$this->_stringify($args);
-			$query = String::insert($query, $args);
+			$query = CakeText::insert($query, $args);
 		}
 		$this->took = round((microtime(true) - $this->_startTime) * 1000, 0);
 		$this->affected = null;
 		if (empty($this->error['err'])) {
-			$this->error = $this->_db->lastError();
-			if (!is_scalar($this->error)) {
-				$this->error = json_encode($this->error);
-			}
+			// TODO: Implement
+//			$this->error = $this->_db->lastError();
+//			if (!is_scalar($this->error)) {
+//				$this->error = json_encode($this->error);
+//			}
 		}
 		$this->numRows = !empty($args['count'])?$args['count']:null;
 
@@ -1508,7 +1515,7 @@ class MongodbSource extends DboSource {
 			if (strlen($mixed) !== 24) {
 				return;
 			}
-			$mixed = new MongoId($mixed);
+			$mixed = new MongoDB\BSON\ObjectID($mixed);
 		}
 		if (is_array($mixed)) {
 			foreach($mixed as &$row) {
@@ -1532,6 +1539,7 @@ class MongodbSource extends DboSource {
  * @access protected
  */
 	protected function _stringify(&$args = array(), $level = 0) {
+		// TODO: Fix
 		foreach($args as &$arg) {
 			if (is_array($arg)) {
 				$this->_stringify($arg, $level + 1);
@@ -1609,7 +1617,7 @@ class MongodbSource extends DboSource {
  */
 function MongoDbDateFormatter($date = null) {
 	if ($date) {
-		return new MongoDate($date);
+		return new MongoDB\BSON\UTCDateTime($date);
 	}
-	return new MongoDate();
+	return new MongoDB\BSON\UTCDateTime(null);
 }

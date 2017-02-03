@@ -217,7 +217,7 @@ class MongodbSourceTest extends CakeTestCase {
 					->connection
 					->selectDB($this->_config['database'])
 					->selectCollection($this->Post->table)
-					->insert($data, array('safe' => true));
+					->insert($data, array('w' => 1));
 			} else {
 				$this->mongodb
 					->connection
